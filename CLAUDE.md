@@ -12,6 +12,7 @@ npm run dev        # builds the WASM, then Vite's dev server (localhost:5173)
 npm run dev:phone  # same, reachable from a phone on the same wifi
 npm test           # Rust tests + coverage, WASM build, vue-tsc, then Vitest + coverage
 npm run typecheck  # only the type check
+npm run lint:rust  # cargo fmt --check and cargo clippy -D warnings (CI runs it too)
 npm run build      # the complete site in dist/
 ```
 
@@ -19,7 +20,8 @@ Rust is installed with rustup through Homebrew. If `cargo` is not found, the she
 `export PATH="/opt/homebrew/opt/rustup/bin:$HOME/.cargo/bin:$PATH"` (it is in
 `~/.zprofile`).
 
-In `game-core/`, run `cargo clippy --all-targets` and `cargo fmt` before committing.
+Before committing Rust code, run `cargo fmt` in `game-core/` and `npm run lint:rust`;
+CI fails on formatting or clippy warnings.
 
 ## Layout
 

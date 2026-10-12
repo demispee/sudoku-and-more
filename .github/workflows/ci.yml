@@ -22,7 +22,7 @@ jobs:
       - name: Install Rust
         run: |
           rustup toolchain install stable --profile minimal \
-            --target wasm32-unknown-unknown --component llvm-tools-preview
+            --target wasm32-unknown-unknown --component llvm-tools-preview,rustfmt,clippy
           rustup default stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -30,6 +30,13 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack,cargo-llvm-cov
+      # wasm-pack downloads wasm-bindgen and wasm-opt on first use; keep them between runs
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/.wasm-pack
+          key: wasm-pack-${{ runner.os }}-${{ hashFiles('game-core/Cargo.lock') }}
+      - name: Check Rust formatting and lints
+        run: npm run lint:rust
       - run: npm ci
       - run: npm test
       - name: Build the site

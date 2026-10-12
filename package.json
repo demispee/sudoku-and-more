@@ -8,6 +8,7 @@
     "dev": "npm run build:wasm && vite",
     "dev:phone": "npm run build:wasm && vite --host",
     "typecheck": "vue-tsc --noEmit",
+    "lint:rust": "cargo fmt --manifest-path game-core/Cargo.toml --check && cargo clippy --manifest-path game-core/Cargo.toml --all-targets -- -D warnings",
     "test": "npm run test:rust && npm run build:wasm && npm run typecheck && npm run test:js",
     "test:rust": "cargo llvm-cov --manifest-path game-core/Cargo.toml --fail-under-lines 80",
     "test:js": "vitest run --coverage",

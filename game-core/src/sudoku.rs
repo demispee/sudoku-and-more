@@ -1212,6 +1212,19 @@ mod tests {
     }
 
     #[test]
+    fn requirement_6_prefers_a_later_cell_with_fewer_options() {
+        let solution = solved(&hard());
+        let mut values = [0; 81];
+        // Row 9 has one open cell left, so its last cell has one option and every other
+        // empty cell has many
+        values[72..80].copy_from_slice(&solution[72..80]);
+        assert_eq!(
+            choose_hint(&values, &solution, None),
+            Some((80, HintReason::Only))
+        );
+    }
+
+    #[test]
     fn requirement_6_otherwise_picks_the_cell_with_the_fewest_options() {
         let solution = solved(&hard());
         let mut values = solution;
