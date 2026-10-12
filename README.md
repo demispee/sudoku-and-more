@@ -1,7 +1,7 @@
 # sudoku-and-more
 
-Three small browser games in plain HTML and JavaScript, with no runtime dependencies and no
-build step.
+Three small browser games. The pages are plain HTML and JavaScript; the game rules are
+being moved to Rust, compiled to WebAssembly (the sudoku already is).
 
 **Play online:** <https://demispee.github.io/sudoku-and-more/>
 
@@ -16,29 +16,45 @@ build step.
 
 Play online at <https://demispee.github.io/sudoku-and-more/>.
 
-To work on it locally you need [Node.js](https://nodejs.org/) (on a Mac: `brew install node`):
+To work on it locally you need [Node.js](https://nodejs.org/) and [Rust](https://rustup.rs/)
+with the WebAssembly tools. On a Mac:
+
+```sh
+brew install node rustup wasm-pack cargo-llvm-cov
+rustup default stable
+rustup target add wasm32-unknown-unknown
+rustup component add llvm-tools-preview
+```
+
+Then:
 
 ```sh
 git clone https://github.com/demispee/sudoku-and-more.git
 cd sudoku-and-more
 npm install        # once: installs the dev server and test tools
-npm run dev        # dev server at http://localhost:5173, reloads on every change
-npm test           # all tests, with coverage
+npm run dev        # builds the WebAssembly, then a dev server at http://localhost:5173
+npm test           # all tests in Rust and JavaScript, with coverage
+npm run build      # the complete site in dist/
 ```
 
 `npm run dev:phone` also makes the dev server reachable from a phone on the same wifi; it
-prints the address to open. Opening the HTML files straight from disk does not work,
-because browsers block the modules in `src/` there.
+prints the address to open. After a change to the Rust code, start `npm run dev` again.
+Opening the HTML files straight from disk does not work, because browsers block modules
+there.
 
 ## Project layout
 
 | Path | What's in it |
 |------|--------------|
 | `*.html` | The pages: layout, styling, and the code that draws and handles input |
-| `src/` | The rules of each game, without any page code, so they can be tested |
-| `tests/` | Tests for `src/` and the pages ([Vitest](https://vitest.dev/)); coverage must stay at 80% or more |
+| `game-core/` | The game rules in Rust, with their tests at the bottom of each file; compiled to WebAssembly in `game-core/pkg/` |
+| `src/` | Game code still in JavaScript, without page code |
+| `tests/` | [Vitest](https://vitest.dev/) tests for `src/`, the pages and the WebAssembly bridge |
+| `scripts/build.js` | Copies the site into `dist/` |
 | `.openspec/` | Specs and design decisions |
-| `.github/workflows/ci.yml` | Runs the tests on every pull request |
+| `.github/workflows/ci.yml` | Runs all tests on every pull request, and publishes the site from `main` |
+
+Coverage must stay at 80% or more, in Rust and in JavaScript.
 
 ## Sudoku
 

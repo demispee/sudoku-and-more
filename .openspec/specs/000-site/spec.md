@@ -1,6 +1,6 @@
 ---
 domain: site
-version: 3.0.0
+version: 3.1.0
 status: accepted
 date: 2026-10-12
 ---
@@ -10,15 +10,15 @@ date: 2026-10-12
 What every page shares: how pages are built, how you move between them, how they look,
 how they are built, tested and published.
 
-Requirements marked **Status: planned** were changed by ADR-0006 (game rules in Rust and
-WebAssembly) and are implemented in the next pull requests of that phase. Until then, the
-current code follows the previous version of this spec (2.0.0).
+Requirement 1 was changed by ADR-0006 (game rules in Rust and WebAssembly) and is being
+implemented one game at a time; its status says how far it is.
 
 ---
 
 ### Requirement 1: Pages, Rust core and no external resources [MUST]
 
-**Status:** planned (ADR-0006)
+**Status:** in progress (ADR-0006): the sudoku rules are in Rust; spot the difference and
+the bouncing balls follow
 
 Each page MUST be one HTML file with its styling inline and its interface code in an
 inline `<script type="module">`. The rules of each game MUST live in the Rust crate
@@ -104,8 +104,6 @@ committed.
 
 ### Requirement 5: Built and published on GitHub Pages [SHOULD]
 
-**Status:** planned (ADR-0006)
-
 `npm run build` MUST compile the WASM and put the complete site in `dist/`. After every
 push to `main` whose tests pass, a GitHub Actions workflow SHOULD build the site and
 publish `dist/` with GitHub Pages, so that every merged pull request is live within
@@ -132,8 +130,6 @@ GitHub Pages set to "GitHub Actions"
 
 ### Requirement 6: Dev server [MUST]
 
-**Status:** planned (ADR-0006)
-
 `npm run dev` MUST compile the WASM and then start a local dev server that serves every
 page and reloads the page when a file changes. `npm run dev:phone` MUST do the same and
 also make the server reachable from other devices on the same network, to test on a phone.
@@ -158,8 +154,6 @@ also make the server reachable from other devices on the same network, to test o
 
 ### Requirement 7: Automated tests with coverage, in both languages [MUST]
 
-**Status:** planned (ADR-0006)
-
 `npm test` MUST run both test suites:
 
 - the Rust unit tests in `game-core/` with `cargo test`, measuring coverage with
@@ -181,8 +175,6 @@ also make the server reachable from other devices on the same network, to test o
 ---
 
 ### Requirement 8: Continuous integration [MUST]
-
-**Status:** planned (ADR-0006)
 
 GitHub Actions MUST install Rust, the WASM target, `wasm-pack` and `cargo-llvm-cov`, and
 run `npm test` on every pull request and every push to `main`. `main` MUST be protected:
