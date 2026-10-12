@@ -1,8 +1,8 @@
 # sudoku-and-more
 
 Three small browser games. The game rules are written in Rust and compiled to
-WebAssembly; the pages are moving to Vue 3 with TypeScript (the start page and the
-bouncing balls already are).
+WebAssembly; the pages are moving to Vue 3 with TypeScript (all but spot the difference
+already are).
 
 **Play online:** <https://demispee.github.io/sudoku-and-more/>
 
