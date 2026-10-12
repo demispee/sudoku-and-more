@@ -1,6 +1,6 @@
 ---
 domain: spot-the-difference
-version: 2.2.0
+version: 2.3.0
 status: accepted
 date: 2026-10-12
 ---
@@ -12,9 +12,6 @@ Two pictures side by side; find the differences as quickly as possible.
 ---
 
 ### Requirement 1: Scenes [MUST]
-
-**Status:** in progress: 22 of the 30 scenes are done; the last 8 follow in one pull
-request
 
 There MUST be at least 30 scenes, each drawn in code as SVG, in varied themes, each with
 10 to 12 possible differences. Every scene MUST have its own name.
@@ -43,7 +40,14 @@ There MUST be at least 30 scenes, each drawn in code as SVG, in varied themes, e
 | 20 | Mountain Lake | 12 |
 | 21 | The Jungle | 12 |
 | 22 | The North Pole | 12 |
-| 23–30 | Planned: hot-air balloons, reading nook, picnic, aquarium, pirate ship, toy room, Japanese garden, fruit market | 10–12 each |
+| 23 | Hot-Air Balloons | 12 |
+| 24 | The Reading Nook | 12 |
+| 25 | Picnic in the Park | 12 |
+| 26 | The Aquarium | 12 |
+| 27 | Pirate Cove | 12 |
+| 28 | The Toy Room | 12 |
+| 29 | Japanese Garden | 12 |
+| 30 | The Fruit Market | 12 |
 
 Every difference MUST be fair to find:
 
