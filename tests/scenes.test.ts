@@ -36,6 +36,14 @@ describe("Requirement 1: scenes", () => {
       ["Mountain Lake", 12],
       ["The Jungle", 12],
       ["The North Pole", 12],
+      ["Hot-Air Balloons", 12],
+      ["The Reading Nook", 12],
+      ["Picnic in the Park", 12],
+      ["The Aquarium", 12],
+      ["Pirate Cove", 12],
+      ["The Toy Room", 12],
+      ["Japanese Garden", 12],
+      ["The Fruit Market", 12],
     ]);
   });
 
