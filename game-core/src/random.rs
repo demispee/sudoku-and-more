@@ -43,6 +43,16 @@ mod tests {
     }
 
     #[test]
+    fn gives_the_same_numbers_as_mulberry32_in_javascript() {
+        let mut rng = Rng::new(1);
+        let first = [rng.next_f64(), rng.next_f64(), rng.next_f64()];
+        assert_eq!(
+            first,
+            [0.6270739405881613, 0.002735721180215478, 0.5274470399599522]
+        );
+    }
+
+    #[test]
     fn numbers_stay_between_0_and_1() {
         let mut rng = Rng::new(1);
         for _ in 0..10_000 {
@@ -69,5 +79,12 @@ mod tests {
         assert_ne!(items, (0..20).collect::<Vec<_>>());
         items.sort();
         assert_eq!(items, (0..20).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn shuffle_gives_the_same_order_as_fisher_yates_in_javascript() {
+        let mut items: Vec<u32> = (0..10).collect();
+        Rng::new(5).shuffle(&mut items);
+        assert_eq!(items, [5, 3, 7, 8, 2, 0, 4, 1, 9, 6]);
     }
 }

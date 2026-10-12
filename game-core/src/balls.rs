@@ -161,13 +161,18 @@ mod tests {
     #[test]
     fn requirement_1_a_new_ball_starts_at_the_spot_with_a_radius_from_12_to_34() {
         let mut rng = Rng::new(3);
+        let (mut smallest, mut biggest) = (f64::MAX, 0.0_f64);
         for _ in 0..1000 {
             let b = create_ball(50.0, 60.0, &mut rng);
             assert_eq!((b.x, b.y), (50.0, 60.0));
             assert!((12.0..34.0).contains(&b.radius));
             assert!((-6.0..6.0).contains(&b.vx));
             assert!((-8.0..2.0).contains(&b.vy));
+            smallest = smallest.min(b.radius);
+            biggest = biggest.max(b.radius);
         }
+        // The sizes spread over the whole range, not just one end of it
+        assert!(smallest < 13.0 && biggest > 33.0);
     }
 
     #[test]
@@ -208,7 +213,7 @@ mod tests {
         };
         move_ball(&mut wall, 800.0, 600.0, false);
         assert!((wall.vx + 10.0 * BOUNCINESS).abs() < 1e-9);
-        assert_eq!(wall.x, 790.0); // pushed back inside
+        assert_eq!((wall.x, wall.y), (790.0, 300.0)); // pushed back inside
 
         let mut floor = Ball {
             vy: 10.0,
@@ -216,7 +221,7 @@ mod tests {
         };
         move_ball(&mut floor, 800.0, 600.0, false);
         assert!((floor.vy + 10.0 * BOUNCINESS).abs() < 1e-9);
-        assert_eq!(floor.y, 590.0);
+        assert_eq!((floor.x, floor.y, floor.vx), (300.0, 590.0, 0.0));
 
         let mut corner = Ball {
             vx: -10.0,
@@ -225,6 +230,36 @@ mod tests {
         };
         move_ball(&mut corner, 800.0, 600.0, false);
         assert_eq!((corner.x, corner.y), (10.0, 10.0));
+
+        // Its middle is still inside, but its edge went past the top left
+        let mut edge = Ball {
+            vx: -10.0,
+            vy: -10.0,
+            ..ball(15.0, 15.0)
+        };
+        move_ball(&mut edge, 800.0, 600.0, false);
+        assert_eq!((edge.x, edge.y), (10.0, 10.0));
+        assert!((edge.vx - 10.0 * BOUNCINESS).abs() < 1e-9);
+        assert!((edge.vy - 10.0 * BOUNCINESS).abs() < 1e-9);
+    }
+
+    #[test]
+    fn requirement_2_a_ball_that_just_touches_a_wall_does_not_bounce() {
+        let mut low = Ball {
+            vx: -1.0,
+            vy: -1.0,
+            ..ball(11.0, 11.0)
+        };
+        move_ball(&mut low, 800.0, 600.0, false);
+        assert_eq!((low.x, low.y, low.vx, low.vy), (10.0, 10.0, -1.0, -1.0));
+
+        let mut high = Ball {
+            vx: 1.0,
+            vy: 1.0,
+            ..ball(789.0, 589.0)
+        };
+        move_ball(&mut high, 800.0, 600.0, false);
+        assert_eq!((high.x, high.y, high.vx, high.vy), (790.0, 590.0, 1.0, 1.0));
     }
 
     #[test]
@@ -245,6 +280,50 @@ mod tests {
         let after = momentum(&[&a, &b]);
         assert!((after.0 - before.0).abs() < 1e-9 && (after.1 - before.1).abs() < 1e-9);
         assert!(a.vx < 3.0); // the small ball slowed the big one down
+    }
+
+    #[test]
+    fn requirement_2_equal_balls_that_meet_head_on_swap_their_speeds() {
+        let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        let mut left = Ball {
+            vx: 2.0,
+            ..ball(100.0, 100.0)
+        };
+        let mut right = Ball {
+            vx: -2.0,
+            ..ball(115.0, 100.0)
+        };
+        collide(&mut left, &mut right);
+        assert!(close(left.vx, -2.0) && close(right.vx, 2.0));
+
+        let mut top = Ball {
+            vy: 3.0,
+            ..ball(100.0, 100.0)
+        };
+        let mut bottom = Ball {
+            vy: -1.0,
+            ..ball(100.0, 115.0)
+        };
+        collide(&mut top, &mut bottom);
+        assert!(close(top.vy, -1.0) && close(bottom.vy, 3.0));
+        assert!(close(top.vx, 0.0) && close(bottom.vx, 0.0));
+    }
+
+    #[test]
+    fn requirement_2_a_heavy_ball_keeps_going_after_hitting_a_light_one() {
+        // Masses 400 and 100: the speeds after a head-on hit are 0.2 and 2.2
+        let mut heavy = Ball {
+            vx: 1.0,
+            radius: 20.0,
+            ..ball(100.0, 100.0)
+        };
+        let mut light = Ball {
+            vx: -1.0,
+            ..ball(125.0, 100.0)
+        };
+        collide(&mut heavy, &mut light);
+        assert!((heavy.vx - 0.2).abs() < 1e-9 && (light.vx - 2.2).abs() < 1e-9);
+        assert!((heavy.x - 99.0).abs() < 1e-9 && (light.x - 129.0).abs() < 1e-9);
     }
 
     #[test]
