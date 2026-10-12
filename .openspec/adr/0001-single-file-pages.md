@@ -1,6 +1,6 @@
 # ADR-0001: Every page is one self-contained HTML file
 
-**Status:** Superseded by ADR-0004 (pages split into HTML and modules); the copied shared styling still applies
+**Status:** Superseded by ADR-0004 (pages split into HTML and modules) and ADR-0007 (shared styling instead of copies)
 **Date:** 2026-10-09
 
 ## Context

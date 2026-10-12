@@ -1,6 +1,6 @@
 ---
 domain: site
-version: 3.2.0
+version: 4.0.0
 status: accepted
 date: 2026-10-12
 ---
@@ -10,19 +10,25 @@ date: 2026-10-12
 What every page shares: how pages are built, how you move between them, how they look,
 how they are tested and published.
 
+Requirements marked **Status: planned** were changed by ADR-0007 (Vue and TypeScript for
+the pages) and are implemented in the next pull requests of that phase. Until then, the
+code follows the previous version of this spec (3.2.0).
+
 ---
 
-### Requirement 1: Pages, Rust core and no external resources [MUST]
+### Requirement 1: Vue pages, Rust core and no external resources [MUST]
 
-Each page MUST be one HTML file with its styling inline and its interface code in an
-inline `<script type="module">`. The rules of each game MUST live in the Rust crate
-`game-core/`, compiled to WebAssembly, and MUST NOT touch the DOM. JavaScript outside the
-pages (`src/`) is limited to code that belongs with the interface, such as the
-spot-the-difference drawings. Pages MUST NOT load anything from the internet. The only
-optional extra is the `fonts/` folder (see Requirement 4). See ADR-0006.
+**Status:** planned (ADR-0007)
 
-**Implementation:** `index.html`, `sudoku.html`, `spot-the-difference.html`, `balls.html`,
-`game-core/`, `src/`
+Every page MUST have a small entry file in `web/` (`index.html`, `sudoku.html`,
+`spot-the-difference.html`, `balls.html`), so the addresses stay the same, and its
+interface MUST be Vue 3 components in TypeScript in `web/src/`. The components show state
+and send actions; the rules of each game MUST live in the Rust crate `game-core/`,
+compiled to WebAssembly, which does not touch the DOM. Pages MUST NOT load anything from
+the internet. The only optional extra is the fonts folder (see Requirement 4). See
+ADR-0006 and ADR-0007.
+
+**Implementation:** `web/`, `game-core/`
 
 #### Scenario: Playing offline
 
@@ -30,15 +36,15 @@ optional extra is the `fonts/` folder (see Requirement 4). See ADR-0006.
 - WHEN `npm run dev` is running and a game is opened
 - THEN the game works fully, only with a fallback font
 
-**Tests:** `tests/site.test.js` (no external URLs; the pages import the WASM module)
+**Tests:** `tests/site.test.js` (no external URLs; every page has its entry file)
 
 ---
 
 ### Requirement 2: Start page [MUST]
 
-`index.html` MUST link to every game, with its name and a one-line description.
+The start page MUST link to every game, with its name and a one-line description.
 
-**Implementation:** `index.html`
+**Implementation:** `index.html` (moves to `web/` with ADR-0007)
 
 #### Scenario: Choosing a game
 
@@ -55,6 +61,7 @@ optional extra is the `fonts/` folder (see Requirement 4). See ADR-0006.
 Every game page MUST show a `← back` link to `index.html`, visible at all times.
 
 **Implementation:** `.back` link in `sudoku.html`, `spot-the-difference.html`, `balls.html`
+(one shared back-link component with ADR-0007)
 
 #### Scenario: Going back
 
@@ -83,6 +90,11 @@ TT Interphases MUST load from a local `fonts/` folder when present and otherwise
 back to Avenir Next, Poppins, Inter or the system sans serif. The font files MUST NOT be
 committed.
 
+**Status:** planned (ADR-0007): the styling moves into one shared stylesheet,
+`web/src/styles/lab271.css`, and shared layout components (back link, header, footer,
+slash), instead of being copied into every page. The fonts folder becomes
+`web/public/fonts/`.
+
 **Implementation:** the `<style>` block of each page
 
 #### Scenario: Fonts not available
@@ -98,14 +110,16 @@ committed.
 
 ### Requirement 5: Built and published on GitHub Pages [SHOULD]
 
-`npm run build` MUST compile the WASM and put the complete site in `dist/`. After every
-push to `main` whose tests pass, a GitHub Actions workflow SHOULD build the site and
-publish `dist/` with GitHub Pages, so that every merged pull request is live within
-minutes at https://demispee.github.io/sudoku-and-more/. Build output MUST NOT be
-committed.
+**Status:** planned (ADR-0007)
 
-**Implementation:** `package.json` (`build`), `.github/workflows/ci.yml` (deploy job),
-GitHub Pages set to "GitHub Actions"
+`npm run build` MUST compile the WASM and then build `web/` with Vite into `dist/`, so
+that it works under `/sudoku-and-more/`. After every push to `main` whose tests pass, a
+GitHub Actions workflow SHOULD publish `dist/` with GitHub Pages, so that every merged
+pull request is live within minutes at https://demispee.github.io/sudoku-and-more/.
+Build output MUST NOT be committed.
+
+**Implementation:** `package.json` (`build`), `vite.config.ts`, `.github/workflows/ci.yml`
+(deploy job), GitHub Pages set to "GitHub Actions"
 
 #### Scenario: A change goes live
 
@@ -124,16 +138,19 @@ GitHub Pages set to "GitHub Actions"
 
 ### Requirement 6: Dev server [MUST]
 
-`npm run dev` MUST compile the WASM and then start a local dev server that serves every
-page and reloads the page when a file changes. `npm run dev:phone` MUST do the same and
-also make the server reachable from other devices on the same network, to test on a phone.
+**Status:** planned (ADR-0007)
 
-**Implementation:** `package.json` scripts, `wasm-pack`, Vite
+`npm run dev` MUST compile the WASM and then start Vite's dev server for `web/`, which
+updates a changed component in the browser without reloading the page. `npm run dev:phone`
+MUST do the same and also make the server reachable from other devices on the same
+network, to test on a phone.
+
+**Implementation:** `package.json` scripts, `wasm-pack`, Vite with `@vitejs/plugin-vue`
 
 #### Scenario: Seeing a change before it goes live
 
-- GIVEN `npm run dev` is running and `sudoku.html` is open in the browser
-- WHEN the file is changed and saved
+- GIVEN `npm run dev` is running and the sudoku is open in the browser
+- WHEN a component is changed and saved
 - THEN the browser shows the change without a push
 
 #### Scenario: Changing Rust code
@@ -142,27 +159,39 @@ also make the server reachable from other devices on the same network, to test o
 - WHEN `npm run dev` is started again
 - THEN the pages use the new WASM
 
-**Check:** run `npm run dev`, open the address it prints, edit a page.
+**Check:** run `npm run dev`, open the address it prints, edit a component.
 
 ---
 
-### Requirement 7: Automated tests with coverage, in both languages [MUST]
+### Requirement 7: Automated tests, type checks and coverage [MUST]
 
-`npm test` MUST run both test suites:
+**Status:** planned (ADR-0007)
 
-- the Rust unit tests in `game-core/` with `cargo test`, measuring coverage with
-  `cargo llvm-cov`; it MUST fail when a test fails or when line coverage is below 80%;
-- the Vitest tests in `tests/` for the JavaScript in `src/` and the pages; it MUST fail
-  when a test fails or when the coverage of lines, statements, functions or branches of
-  `src/` is below 80%.
+`npm test` MUST run:
 
-**Implementation:** `package.json`, `vitest.config.js`, `tests/`, `game-core/src/`
+- the Rust unit tests in `game-core/` with `cargo llvm-cov`; it MUST fail when a test
+  fails or when line coverage is below 80%;
+- the type check, `vue-tsc --noEmit`, over all TypeScript and Vue files; it MUST fail on
+  any type error;
+- the Vitest tests in `tests/`: component tests with Vue Test Utils in `jsdom`, with the
+  real WebAssembly module, and the bridge and site tests; it MUST fail when a test fails
+  or when the coverage of lines, statements, functions or branches of `web/src/` is below
+  80%.
+
+**Implementation:** `package.json`, `vitest.config.ts`, `tsconfig.json`, `tests/`,
+`game-core/src/`
 
 #### Scenario: Coverage drops
 
-- GIVEN new Rust code without tests, bringing line coverage below 80%
+- GIVEN a new component without tests, bringing coverage of `web/src/` below 80%
 - WHEN `npm test` runs
 - THEN it fails and names the coverage that is too low
+
+#### Scenario: A type error
+
+- GIVEN a component that passes a string where the Rust bridge expects a number
+- WHEN `npm test` runs
+- THEN the type check fails and names the file and line
 
 **Check:** `npm test` passes on `main`.
 
@@ -170,15 +199,18 @@ also make the server reachable from other devices on the same network, to test o
 
 ### Requirement 8: Continuous integration [MUST]
 
+**Status:** planned (ADR-0007)
+
 GitHub Actions MUST install Rust, the WASM target, `wasm-pack` and `cargo-llvm-cov`, and
-run `npm test` on every pull request and every push to `main`. `main` MUST be protected:
+run `npm test` (including the type check, ADR-0007) on every pull request and every push
+to `main`. `main` MUST be protected:
 changes only arrive through a pull request whose test check has passed. See ADR-0005.
 
 **Implementation:** `.github/workflows/ci.yml`, branch protection on GitHub
 
 #### Scenario: A failing pull request
 
-- GIVEN a pull request that breaks a Rust or a JavaScript test
+- GIVEN a pull request that breaks a Rust test, a component test or the type check
 - WHEN CI has run
 - THEN the pull request shows a failed check and cannot be merged
 
