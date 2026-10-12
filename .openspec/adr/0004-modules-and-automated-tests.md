@@ -1,6 +1,6 @@
 # ADR-0004: Game logic in modules, tested with Vitest
 
-**Status:** Accepted
+**Status:** Accepted; partly superseded by ADR-0006 (rules move to Rust and WASM; the site gets a build step)
 **Date:** 2026-10-09
 **Supersedes:** ADR-0001
 
