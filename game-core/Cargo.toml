@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "Game rules for sudoku-and-more, compiled to WebAssembly"
 license = "Apache-2.0"
+repository = "https://github.com/demispee/sudoku-and-more"
 publish = false
 
 [lib]

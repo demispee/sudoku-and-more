@@ -3,7 +3,10 @@
 // compiled module loads and that values cross the bridge correctly.
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, test } from "vitest";
-import init, { clearNotesAround, generate, hint, isPeer, solverStep } from "../game-core/pkg/game_core.js";
+import init, {
+  SceneOrder, World, ballColors, clearNotesAround, findHit, generate, hint, hintPenalty, hitsFound, isPeer,
+  missPenalty, pickDifferences, recordKey, solverStep, totalTime,
+} from "../game-core/pkg/game_core.js";
 
 beforeAll(async () => {
   const wasm = readFileSync(new URL("../game-core/pkg/game_core_bg.wasm", import.meta.url));
@@ -52,17 +55,14 @@ describe("sudoku through WebAssembly", () => {
 });
 
 describe("spot the difference through WebAssembly", () => {
-  test("gives every scene once before any repeats", async () => {
-    const { SceneOrder } = await import("../game-core/pkg/game_core.js");
+  test("gives every scene once before any repeats", () => {
     const order = new SceneOrder(5, 42);
     const first = [0, 1, 2, 3, 4].map(() => order.next());
     expect([...first].sort()).toEqual([0, 1, 2, 3, 4]);
     order.free();
   });
 
-  test("finds a click by index, with parallel lists of circles", async () => {
-    const { findHit, hitsFound, pickDifferences, totalTime, missPenalty, hintPenalty, recordKey } =
-      await import("../game-core/pkg/game_core.js");
+  test("finds a click by index, with parallel lists of circles", () => {
     const circles = [[100, 150], [100, 100], [20, 20]];
     expect(findHit(...circles, [0, 0], 130, 100)).toBe(1);
     expect(findHit(...circles, [0, 0], 400, 400)).toBe(-1);
@@ -75,8 +75,7 @@ describe("spot the difference through WebAssembly", () => {
 });
 
 describe("bouncing balls through WebAssembly", () => {
-  test("adds, moves and clears balls", async () => {
-    const { World, ballColors } = await import("../game-core/pkg/game_core.js");
+  test("adds, moves and clears balls", () => {
     const world = new World(1);
     for (let i = 0; i < 20; i++) world.addRandom(800, 600);
     world.add(300, 200);
