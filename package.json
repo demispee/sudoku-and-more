@@ -3,9 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:phone": "vite --host",
-    "test": "vitest run --coverage",
+    "build:wasm": "wasm-pack build game-core --target web --release",
+    "build": "npm run build:wasm && node scripts/build.js",
+    "dev": "npm run build:wasm && vite",
+    "dev:phone": "npm run build:wasm && vite --host",
+    "test": "npm run test:rust && npm run build:wasm && npm run test:js",
+    "test:rust": "cargo llvm-cov --manifest-path game-core/Cargo.toml --fail-under-lines 80",
+    "test:js": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "devDependencies": {

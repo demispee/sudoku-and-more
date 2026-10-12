@@ -1,8 +1,8 @@
 ---
 domain: sudoku
-version: 1.1.0
+version: 1.2.0
 status: accepted
-date: 2026-10-09
+date: 2026-10-12
 ---
 
 # 001 — Sudoku
@@ -16,7 +16,7 @@ step it takes.
 
 Every puzzle MUST have exactly one solution. A puzzle MUST have at most 42 given numbers.
 
-**Implementation:** `src/sudoku.js::attempt()`, `solve()`
+**Implementation:** `game-core/src/sudoku.rs::attempt()`, `solve()`
 
 #### Scenario: New puzzle
 
@@ -24,7 +24,7 @@ Every puzzle MUST have exactly one solution. A puzzle MUST have at most 42 given
 - WHEN a new puzzle is generated
 - THEN it has one unique solution and at most 42 givens
 
-**Tests:** `tests/sudoku.test.js` ("Requirement 1")
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_1_…` tests); `tests/wasm.test.js` for the bridge
 
 ---
 
@@ -45,7 +45,7 @@ The generator SHOULD find a puzzle of exactly the chosen level. If it has not fo
 after 8 seconds, it MUST use the closest level it found, and the level label MUST show the
 actual level.
 
-**Implementation:** `src/sudoku.js::TECHNIQUES`, `rate()`, `levelOf()`; `sudoku.html::startJob()`
+**Implementation:** `game-core/src/sudoku.rs::TECHNIQUES`, `rate()`, `level_of()`; `sudoku.html::startJob()`
 
 #### Scenario: Choosing a level
 
@@ -53,7 +53,7 @@ actual level.
 - WHEN the puzzle is ready
 - THEN the label reads `level \ 5` and the puzzle needs pairs but nothing harder
 
-**Tests:** `tests/sudoku.test.js` ("Requirement 2")
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_2_…` tests); `tests/wasm.test.js` for the bridge
 
 ---
 
@@ -85,7 +85,7 @@ Backspace, Delete, 0 and `erase` MUST clear the selected cell.
 When a correct number is placed, that number MUST be removed from the notes of every cell
 in the same row, column and box.
 
-**Implementation:** `sudoku.html::select()`, `enter()`, `erase()`; `src/sudoku.js::clearNotesAround()`
+**Implementation:** `sudoku.html::select()`, `enter()`, `erase()`; `game-core/src/sudoku.rs::clear_notes_around()`
 
 #### Scenario: A wrong number
 
@@ -93,7 +93,7 @@ in the same row, column and box.
 - WHEN the player enters 7
 - THEN the 7 is shown in magenta
 
-**Tests:** `tests/sudoku.test.js` ("Requirement 4")
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_4_…` tests); `tests/wasm.test.js` for the bridge
 
 **Check:** typing, the pad and erase are checked by hand.
 
@@ -125,7 +125,7 @@ note in the cell instead of filling the cell. Notes MUST only be added to empty 
 2. Otherwise, if an empty cell is selected, it MUST fill that cell.
 3. Otherwise it MUST fill the empty cell with the fewest options.
 
-**Implementation:** `src/sudoku.js::chooseHint()`; `sudoku.html::hint()`
+**Implementation:** `game-core/src/sudoku.rs::choose_hint()`; `sudoku.html::hint()`
 
 #### Scenario: Mistake on the board
 
@@ -133,7 +133,7 @@ note in the cell instead of filling the cell. Notes MUST only be added to empty 
 - WHEN the player presses `hint`
 - THEN that number is corrected and the message says it was wrong
 
-**Tests:** `tests/sudoku.test.js` ("Requirement 6")
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_6_…` tests); `tests/wasm.test.js` for the bridge
 
 ---
 
@@ -151,7 +151,7 @@ technique. It MUST work on the player's notes and highlight the cells involved. 
 
 Every step except filling in notes MUST count as a hint.
 
-**Implementation:** `src/sudoku.js::solverStep()`, `nextStep()`; `sudoku.html::showStep()`
+**Implementation:** `game-core/src/sudoku.rs::solver_step()`, `next_step()`; `sudoku.html::showStep()`
 
 #### Scenario: Following the solver
 
@@ -160,7 +160,7 @@ Every step except filling in notes MUST count as a hint.
 - THEN one technique is applied, the message names it, and the affected cells are
   highlighted
 
-**Tests:** `tests/sudoku.test.js` ("Requirement 7")
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_7_…` tests); `tests/wasm.test.js` for the bridge
 
 ---
 

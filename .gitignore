@@ -2,3 +2,6 @@
 fonts/
 node_modules/
 coverage/
+dist/
+game-core/target/
+game-core/pkg/

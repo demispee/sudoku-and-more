@@ -413,9 +413,12 @@
   </main>
 
   <script type="module">
-    import {
-      row, col, isPeer, attempt, chooseHint, clearNotesAround, solverStep as takeStep,
-    } from "./src/sudoku.js";
+    // The sudoku rules are in Rust, compiled to WebAssembly (game-core/, ADR-0006)
+    import init, {
+      generate, hint as findHint, solverStep as takeStep, isPeer, clearNotesAround as clearNotes,
+    } from "./game-core/pkg/game_core.js";
+
+    await init();
 
     const NEXT_PUZZLE_DELAY = 3000;
     const GENERATE_BUDGET = 8000; // ms; after this, take the closest puzzle found
@@ -436,6 +439,22 @@
     let startTime = 0;
     let solvedCount = Number(localStorage.getItem("sudokuSolved")) || 0;
 
+    // Board layout: cells are numbered 0-80, row by row
+    const row = i => Math.floor(i / 9);
+    const col = i => i % 9;
+
+    // Notes are Sets in the page and bitmasks in game-core (bit n set = note n)
+    const digitsOf = mask => [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(n => mask & (1 << n));
+    const toMasks = () => notes.map(set => [...set].reduce((m, n) => m | (1 << n), 0));
+    function setNotes(masks) {
+      masks.forEach((mask, i) => { notes[i] = new Set(digitsOf(mask)); });
+    }
+
+    function clearNotesAround(i, n) {
+      setNotes(clearNotes(toMasks(), i, n));
+    }
+
+    const randomSeed = () => Math.floor(Math.random() * 2 ** 32);
 
     // ---------- Game ----------
 
@@ -446,11 +465,15 @@
       const startedAt = Date.now();
       function step() {
         if (job.cancelled) return;
-        const result = attempt(level);
-        if (!job.result || Math.abs(result.level - level) < Math.abs(job.result.level - level)) {
-          job.result = result;
+        const found = generate(level, randomSeed());
+        if (found) {
+          const result = { puzzle: Array.from(found.puzzle), solution: Array.from(found.solution), level: found.level };
+          found.free();
+          if (!job.result || Math.abs(result.level - level) < Math.abs(job.result.level - level)) {
+            job.result = result;
+          }
         }
-        if (job.result.level === level || Date.now() - startedAt > GENERATE_BUDGET) {
+        if (job.result && (job.result.level === level || Date.now() - startedAt > GENERATE_BUDGET)) {
           job.done = true;
           if (job.onDone) job.onDone(job.result);
         } else {
@@ -532,7 +555,7 @@
         values[selected] = values[selected] === n ? 0 : n;
         notes[selected].clear();
         hinted.delete(selected);
-        if (values[selected] === solution[selected]) clearNotesAround(notes, selected, n);
+        if (values[selected] === solution[selected]) clearNotesAround(selected, n);
       }
       render();
       checkSolved();
@@ -556,7 +579,9 @@
       if (locked) return;
       stopAutoSolve();
       clearMarks();
-      const { cell: target, reason } = chooseHint(values, solution, selected);
+      const found = findHint(values, solution, selected ?? -1);
+      const { cell: target, reason } = found;
+      found.free();
       const n = solution[target];
       say("hint", reason === "wrong" ? `This cell was wrong. It's a ${n}.`
         : reason === "only" ? `Only a ${n} fits in this cell.`
@@ -564,7 +589,7 @@
 
       values[target] = n;
       notes[target].clear();
-      clearNotesAround(notes, target, n);
+      clearNotesAround(target, n);
       hinted.add(target);
       hints++;
       selected = target;
@@ -601,15 +626,20 @@
       solverStep();
     }
 
-    // One logical step, explained (see solverStep in src/sudoku.js)
+    // One logical step, explained (see solver_step in game-core/src/sudoku.rs)
     function solverStep() {
       if (locked) return stopAutoSolve();
       clearMarks();
-      const step = takeStep({ values, notes, solution });
+      const step = takeStep(values, toMasks(), solution);
+      step.values.forEach((v, i) => { values[i] = v; });
+      setNotes(step.notes);
       step.filled.forEach(i => hinted.add(i));
       step.pattern.forEach(i => marks.pattern.add(i));
-      marks.removed = step.removed;
-      showStep(step.label, step.text, step.targets, step.counts);
+      step.removed.forEach((mask, i) => { if (mask) marks.removed[i] = digitsOf(mask); });
+      const { label, text, counts } = step;
+      const targets = Array.from(step.targets);
+      step.free();
+      showStep(label, text, targets, counts);
     }
 
     function showStep(label, text, targets, counts) {

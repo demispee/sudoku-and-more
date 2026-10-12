@@ -15,10 +15,14 @@ describe("Requirement 1: pages and modules", () => {
     expect(html).not.toMatch(/<link[^>]*stylesheet/);
   });
 
-  test.each(GAMES)("%s imports its rules from src/", page => {
+  test.each(GAMES)("%s imports its rules from game-core or src/", page => {
     const html = read(page);
     expect(html).toContain('<script type="module">');
-    expect(html).toMatch(/from "\.\/src\/[\w-]+\.js"/);
+    expect(html).toMatch(/from "\.\/(game-core\/pkg|src)\/[\w-]+\.js"/);
+  });
+
+  test("the sudoku uses the WebAssembly module", () => {
+    expect(read("sudoku.html")).toContain('from "./game-core/pkg/game_core.js"');
   });
 });
 
