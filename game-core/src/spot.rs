@@ -63,6 +63,16 @@ pub fn pick_differences(total: usize, count: usize, rng: &mut Rng) -> Vec<usize>
     picked
 }
 
+/// Which picture shows the differences: 0 (left) or 1 (right), at random
+pub fn changed_side(rng: &mut Rng) -> usize {
+    rng.below(2)
+}
+
+/// Which of the `remaining` differences a hint points at, at random
+pub fn pick_hint(remaining: usize, rng: &mut Rng) -> usize {
+    rng.below(remaining)
+}
+
 /// Misses and hints cost time, so clicking around at random doesn't pay off
 pub fn total_time(ms: f64, misses: u32, hints: u32) -> f64 {
     ms + f64::from(misses * MISS_PENALTY + hints * HINT_PENALTY)
@@ -171,6 +181,27 @@ mod tests {
         let first = pick_differences(12, 7, &mut rng);
         let second = pick_differences(12, 7, &mut rng);
         assert_ne!(first, second);
+    }
+
+    #[test]
+    fn requirement_3_the_changed_picture_is_left_or_right_at_random() {
+        let mut rng = Rng::new(4);
+        let sides: Vec<usize> = (0..100).map(|_| changed_side(&mut rng)).collect();
+        assert!(sides.iter().all(|&s| s < 2));
+        assert!(sides.contains(&0) && sides.contains(&1));
+    }
+
+    // ----- Requirement 6: hint -----
+
+    #[test]
+    fn requirement_6_a_hint_points_at_any_remaining_difference() {
+        let mut rng = Rng::new(5);
+        let mut seen = [false; 4];
+        for _ in 0..200 {
+            seen[pick_hint(4, &mut rng)] = true;
+        }
+        assert!(seen.iter().all(|&s| s));
+        assert_eq!(pick_hint(1, &mut rng), 0);
     }
 
     // ----- Requirement 4: clicking -----
