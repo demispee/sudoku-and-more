@@ -1,6 +1,6 @@
 ---
 domain: site
-version: 4.1.0
+version: 4.2.0
 status: accepted
 date: 2026-10-12
 ---
@@ -196,16 +196,18 @@ network, to test on a phone.
 
 ### Requirement 8: Continuous integration [MUST]
 
-GitHub Actions MUST install Rust, the WASM target, `wasm-pack` and `cargo-llvm-cov`, and
-run `npm test` (including the type check, ADR-0007) on every pull request and every push
-to `main`. `main` MUST be protected:
+GitHub Actions MUST install Rust, the WASM target, `wasm-pack` and `cargo-llvm-cov`, check
+the Rust code with `cargo fmt --check` and `cargo clippy -D warnings` (`npm run lint:rust`),
+and run `npm test` (including the type check, ADR-0007) on every pull request and every
+push to `main`. `main` MUST be protected:
 changes only arrive through a pull request whose test check has passed. See ADR-0005.
 
 **Implementation:** `.github/workflows/ci.yml`, branch protection on GitHub
 
 #### Scenario: A failing pull request
 
-- GIVEN a pull request that breaks a Rust test, a component test or the type check
+- GIVEN a pull request that breaks a Rust test, a component test, the type check, or
+  Rust formatting or lints
 - WHEN CI has run
 - THEN the pull request shows a failed check and cannot be merged
 
