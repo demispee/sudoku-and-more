@@ -51,7 +51,7 @@ repeats. The same scene MUST NOT come twice in a row.
 - WHEN the player plays five rounds
 - THEN they have seen all five scenes
 
-**Tests:** `game-core/src/spot.rs` (the `requirement_2_…` tests); `tests/wasm.test.js` for the bridge
+**Tests:** `game-core/src/spot.rs` (the `requirement_2_…` tests); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -62,14 +62,14 @@ default is 7 and the choice MUST be remembered. Each round MUST pick that many d
 at random from the scene, and put the changed picture randomly on the left or the right.
 Changing the number MUST restart the round with the same scene.
 
-**Implementation:** `game-core/src/spot.rs::pick_differences()`; `spot-the-difference.html::newRound()`
+**Implementation:** `game-core/src/spot.rs::pick_differences()`; `web/spot-the-difference.html::newRound()`
 
 #### Scenario: Same scene, different round
 
 - GIVEN the same scene is played twice
 - THEN the differences are (usually) not the same set
 
-**Tests:** `game-core/src/spot.rs` (the `requirement_3_…` tests); `tests/wasm.test.js` for the bridge
+**Tests:** `game-core/src/spot.rs` (the `requirement_3_…` tests); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -80,7 +80,7 @@ as found, in either picture. A found difference MUST be circled in turquoise in 
 pictures. Clicking a difference that was already found MUST NOT count as a miss. Any other
 click MUST count as a miss, shown as a magenta cross with `+5s`.
 
-**Implementation:** `game-core/src/spot.rs::find_hit()`, `hits_found()`, `CLICK_MARGIN`; `spot-the-difference.html::handleClick()`
+**Implementation:** `game-core/src/spot.rs::find_hit()`, `hits_found()`, `CLICK_MARGIN`; `web/spot-the-difference.html::handleClick()`
 
 #### Scenario: A miss
 
@@ -88,7 +88,7 @@ click MUST count as a miss, shown as a magenta cross with `+5s`.
 - WHEN the player clicks where nothing differs
 - THEN a magenta cross and `+5s` appear and the misses counter goes up by one
 
-**Tests:** `game-core/src/spot.rs` (the `requirement_4_…` tests); `tests/wasm.test.js` for the bridge
+**Tests:** `game-core/src/spot.rs` (the `requirement_4_…` tests); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -104,7 +104,7 @@ clicking at random does not pay.
 - GIVEN 20 seconds have passed, with 2 misses and 1 hint
 - THEN the time shows 0:40
 
-**Tests:** `game-core/src/spot.rs` (the `requirement_5_…` tests); `tests/wasm.test.js` for the bridge
+**Tests:** `game-core/src/spot.rs` (the `requirement_5_…` tests); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -113,7 +113,7 @@ clicking at random does not pay.
 `hint` (key `H`) MUST mark one random difference that has not been found yet with a
 pulsing orange circle for 2.5 seconds, and add the hint penalty.
 
-**Implementation:** `spot-the-difference.html::hint()`
+**Implementation:** `web/spot-the-difference.html::hint()`
 
 **Check:** press `hint` and click inside the circle.
 
@@ -125,7 +125,7 @@ pulsing orange circle for 2.5 seconds, and add the hint penalty.
 dashed magenta and lock the round. A round ended this way MUST NOT count as solved and
 MUST NOT set a record.
 
-**Implementation:** `spot-the-difference.html::reveal()`
+**Implementation:** `web/spot-the-difference.html::reveal()`
 
 **Check:** press `show solution`; the solved counter stays the same.
 
@@ -141,7 +141,7 @@ scene MUST start. `next` (key `N`) MUST start the next scene at any time.
 Records and the solved count are kept in the browser (`localStorage` keys `spotRecords`,
 `spotSolved` and `spotCount`).
 
-**Implementation:** `spot-the-difference.html::finishRound()`; `game-core/src/spot.rs::record_key()`
+**Implementation:** `web/spot-the-difference.html::finishRound()`; `game-core/src/spot.rs::record_key()`
 
 #### Scenario: New record
 
@@ -149,6 +149,6 @@ Records and the solved count are kept in the browser (`localStorage` keys `spotR
 - WHEN the player finds all 7 in 0:55
 - THEN the overlay says `New record in 0:55` and the record label shows 0:55
 
-**Tests:** `game-core/src/spot.rs` (the `requirement_8_…` tests); `tests/wasm.test.js` for the bridge
+**Tests:** `game-core/src/spot.rs` (the `requirement_8_…` tests); `tests/wasm.test.ts` for the bridge
 
 **Check:** finishing a round and the overlay are checked by hand.

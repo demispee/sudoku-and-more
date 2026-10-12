@@ -1,6 +1,6 @@
 ---
 domain: bouncing-balls
-version: 1.2.0
+version: 1.3.0
 status: accepted
 date: 2026-10-12
 ---
@@ -17,7 +17,7 @@ The page MUST start with 20 balls at random places in the top half. A click on t
 MUST add 5 balls at the cursor, each with a random speed and a radius from 12 to 34. The
 panel MUST show the number of balls.
 
-**Implementation:** `game-core/src/balls.rs::create_ball()`, `World`; `balls.html` click handler
+**Implementation:** `game-core/src/balls.rs::create_ball()`, `World`; `web/src/pages/BallsPage.vue::addBalls()`
 
 #### Scenario: Clicking
 
@@ -25,7 +25,7 @@ panel MUST show the number of balls.
 - WHEN the player clicks once
 - THEN there are 25 balls and the panel says `25 balls`
 
-**Tests:** `game-core/src/balls.rs` (the `requirement_1_…` tests); `tests/wasm.test.js` for the bridge
+**Tests:** `game-core/src/balls.rs` (the `requirement_1_…` tests); `tests/balls-page.test.ts` ("Requirement 1"); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -43,7 +43,7 @@ MUST be on at start and MUST be toggled with `G`.
 - WHEN the player presses `G`
 - THEN the panel says `gravity off` and the balls keep floating around instead of falling
 
-**Tests:** `game-core/src/balls.rs` (the `requirement_2_…` tests); `tests/wasm.test.js` for the bridge
+**Tests:** `game-core/src/balls.rs` (the `requirement_2_…` tests); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -53,9 +53,9 @@ The background MUST be the Lab271 canvas color, and balls MUST use the Lab271 co
 (turquoise, orange, magenta and blue) with a highlight and a glow. Balls MUST leave a short
 trail.
 
-**Implementation:** `game-core/src/balls.rs::COLORS`; `balls.html::drawBall()`, `frame()`
+**Implementation:** `game-core/src/balls.rs::COLORS`; `web/src/pages/BallsPage.vue::drawBall()`, `frame()`
 
-**Tests:** `game-core/src/balls.rs` (the `requirement_3_…` tests); `tests/wasm.test.js` for the bridge
+**Tests:** `game-core/src/balls.rs` (the `requirement_3_…` tests); `tests/balls-page.test.ts` ("Requirement 3"); `tests/wasm.test.ts` for the bridge
 
 **Check:** the glow and trails are checked by hand.
 
@@ -66,7 +66,7 @@ trail.
 `C` MUST remove all balls. `H` MUST collapse the panel to just the `← back` link and
 expand it again.
 
-**Implementation:** `balls.html` keydown handler
+**Implementation:** `web/src/pages/BallsPage.vue::onKey()`
 
 #### Scenario: Hiding the panel
 
@@ -74,4 +74,4 @@ expand it again.
 - WHEN the player presses `H`
 - THEN only the `← back` link remains; pressing `H` again brings the panel back
 
-**Check:** press `C`, then `H` twice.
+**Tests:** `tests/balls-page.test.ts` ("Requirement 2 and 4")

@@ -23,9 +23,9 @@ and `cargo-llvm-cov`; the README lists the commands. Run `npm install` once, the
 your change in at least one desktop browser and on a narrow window or phone
 (`npm run dev:phone`).
 
-Keep it small: no frameworks and no runtime dependencies or network requests. The only
-Rust dependency is `wasm-bindgen`; Node.js and the packages in `package.json` are only
-for development and tests.
+Keep it small: Vue is the only runtime package, `wasm-bindgen` the only Rust dependency,
+and there are no network requests. Everything else in `package.json` is for development
+and tests.
 
 ## Specs and tests
 
@@ -33,15 +33,17 @@ for development and tests.
 - Game rules belong in `game-core/` (Rust), without page code. Put the tests at the bottom
   of the same file, in `#[cfg(test)] mod tests`, named after the requirement they test
   (`requirement_6_…`).
-- `npm test` must pass: Rust with at least 80% line coverage, and JavaScript with at least
-  80% coverage of `src/`. CI runs it on every pull request, and `main` only accepts pull
-  requests that pass.
+- The interface is Vue 3 with TypeScript in `web/src/`. Components show state and send
+  actions; they make no game decisions. Test them in `tests/` with Vue Test Utils.
+- `npm test` must pass: Rust with at least 80% line coverage, the type check
+  (`vue-tsc`), and at least 80% coverage of `web/src/`. CI runs it on every pull request,
+  and `main` only accepts pull requests that pass.
 - Run `cargo clippy` and `cargo fmt` in `game-core/` before committing Rust code.
 
 ## Fonts and logos
 
 Do not commit font files. TT Interphases is licensed and lives only in the ignored
-`fonts/` folder. Do not add or change brand logos; they are not covered by the
+`web/public/fonts/` folder. Do not add or change brand logos; they are not covered by the
 license.
 
 ## Commits
