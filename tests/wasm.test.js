@@ -50,3 +50,44 @@ describe("sudoku through WebAssembly", () => {
     expect([notes[1], notes[40]]).toEqual([0, 1 << 3]);
   });
 });
+
+describe("spot the difference through WebAssembly", () => {
+  test("gives every scene once before any repeats", async () => {
+    const { SceneOrder } = await import("../game-core/pkg/game_core.js");
+    const order = new SceneOrder(5, 42);
+    const first = [0, 1, 2, 3, 4].map(() => order.next());
+    expect([...first].sort()).toEqual([0, 1, 2, 3, 4]);
+    order.free();
+  });
+
+  test("finds a click by index, with parallel lists of circles", async () => {
+    const { findHit, hitsFound, pickDifferences, totalTime, missPenalty, hintPenalty, recordKey } =
+      await import("../game-core/pkg/game_core.js");
+    const circles = [[100, 150], [100, 100], [20, 20]];
+    expect(findHit(...circles, [0, 0], 130, 100)).toBe(1);
+    expect(findHit(...circles, [0, 0], 400, 400)).toBe(-1);
+    expect(hitsFound(...circles, [1, 0], 100, 100)).toBe(true);
+    expect(Array.from(pickDifferences(12, 7, 3))).toHaveLength(7);
+    expect(totalTime(20000, 2, 1)).toBe(40000);
+    expect([missPenalty(), hintPenalty()]).toEqual([5000, 10000]);
+    expect(recordKey("The Swan", 7)).toBe("The Swan|7");
+  });
+});
+
+describe("bouncing balls through WebAssembly", () => {
+  test("adds, moves and clears balls", async () => {
+    const { World, ballColors } = await import("../game-core/pkg/game_core.js");
+    const world = new World(1);
+    for (let i = 0; i < 20; i++) world.addRandom(800, 600);
+    world.add(300, 200);
+    expect(world.count).toBe(21);
+    world.step(800, 600, true);
+    const balls = world.balls();
+    expect(balls).toHaveLength(21 * 4);
+    expect(balls[2]).toBeGreaterThanOrEqual(12);  // radius
+    world.clear();
+    expect(world.count).toBe(0);
+    expect(ballColors()).toHaveLength(8);
+    world.free();
+  });
+});

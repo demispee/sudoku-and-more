@@ -1,6 +1,6 @@
 ---
 domain: site
-version: 3.1.0
+version: 3.2.0
 status: accepted
 date: 2026-10-12
 ---
@@ -8,17 +8,11 @@ date: 2026-10-12
 # 000 — Site
 
 What every page shares: how pages are built, how you move between them, how they look,
-how they are built, tested and published.
-
-Requirement 1 was changed by ADR-0006 (game rules in Rust and WebAssembly) and is being
-implemented one game at a time; its status says how far it is.
+how they are tested and published.
 
 ---
 
 ### Requirement 1: Pages, Rust core and no external resources [MUST]
-
-**Status:** in progress (ADR-0006): the sudoku rules are in Rust; spot the difference and
-the bouncing balls follow
 
 Each page MUST be one HTML file with its styling inline and its interface code in an
 inline `<script type="module">`. The rules of each game MUST live in the Rust crate

@@ -1,7 +1,7 @@
 # sudoku-and-more
 
-Three small browser games. The pages are plain HTML and JavaScript; the game rules are
-being moved to Rust, compiled to WebAssembly (the sudoku already is).
+Three small browser games. The game rules are written in Rust and compiled to
+WebAssembly; the pages are plain HTML and JavaScript.
 
 **Play online:** <https://demispee.github.io/sudoku-and-more/>
 
@@ -48,7 +48,7 @@ there.
 |------|--------------|
 | `*.html` | The pages: layout, styling, and the code that draws and handles input |
 | `game-core/` | The game rules in Rust, with their tests at the bottom of each file; compiled to WebAssembly in `game-core/pkg/` |
-| `src/` | Game code still in JavaScript, without page code |
+| `src/` | The spot-the-difference scene drawings (SVG), which belong with the pages |
 | `tests/` | [Vitest](https://vitest.dev/) tests for `src/`, the pages and the WebAssembly bridge |
 | `scripts/build.js` | Copies the site into `dist/` |
 | `.openspec/` | Specs and design decisions |

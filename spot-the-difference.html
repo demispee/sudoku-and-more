@@ -354,10 +354,29 @@
 
   <script type="module">
     import { SCENES } from "./src/spot-scenes.js";
-    import {
-      MISS_PENALTY, HINT_PENALTY, findHit, hitsFound, pickDifferences, recordKey as keyFor,
-      sceneOrder, totalTime,
-    } from "./src/spot.js";
+    // The rules are in Rust, compiled to WebAssembly (game-core/, ADR-0006)
+    import init, {
+      SceneOrder, findHit as findHitAt, hintPenalty, hitsFound as hitsFoundAt, missPenalty,
+      pickDifferences as pickIndexes, recordKey as keyFor, totalTime,
+    } from "./game-core/pkg/game_core.js";
+
+    await init();
+    const MISS_PENALTY = missPenalty();
+    const HINT_PENALTY = hintPenalty();
+    const randomSeed = () => Math.floor(Math.random() * 2 ** 32);
+
+    // Differences cross to WebAssembly as parallel lists of x, y and radius
+    function circles(found) {
+      return [active.map(d => d.x), active.map(d => d.y), active.map(d => d.r), active.map(d => (found.has(d.id) ? 1 : 0))];
+    }
+    function findHit(found, x, y) {
+      const i = findHitAt(...circles(found), x, y);
+      return i >= 0 ? active[i] : undefined;
+    }
+    const hitsFound = (found, x, y) => hitsFoundAt(...circles(found), x, y);
+    function pickDifferences(scene, count) {
+      return Array.from(pickIndexes(scene.differences.length, count, randomSeed()), i => scene.differences[i]);
+    }
 
     const NEXT_ROUND_DELAY = 3500;
 
@@ -368,7 +387,8 @@
     const messageEl = document.getElementById("message");
     const countEl = document.getElementById("count");
 
-    const nextScene = sceneOrder(SCENES);
+    const sceneOrder = new SceneOrder(SCENES.length, randomSeed());
+    const nextScene = () => SCENES[sceneOrder.next()];
     let scene = null;
     let active = [];        // the differences in this round
     let found = new Set();  // ids that have been found
@@ -385,7 +405,7 @@
     }
 
     function recordKey() {
-      return keyFor(scene, active.length);
+      return keyFor(scene.name, active.length);
     }
 
     function elapsed() {
@@ -433,7 +453,7 @@
       const x = (event.clientX - rect.left) / rect.width * 800;
       const y = (event.clientY - rect.top) / rect.height * 600;
 
-      const hit = findHit(active, found, x, y);
+      const hit = findHit(found, x, y);
       if (hit) {
         found.add(hit.id);
         marksLayers().forEach(layer =>
@@ -444,7 +464,7 @@
         return;
       }
 
-      if (hitsFound(active, found, x, y)) return;
+      if (hitsFound(found, x, y)) return;
       misses++;
       addMark(marksLayers()[side],
         `<path class="miss" d="M${x - 12},${y - 12} L${x + 12},${y + 12} M${x + 12},${y - 12} L${x - 12},${y + 12}"/>` +

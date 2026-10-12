@@ -109,12 +109,16 @@
   </div>
 
   <script type="module">
-    import { collide, createBall, moveBall, random } from "./src/balls.js";
+    // The physics is in Rust, compiled to WebAssembly (game-core/, ADR-0006)
+    import init, { World, ballColors } from "./game-core/pkg/game_core.js";
+
+    await init();
+    const COLORS = ballColors();  // highlight, base, highlight, base, …
 
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
-    let balls = [];
+    const world = new World(Math.floor(Math.random() * 2 ** 32));
     let gravityOn = true;
 
     function resize() {
@@ -122,11 +126,9 @@
       canvas.height = window.innerHeight;
     }
 
-    function addBall(x, y) {
-      balls.push(createBall(x, y));
-    }
 
-    function drawBall(ball) {
+    function drawBall(x, y, radius, color) {
+      const ball = { x, y, radius, color: [COLORS[color * 2], COLORS[color * 2 + 1]] };
       const gradient = ctx.createRadialGradient(
         ball.x - ball.radius / 3, ball.y - ball.radius / 3, ball.radius / 6,
         ball.x, ball.y, ball.radius
@@ -148,20 +150,16 @@
       ctx.fillStyle = "rgba(2, 12, 23, 0.25)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      balls.forEach(ball => moveBall(ball, canvas.width, canvas.height, gravityOn));
-      for (let i = 0; i < balls.length; i++) {
-        for (let j = i + 1; j < balls.length; j++) {
-          collide(balls[i], balls[j]);
-        }
-      }
-      balls.forEach(drawBall);
+      world.step(canvas.width, canvas.height, gravityOn);
+      const balls = world.balls();  // x, y, radius, color for every ball
+      for (let i = 0; i < balls.length; i += 4) drawBall(balls[i], balls[i + 1], balls[i + 2], balls[i + 3]);
 
-      document.getElementById("count").textContent = `${balls.length} balls`;
+      document.getElementById("count").textContent = `${world.count} balls`;
       requestAnimationFrame(frame);
     }
 
     canvas.addEventListener("click", (event) => {
-      for (let i = 0; i < 5; i++) addBall(event.clientX, event.clientY);
+      for (let i = 0; i < 5; i++) world.add(event.clientX, event.clientY);
     });
 
     window.addEventListener("keydown", (event) => {
@@ -170,7 +168,7 @@
         gravityOn = !gravityOn;
         document.getElementById("gravity").textContent = gravityOn ? "on" : "off";
       } else if (key === "c") {
-        balls = [];
+        world.clear();
       } else if (key === "h") {
         document.getElementById("panel").classList.toggle("compact");
       }
@@ -179,7 +177,7 @@
     window.addEventListener("resize", resize);
     resize();
     for (let i = 0; i < 20; i++) {
-      addBall(random(50, canvas.width - 50), random(50, canvas.height / 2));
+      world.addRandom(canvas.width, canvas.height);
     }
     frame();
   </script>
