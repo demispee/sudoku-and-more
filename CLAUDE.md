@@ -1,7 +1,7 @@
 # Claude Code instructions — sudoku-and-more
 
-Three browser games (sudoku, spot the difference, bouncing balls). The pages are HTML and
-JavaScript; the game rules are moving to Rust, compiled to WebAssembly (ADR-0006). The
+Three browser games (sudoku, spot the difference, bouncing balls). The game rules are in
+Rust, compiled to WebAssembly; the pages are HTML and JavaScript (ADR-0006). The
 site is built and published to GitHub Pages by CI from `main`.
 
 ## Commands
@@ -23,12 +23,12 @@ In `game-core/`, run `cargo clippy --all-targets` and `cargo fmt` before committ
 
 - `*.html`: the pages. Styling and interface code (rendering, input) live inline, in a
   `<script type="module">` that imports from `game-core/pkg/` or `src/`.
-- `game-core/`: the game rules in Rust (`src/sudoku.rs`, …) and the bridge to JavaScript
-  (`src/lib.rs`, with `#[wasm_bindgen]`). No DOM access. Unit tests at the bottom of each
+- `game-core/`: the game rules in Rust (`src/sudoku.rs`, `spot.rs`, `balls.rs`) and the
+  bridge to JavaScript (`src/lib.rs`, with `#[wasm_bindgen]`). No DOM access. Unit tests at the bottom of each
   file, named after the spec requirement (`requirement_6_…`). Randomness goes through the
   seeded `random::Rng`, so tests are repeatable.
 - `game-core/pkg/`: built by `wasm-pack`; never edit or commit it.
-- `src/`: game code still in JavaScript (spot the difference, balls). No DOM access.
+- `src/`: the spot-the-difference scene drawings (SVG strings). No DOM access.
 - `tests/`: Vitest tests, one file per spec or bridge, grouped by requirement
   (`describe("Requirement N: …")`). Use `seedRandom()` from `tests/random.js` for anything
   random. `tests/wasm.test.js` checks the WebAssembly bridge.
