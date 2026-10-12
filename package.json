@@ -12,7 +12,9 @@
     "test": "npm run test:rust && npm run build:wasm && npm run typecheck && npm run test:js",
     "test:rust": "cargo llvm-cov --manifest-path game-core/Cargo.toml --fail-under-lines 80",
     "test:js": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "mutants": "cargo mutants --manifest-path game-core/Cargo.toml -j 4",
+    "bench": "npm run build:wasm && node tools/bench.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

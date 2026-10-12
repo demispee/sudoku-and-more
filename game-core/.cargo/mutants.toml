@@ -1,0 +1,3 @@
+# Settings for `npm run mutants` (ADR-0008)
+# The bridge to JavaScript is tested by the Vitest tests, which cargo-mutants does not run
+exclude_globs = ["src/lib.rs"]
