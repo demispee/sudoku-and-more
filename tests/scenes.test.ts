@@ -1,8 +1,8 @@
 // Tests for .openspec/specs/002-spot-the-difference/spec.md, Requirement 1: the scene
-// drawings, which stay in JavaScript (ADR-0006). The other rules are tested in Rust
-// (game-core/src/spot.rs).
+// drawings, which belong with the interface (ADR-0007). The rules are tested in Rust
+// (game-core/src/spot.rs) and in tests/use-spot.test.ts.
 import { describe, expect, test } from "vitest";
-import { SCENES, seeded } from "../src/spot-scenes.js";
+import { SCENES, seeded } from "../web/src/scenes";
 
 const none = () => false;
 
@@ -50,6 +50,9 @@ describe("Requirement 1: scenes", () => {
     const a = seeded(7), b = seeded(7);
     const first = [a(), a(), a()];
     expect([b(), b(), b()]).toEqual(first);
-    first.forEach(v => expect(v).toBeGreaterThanOrEqual(0) && expect(v).toBeLessThan(1));
+    for (const v of first) {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+    }
   });
 });

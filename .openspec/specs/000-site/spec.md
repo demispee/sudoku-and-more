@@ -1,6 +1,6 @@
 ---
 domain: site
-version: 4.3.0
+version: 5.0.0
 status: accepted
 date: 2026-10-12
 ---
@@ -10,15 +10,9 @@ date: 2026-10-12
 What every page shares: how pages are built, how you move between them, how they look,
 how they are tested and published.
 
-Requirements 1 and 4 were changed by ADR-0007 (Vue and TypeScript for the pages) and are
-being implemented one page at a time; their status says how far it is.
-
 ---
 
 ### Requirement 1: Vue pages, Rust core and no external resources [MUST]
-
-**Status:** in progress (ADR-0007): the start page, the sudoku and the bouncing balls are in
-Vue; spot the difference is in `web/` but still plain HTML and JavaScript
 
 Every page MUST have a small entry file in `web/` (`index.html`, `sudoku.html`,
 `spot-the-difference.html`, `balls.html`), so the addresses stay the same, and its
@@ -60,8 +54,7 @@ The start page MUST link to every game, with its name and a one-line description
 
 Every game page MUST show a `← back` link to `index.html`, visible at all times.
 
-**Implementation:** `web/src/components/BackLink.vue`; the `.back` link in
-`web/spot-the-difference.html`
+**Implementation:** `web/src/components/BackLink.vue`, used by every game page
 
 #### Scenario: Going back
 
@@ -86,17 +79,12 @@ buttons, rounded labels with a square bottom-left corner, and the `\` separator.
 with a scrolling layout MUST show the refracted slash top right and the Lab271 \
 Schuberg Philis footer. See ADR-0002.
 
-TT Interphases MUST load from a local `fonts/` folder when present and otherwise fall
+TT Interphases MUST load from a local `web/public/fonts/` folder when present and otherwise fall
 back to Avenir Next, Poppins, Inter or the system sans serif. The font files MUST NOT be
 committed.
 
-**Status:** in progress (ADR-0007): the styling lives in one shared stylesheet and shared
-layout components, used by the start page, the sudoku and the bouncing balls; spot the
-difference still has its own copy until it moves to Vue. The fonts folder is
-`web/public/fonts/`.
-
 **Implementation:** `web/src/styles/lab271.css`, `web/src/components/SlashMark.vue`,
-`web/src/components/SiteFooter.vue`; the `<style>` block of `web/spot-the-difference.html`
+`web/src/components/SiteFooter.vue`; page-specific styles in each component's `<style scoped>`
 
 #### Scenario: Fonts not available
 

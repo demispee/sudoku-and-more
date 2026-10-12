@@ -1,15 +1,36 @@
-// The five spot-the-difference scenes, drawn in code as SVG.
+// The five spot-the-difference scenes, drawn in code as SVG (ADR-0007: the drawings
+// belong with the interface, so they stay in TypeScript; the rules are in Rust).
 // No DOM access, so this runs in the browser and in Node.js (tests).
 //
 // Each scene has a name, a draw(has) function that returns the SVG markup (has(id) says
 // whether difference `id` is shown), and its list of possible differences.
+
+/** A point in the 800 × 600 picture */
+export type Point = [number, number];
+
+/** Whether the difference with this id is shown in the picture */
+export type Has = (id: string) => boolean;
+
+/** Where a difference is: a circle around (x, y) with radius r */
+export interface Difference {
+  id: string;
+  x: number;
+  y: number;
+  r: number;
+}
+
+export interface Scene {
+  name: string;
+  draw: (has: Has) => string;
+  differences: Difference[];
+}
 
 // ---------- Drawing helpers ----------
 // Pictures are SVG strings in an 800x600 coordinate system. Everything
 // random uses a seeded generator, so both pictures come out identical
 // except for the differences.
 
-export function seeded(seed) {
+export function seeded(seed: number): () => number {
   return () => {
     seed = (seed + 0x6d2b79f5) | 0;
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -18,13 +39,13 @@ export function seeded(seed) {
   };
 }
 
-function rotatePoint(x, y, cx, cy, degrees) {
+function rotatePoint(x: number, y: number, cx: number, cy: number, degrees: number): Point {
   const a = degrees * Math.PI / 180;
   const dx = x - cx, dy = y - cy;
   return [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)];
 }
 
-function starPath(cx, cy, outer, inner, points) {
+function starPath(cx: number, cy: number, outer: number, inner: number, points: number): string {
   let d = "";
   for (let k = 0; k < points * 2; k++) {
     const r = k % 2 ? inner : outer;
@@ -34,16 +55,16 @@ function starPath(cx, cy, outer, inner, points) {
   return d + "Z";
 }
 
-function star(cx, cy, outer, inner, points, fill, extra = "") {
+function star(cx: number, cy: number, outer: number, inner: number, points: number, fill: string, extra = ""): string {
   return `<path d="${starPath(cx, cy, outer, inner, points)}" fill="${fill}" ${extra}/>`;
 }
 
-function sparkle(cx, cy, size, color = "#fffbe8") {
+function sparkle(cx: number, cy: number, size: number, color = "#fffbe8"): string {
   return star(cx, cy, size, size * 0.22, 4, color, 'filter="url(#glow)"');
 }
 
 // Brilliant-cut gem seen from the side; (cx, cy) is the widest point
-function diamond(cx, cy, w, fill) {
+function diamond(cx: number, cy: number, w: number, fill: string): string {
   const crown = w * 0.28, pavilion = w * 0.6, table = w / 3, mid = w / 6;
   const left = cx - w / 2, right = cx + w / 2;
   return `<g stroke="#fff" stroke-opacity="0.75" stroke-width="1" stroke-linejoin="round">
@@ -55,11 +76,11 @@ function diamond(cx, cy, w, fill) {
   </g>`;
 }
 
-function pearl(cx, cy, r, fill = "url(#pearl)") {
+function pearl(cx: number, cy: number, r: number, fill = "url(#pearl)"): string {
   return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${fill}"/>`;
 }
 
-function quadPoint(p0, p1, p2, t) {
+function quadPoint(p0: Point, p1: Point, p2: Point, t: number): Point {
   const u = 1 - t;
   return [u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]];
 }
@@ -98,14 +119,14 @@ const SHARED_DEFS = `
 // ---------- Scene 1: Champagne & Diamanten ----------
 
 const GARLAND = { xs: [70, 190, 310, 490, 610, 730], lengths: [40, 70, 30, 55, 80, 45] };
-function garlandY(x) {
+function garlandY(x: number): number {
   return quadPoint([0, 30], [400, 110], [800, 30], x / 800)[1];
 }
-const NECKLACE = [[40, 500], [270, 600], [510, 505]];
+const NECKLACE: [Point, Point, Point] = [[40, 500], [270, 600], [510, 505]];
 const LEFT_FLUTE = { cx: 300, angle: 12 };
 const RIGHT_FLUTE = { cx: 500, angle: -12 };
 
-function flute(cx, random) {
+function flute(cx: number, random: () => number): string {
   let s = `
     <path d="M${cx - 38},150 Q${cx - 40},300 ${cx - 7},345 L${cx + 7},345 Q${cx + 40},300 ${cx + 38},150 Z"
       fill="#fff" fill-opacity="0.1" stroke="#fff" stroke-opacity="0.6" stroke-width="2"/>
@@ -125,7 +146,7 @@ function flute(cx, random) {
   return s;
 }
 
-function drawChampagne(has) {
+function drawChampagne(has: Has): string {
   const random = seeded(7);
   let s = `<defs>${SHARED_DEFS}
     <radialGradient id="cBg" cx="50%" cy="35%" r="75%">
@@ -167,7 +188,7 @@ function drawChampagne(has) {
   s += '<path d="M0,30 Q400,110 800,30" stroke="url(#gold)" stroke-width="2.5" fill="none"/>';
   GARLAND.xs.forEach((x, k) => {
     if (k === 4 && has("garlandStar")) return;
-    const y = garlandY(x), end = y + GARLAND.lengths[k];
+    const y = garlandY(x), end = y + GARLAND.lengths[k]!;
     s += `<line x1="${x}" y1="${y}" x2="${x}" y2="${end}" stroke="#e2b54a" stroke-width="1"/>`;
     s += star(x, end + 10, 13, 5.5, 5, "url(#gold)", 'filter="url(#glow)"');
   });
@@ -247,7 +268,7 @@ function drawChampagne(has) {
   return s;
 }
 
-function champagneDifferences() {
+function champagneDifferences(): Difference[] {
   const bubbles = rotatePoint(RIGHT_FLUTE.cx + 14, 280, RIGHT_FLUTE.cx, 470, RIGHT_FLUTE.angle);
   const ribbon = rotatePoint(RIGHT_FLUTE.cx, 385, RIGHT_FLUTE.cx, 470, RIGHT_FLUTE.angle);
   const label = rotatePoint(170, 334, 170, 360, -14);
@@ -273,23 +294,23 @@ function champagneDifferences() {
 
 const FAN = { cx: 400, cy: 440, rings: [{ R: 330, count: 17 }, { R: 255, count: 12 }, { R: 180, count: 9 }] };
 
-function featherAngle(count, k) {
+function featherAngle(count: number, k: number): number {
   return -168 + k * (156 / (count - 1));
 }
 
-function featherEyePoint(R, angle) {
+function featherEyePoint(R: number, angle: number): Point {
   const a = angle * Math.PI / 180;
   return [FAN.cx + (R - 14) * Math.cos(a), FAN.cy + (R - 14) * Math.sin(a)];
 }
 
-function featherEye(x, y, angle, scale, centerColor) {
-  const layers = [[24, 19, "#3f8f3a"], [19, 15, "url(#gold)"], [14, 11, "#19a7a3"], [9.5, 7.5, "#1d3fb8"], [5.5, 4.5, centerColor]];
+function featherEye(x: number, y: number, angle: number, scale: number, centerColor: string): string {
+  const layers: [number, number, string][] = [[24, 19, "#3f8f3a"], [19, 15, "url(#gold)"], [14, 11, "#19a7a3"], [9.5, 7.5, "#1d3fb8"], [5.5, 4.5, centerColor]];
   return layers.map(([rx, ry, fill]) =>
     `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(rx * scale).toFixed(1)}" ry="${(ry * scale).toFixed(1)}" fill="${fill}" transform="rotate(${angle.toFixed(1)},${x.toFixed(1)},${y.toFixed(1)})"/>`
   ).join("");
 }
 
-function feather(R, angle, { eye = true, centerColor = "#0a0f3a" } = {}) {
+function feather(R: number, angle: number, { eye = true, centerColor = "#0a0f3a" }: { eye?: boolean; centerColor?: string } = {}): string {
   const a = angle * Math.PI / 180;
   const tx = FAN.cx + R * Math.cos(a), ty = FAN.cy + R * Math.sin(a);
   const mx = FAN.cx + R * 0.6 * Math.cos(a), my = FAN.cy + R * 0.6 * Math.sin(a);
@@ -303,7 +324,7 @@ function feather(R, angle, { eye = true, centerColor = "#0a0f3a" } = {}) {
   return s;
 }
 
-function drawPeacock(has) {
+function drawPeacock(has: Has): string {
   const random = seeded(21);
   let s = `<defs>${SHARED_DEFS}
     <linearGradient id="pBg" x1="0" y1="0" x2="0" y2="1">
@@ -340,7 +361,7 @@ function drawPeacock(has) {
   FAN.rings.forEach(({ R, count }, ring) => {
     for (let k = 0; k < count; k++) {
       const angle = featherAngle(count, k);
-      const options = {};
+      const options: { eye?: boolean; centerColor?: string } = {};
       if (ring === 0 && k === 4 && has("featherEye")) options.centerColor = "#c2127e";
       if (ring === 1 && k === 9 && has("featherNoEye")) options.eye = false;
       s += feather(R, angle, options);
@@ -395,8 +416,8 @@ function drawPeacock(has) {
   return s;
 }
 
-function peacockDifferences() {
-  const outer = FAN.rings[0], middle = FAN.rings[1];
+function peacockDifferences(): Difference[] {
+  const outer = FAN.rings[0]!, middle = FAN.rings[1]!;
   const eyeA = featherEyePoint(outer.R, featherAngle(outer.count, 4));
   const eyeB = featherEyePoint(middle.R, featherAngle(middle.count, 9));
   return [
@@ -416,12 +437,12 @@ function peacockDifferences() {
 // ---------- Scene 3: Parfum & Parels ----------
 
 const PEARL_LOOP = { cx: 250, cy: 555, rx: 95, ry: 22, count: 26 };
-function loopPearl(k) {
+function loopPearl(k: number): Point {
   const a = 2 * Math.PI * k / PEARL_LOOP.count;
   return [PEARL_LOOP.cx + PEARL_LOOP.rx * Math.cos(a), PEARL_LOOP.cy + PEARL_LOOP.ry * Math.sin(a)];
 }
 
-function drawVanity(has) {
+function drawVanity(has: Has): string {
   const random = seeded(5);
   let s = `<defs>${SHARED_DEFS}
     <linearGradient id="vBg" x1="0" y1="0" x2="0" y2="1">
@@ -559,7 +580,7 @@ function drawVanity(has) {
   return s;
 }
 
-function vanityDifferences() {
+function vanityDifferences(): Difference[] {
   const goldPearl = loopPearl(8);
   return [
     { id: "mirrorCrown", x: 400, y: 70, r: 14 },
@@ -577,10 +598,10 @@ function vanityDifferences() {
 
 // ---------- Scene 4: De Zwaan ----------
 
-const NECK_PEARLS = [[249, 304], [253, 310], [258, 315], [264, 318], [270, 320], [276, 320], [282, 318]];
+const NECK_PEARLS: Point[] = [[249, 304], [253, 310], [258, 315], [264, 318], [270, 320], [276, 320], [282, 318]];
 const REEDS = [{ x: 30, top: 400 }, { x: 47, top: 372 }, { x: 64, top: 388 }, { x: 80, top: 410 }];
 
-function lotus(cx, cy) {
+function lotus(cx: number, cy: number): string {
   let s = "";
   [-60, -30, 0, 30, 60].forEach(angle => {
     s += `<ellipse cx="${cx}" cy="${cy - 9}" rx="5" ry="11" fill="#ff9ec7" stroke="#fff" stroke-opacity="0.5"
@@ -589,12 +610,12 @@ function lotus(cx, cy) {
   return s + `<circle cx="${cx}" cy="${cy - 2}" r="3.5" fill="#ffd166"/>`;
 }
 
-function lilyPad(cx, cy, rx) {
+function lilyPad(cx: number, cy: number, rx: number): string {
   return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${rx * 0.3}" fill="url(#sPad)"/>
     <path d="M${cx},${cy} L${cx + rx * 0.9},${cy - rx * 0.12} L${cx + rx * 0.9},${cy + rx * 0.12} Z" fill="#05060f"/>`;
 }
 
-function drawSwan(has) {
+function drawSwan(has: Has): string {
   const random = seeded(33);
   let s = `<defs>${SHARED_DEFS}
     <linearGradient id="sSky" x1="0" y1="0" x2="0" y2="1">
@@ -712,13 +733,13 @@ function drawSwan(has) {
   return s;
 }
 
-function swanDifferences() {
-  const [px, py] = NECK_PEARLS[3];
+function swanDifferences(): Difference[] {
+  const [px, py] = NECK_PEARLS[3]!;
   return [
     { id: "shootingStar", x: 148, y: 84, r: 28 },
     { id: "cloud", x: 652, y: 164, r: 24 },
     { id: "pavilionFlag", x: 754, y: 298, r: 14 },
-    { id: "cattail", x: REEDS[2].x, y: REEDS[2].top + 21, r: 18 },
+    { id: "cattail", x: REEDS[2]!.x, y: REEDS[2]!.top + 21, r: 18 },
     { id: "lilyFlower", x: 600, y: 532, r: 18 },
     { id: "goldFish", x: 500, y: 563, r: 22 },
     { id: "beakKnob", x: 266, y: 221, r: 10 },
@@ -733,7 +754,7 @@ function swanDifferences() {
 
 const DISCO = { cx: 400, cy: 100, r: 56, tile: 10 };
 
-function drawCocktails(has) {
+function drawCocktails(has: Has): string {
   const random = seeded(55);
   let s = `<defs>${SHARED_DEFS}
     <radialGradient id="kBg" cx="50%" cy="15%" r="85%">
@@ -870,7 +891,7 @@ function drawCocktails(has) {
   return s;
 }
 
-function cocktailDifferences() {
+function cocktailDifferences(): Difference[] {
   return [
     { id: "discoTile", x: DISCO.cx + 29, y: DISCO.cy - 1, r: 12 },
     { id: "sparkle", x: 462, y: 42, r: 14 },
@@ -886,7 +907,7 @@ function cocktailDifferences() {
   ];
 }
 
-export const SCENES = [
+export const SCENES: Scene[] = [
   { name: "Champagne & Diamonds", draw: drawChampagne, differences: champagneDifferences() },
   { name: "The Peacock", draw: drawPeacock, differences: peacockDifferences() },
   { name: "Perfume & Pearls", draw: drawVanity, differences: vanityDifferences() },

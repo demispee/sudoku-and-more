@@ -249,6 +249,18 @@ pub fn hits_found(xs: &[f64], ys: &[f64], rs: &[f64], found: &[u8], x: f64, y: f
     spot::hits_found(&differences(xs, ys, rs), &flags(found), x, y)
 }
 
+/// Which picture shows the differences: 0 (left) or 1 (right)
+#[wasm_bindgen(js_name = changedSide)]
+pub fn changed_side(seed: u32) -> u32 {
+    spot::changed_side(&mut Rng::new(seed)) as u32
+}
+
+/// Which of the `remaining` differences a hint points at
+#[wasm_bindgen(js_name = pickHint)]
+pub fn pick_hint(remaining: u32, seed: u32) -> u32 {
+    spot::pick_hint(remaining as usize, &mut Rng::new(seed)) as u32
+}
+
 #[wasm_bindgen(js_name = totalTime)]
 pub fn total_time(ms: f64, misses: u32, hints: u32) -> f64 {
     spot::total_time(ms, misses, hints)
@@ -414,6 +426,8 @@ mod tests {
         assert_eq!(total_time(20_000.0, 2, 1), 40_000.0);
         assert_eq!((miss_penalty(), hint_penalty()), (5000, 10000));
         assert_eq!(record_key("The Swan", 7), "The Swan|7");
+        assert!(changed_side(1) < 2);
+        assert!(pick_hint(3, 1) < 3);
     }
 
     #[test]

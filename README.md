@@ -1,8 +1,7 @@
 # sudoku-and-more
 
 Three small browser games. The game rules are written in Rust and compiled to
-WebAssembly; the pages are moving to Vue 3 with TypeScript (all but spot the difference
-already are).
+WebAssembly; the pages are Vue 3 components in TypeScript.
 
 **Play online:** <https://demispee.github.io/sudoku-and-more/>
 
@@ -48,9 +47,8 @@ there.
 
 | Path | What's in it |
 |------|--------------|
-| `web/` | The interface: one entry page per game, and in `web/src/` the Vue components, the shared Lab271 stylesheet and the bridge to the WebAssembly |
+| `web/` | The interface: one entry page per game, and in `web/src/` the Vue components, the shared Lab271 stylesheet, the spot-the-difference drawings and the bridge to the WebAssembly |
 | `game-core/` | The game rules in Rust, with their tests at the bottom of each file; compiled to WebAssembly in `game-core/pkg/` |
-| `src/` | The spot-the-difference scene drawings (SVG); they move to `web/` with that page |
 | `tests/` | [Vitest](https://vitest.dev/) tests: Vue components (in a simulated browser), the WebAssembly bridge and the site |
 | `vite.config.ts` | Builds `web/` into `dist/` |
 | `.openspec/` | Specs and design decisions |

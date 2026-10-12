@@ -2,6 +2,7 @@
 // The rules are in Rust (game-core/src/sudoku.rs): this file keeps track of what is on
 // the screen and asks the WebAssembly module what a move, hint or step does.
 import { computed, ref } from "vue";
+import { formatTime } from "../format";
 import { clearNotesAround as clearNotesIn, generate, hint as findHint, randomSeed, solverStep } from "../wasm";
 
 export const NEXT_PUZZLE_DELAY = 3000; // ms between solving a puzzle and the next one
@@ -21,10 +22,7 @@ export const col = (i: number) => i % 9;
 /** The digits in a notes bitmask (bit n set = note n) */
 export const digitsOf = (mask: number) => [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(n => mask & (1 << n));
 
-export function formatTime(ms: number): string {
-  const s = Math.floor(ms / 1000);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
+export { formatTime } from "../format";
 
 interface Puzzle {
   puzzle: number[];
