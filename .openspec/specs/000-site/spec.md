@@ -1,33 +1,35 @@
 ---
 domain: site
-version: 1.0.0
+version: 2.0.0
 status: accepted
 date: 2026-10-09
 ---
 
 # 000 — Site
 
-What every page shares: how pages are built, how you move between them, how they look and
-where they are published.
+What every page shares: how pages are built, how you move between them, how they look,
+how they are tested and where they are published.
 
 ---
 
-### Requirement 1: Self-contained pages [MUST]
+### Requirement 1: Pages and modules, no external resources [MUST]
 
-Every page MUST be a single HTML file with its CSS and JavaScript inline. Pages MUST NOT
-load scripts, styles or images from other files or from the internet. The only exception
-is the optional `fonts/` folder (see Requirement 4). See ADR-0001.
+Each page MUST be one HTML file with its styling inline and its interface code in an
+inline `<script type="module">`. The rules of each game MUST live in ES modules in `src/`
+that do not touch the DOM. Pages MUST NOT load anything from the internet, and MUST NOT
+need a build step. The only optional extra is the `fonts/` folder (see Requirement 4).
+See ADR-0004.
 
-**Implementation:** `index.html`, `sudoku.html`, `spot-the-difference.html`, `balls.html`
+**Implementation:** `index.html`, `sudoku.html`, `spot-the-difference.html`, `balls.html`,
+`src/`
 
-#### Scenario: A page is sent on its own
+#### Scenario: Playing offline
 
-- GIVEN a single game file, for example `sudoku.html`, copied to another computer
-- WHEN it is opened in a browser without an internet connection
+- GIVEN the repository on a computer without an internet connection
+- WHEN `npm run dev` is running and a game is opened
 - THEN the game works fully, only with a fallback font
 
-**Check:** search the files for `<script src`, `<link rel="stylesheet"` and `http` URLs in
-`src`/`href`; there should be none apart from links between the pages.
+**Tests:** `tests/site.test.js` (no external URLs; modules in `src/` load in Node.js)
 
 ---
 
@@ -43,7 +45,7 @@ is the optional `fonts/` folder (see Requirement 4). See ADR-0001.
 - WHEN the player clicks a game card
 - THEN that game opens
 
-**Check:** every game file has a card on the start page.
+**Tests:** `tests/site.test.js`
 
 ---
 
@@ -64,7 +66,7 @@ Every game page MUST show a `← back` link to `index.html`, visible at all time
 - GIVEN the bouncing balls page with the panel collapsed (key `H`)
 - THEN the `← back` link is still visible
 
-**Check:** open each game and click back.
+**Tests:** `tests/site.test.js` (the link is present; clicking it is checked by hand)
 
 ---
 
@@ -95,16 +97,70 @@ committed.
 
 ### Requirement 5: Published on GitHub Pages [SHOULD]
 
-The site SHOULD be published with GitHub Pages from the `main` branch, so that every push
-to `main` is live within minutes at https://demispee.github.io/sudoku-and-more/.
+The site SHOULD be published with GitHub Pages from the `main` branch, so that every
+merged pull request is live within minutes at https://demispee.github.io/sudoku-and-more/.
 
 **Implementation:** repository settings on GitHub
 
 #### Scenario: A change goes live
 
-- GIVEN a change pushed to `main`
+- GIVEN a pull request merged into `main`
 - WHEN the Pages build has finished
 - THEN the online page shows the change
 
 **Check:** `gh api repos/demispee/sudoku-and-more/pages/builds/latest` shows `built` for
 the latest commit.
+
+---
+
+### Requirement 6: Dev server [MUST]
+
+`npm run dev` MUST start a local dev server that serves every page and reloads the page
+when a file changes. `npm run dev:phone` MUST do the same and also make the server
+reachable from other devices on the same network, to test on a phone.
+
+**Implementation:** `package.json` scripts, Vite
+
+#### Scenario: Seeing a change before it goes live
+
+- GIVEN `npm run dev` is running and `sudoku.html` is open in the browser
+- WHEN the file is changed and saved
+- THEN the browser shows the change without a push
+
+**Check:** run `npm run dev`, open the address it prints, edit a page.
+
+---
+
+### Requirement 7: Automated tests with coverage [MUST]
+
+`npm test` MUST run all tests in `tests/` with Vitest and measure the coverage of `src/`.
+It MUST fail when a test fails or when the coverage of lines, statements, functions or
+branches is below 80%.
+
+**Implementation:** `package.json`, `vitest.config.js`, `tests/`
+
+#### Scenario: Coverage drops
+
+- GIVEN new code in `src/` without tests, bringing coverage below 80%
+- WHEN `npm test` runs
+- THEN it fails and names the coverage that is too low
+
+**Check:** `npm test` passes on `main`.
+
+---
+
+### Requirement 8: Continuous integration [MUST]
+
+GitHub Actions MUST run `npm test` on every pull request and every push to `main`. `main` MUST be
+protected: changes only arrive through a pull request whose test check has passed. See
+ADR-0005.
+
+**Implementation:** `.github/workflows/ci.yml`, branch protection on GitHub
+
+#### Scenario: A failing pull request
+
+- GIVEN a pull request that breaks a test
+- WHEN CI has run
+- THEN the pull request shows a failed check and cannot be merged
+
+**Check:** the pull request page on GitHub shows the `test` check.

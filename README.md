@@ -1,6 +1,7 @@
 # sudoku-and-more
 
-Three small browser games, each a single HTML file with no dependencies and no build step.
+Three small browser games in plain HTML and JavaScript, with no runtime dependencies and no
+build step.
 
 **Play online:** <https://demispee.github.io/sudoku-and-more/>
 
@@ -13,14 +14,31 @@ Three small browser games, each a single HTML file with no dependencies and no b
 
 ## Running it
 
-Play online at <https://demispee.github.io/sudoku-and-more/>, or download or clone the
-repository and open any of the HTML files in a browser. There is nothing to install and no
-internet connection is needed.
+Play online at <https://demispee.github.io/sudoku-and-more/>.
+
+To work on it locally you need [Node.js](https://nodejs.org/) (on a Mac: `brew install node`):
 
 ```sh
 git clone https://github.com/demispee/sudoku-and-more.git
-open sudoku-and-more/sudoku.html
+cd sudoku-and-more
+npm install        # once: installs the dev server and test tools
+npm run dev        # dev server at http://localhost:5173, reloads on every change
+npm test           # all tests, with coverage
 ```
+
+`npm run dev:phone` also makes the dev server reachable from a phone on the same wifi; it
+prints the address to open. Opening the HTML files straight from disk does not work,
+because browsers block the modules in `src/` there.
+
+## Project layout
+
+| Path | What's in it |
+|------|--------------|
+| `*.html` | The pages: layout, styling, and the code that draws and handles input |
+| `src/` | The rules of each game, without any page code, so they can be tested |
+| `tests/` | Tests for `src/` and the pages ([Vitest](https://vitest.dev/)); coverage must stay at 80% or more |
+| `.openspec/` | Specs and design decisions |
+| `.github/workflows/ci.yml` | Runs the tests on every pull request |
 
 ## Sudoku
 
@@ -60,7 +78,8 @@ All artwork is drawn in code as SVG.
 
 What each page must do, and why it is built the way it is, lives in
 [`.openspec/`](.openspec/README.md): one spec per page plus architectural decision records.
-Change the spec first, then the code.
+Change the spec first, then the code. Every change goes through a pull request, and `main`
+only accepts pull requests whose tests pass.
 
 ## Fonts and logos
 

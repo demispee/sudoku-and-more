@@ -1,0 +1,16 @@
+{
+  "name": "sudoku-and-more",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:phone": "vite --host",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^5.0.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

@@ -1,6 +1,6 @@
 ---
 domain: spot-the-difference
-version: 1.0.0
+version: 1.1.0
 status: accepted
 date: 2026-10-09
 ---
@@ -27,15 +27,14 @@ differences:
 Apart from the chosen differences, both pictures MUST be identical; anything random in a
 drawing MUST use a seeded generator.
 
-**Implementation:** `spot-the-difference.html::SCENES`, `draw*()`, `*Differences()`,
-`seeded()`
+**Implementation:** `src/spot-scenes.js::SCENES`, `draw*()`, `*Differences()`, `seeded()`
 
 #### Scenario: Comparing the pictures
 
 - GIVEN a new round
 - THEN the pictures differ only in the differences of this round
 
-**Check:** click `show solution`; nothing else differs between the pictures.
+**Tests:** `tests/spot.test.js` ("Requirement 1")
 
 ---
 
@@ -44,13 +43,15 @@ drawing MUST use a seeded generator.
 Scenes MUST come in random order, and every scene MUST be shown once before any scene
 repeats. The same scene MUST NOT come twice in a row.
 
-**Implementation:** `spot-the-difference.html::newRound()`
+**Implementation:** `src/spot.js::sceneOrder()`
 
 #### Scenario: Playing five rounds
 
 - GIVEN a fresh page
 - WHEN the player plays five rounds
 - THEN they have seen all five scenes
+
+**Tests:** `tests/spot.test.js` ("Requirement 2")
 
 ---
 
@@ -61,12 +62,14 @@ default is 7 and the choice MUST be remembered. Each round MUST pick that many d
 at random from the scene, and put the changed picture randomly on the left or the right.
 Changing the number MUST restart the round with the same scene.
 
-**Implementation:** `spot-the-difference.html::newRound()`, `countEl` change handler
+**Implementation:** `src/spot.js::pickDifferences()`; `spot-the-difference.html::newRound()`
 
 #### Scenario: Same scene, different round
 
 - GIVEN the same scene is played twice
 - THEN the differences are (usually) not the same set
+
+**Tests:** `tests/spot.test.js` ("Requirement 3")
 
 ---
 
@@ -77,13 +80,15 @@ as found, in either picture. A found difference MUST be circled in turquoise in 
 pictures. Clicking a difference that was already found MUST NOT count as a miss. Any other
 click MUST count as a miss, shown as a magenta cross with `+5s`.
 
-**Implementation:** `spot-the-difference.html::handleClick()`, `CLICK_MARGIN`
+**Implementation:** `src/spot.js::findHit()`, `hitsFound()`, `CLICK_MARGIN`; `spot-the-difference.html::handleClick()`
 
 #### Scenario: A miss
 
 - GIVEN a round in progress
 - WHEN the player clicks where nothing differs
 - THEN a magenta cross and `+5s` appear and the misses counter goes up by one
+
+**Tests:** `tests/spot.test.js` ("Requirement 4")
 
 ---
 
@@ -92,12 +97,14 @@ click MUST count as a miss, shown as a magenta cross with `+5s`.
 The time MUST be the real time plus 5 seconds per miss and 10 seconds per hint, so that
 clicking at random does not pay.
 
-**Implementation:** `spot-the-difference.html::elapsed()`, `MISS_PENALTY`, `HINT_PENALTY`
+**Implementation:** `src/spot.js::totalTime()`, `MISS_PENALTY`, `HINT_PENALTY`
 
 #### Scenario: Penalties add up
 
 - GIVEN 20 seconds have passed, with 2 misses and 1 hint
 - THEN the time shows 0:40
+
+**Tests:** `tests/spot.test.js` ("Requirement 5")
 
 ---
 
@@ -108,6 +115,8 @@ pulsing orange circle for 2.5 seconds, and add the hint penalty.
 
 **Implementation:** `spot-the-difference.html::hint()`
 
+**Check:** press `hint` and click inside the circle.
+
 ---
 
 ### Requirement 7: Show solution [MUST]
@@ -117,6 +126,8 @@ dashed magenta and lock the round. A round ended this way MUST NOT count as solv
 MUST NOT set a record.
 
 **Implementation:** `spot-the-difference.html::reveal()`
+
+**Check:** press `show solution`; the solved counter stays the same.
 
 ---
 
@@ -130,10 +141,14 @@ scene MUST start. `next` (key `N`) MUST start the next scene at any time.
 Records and the solved count are kept in the browser (`localStorage` keys `spotRecords`,
 `spotSolved` and `spotCount`).
 
-**Implementation:** `spot-the-difference.html::finishRound()`, `recordKey()`
+**Implementation:** `spot-the-difference.html::finishRound()`; `src/spot.js::recordKey()`
 
 #### Scenario: New record
 
 - GIVEN the record for The Swan with 7 differences is 1:10
 - WHEN the player finds all 7 in 0:55
 - THEN the overlay says `New record in 0:55` and the record label shows 0:55
+
+**Tests:** `tests/spot.test.js` ("Requirement 8")
+
+**Check:** finishing a round and the overlay are checked by hand.

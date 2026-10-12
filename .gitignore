@@ -1,2 +1,4 @@
 # Licensed via Schuberg Philis; do not redistribute
 fonts/
+node_modules/
+coverage/

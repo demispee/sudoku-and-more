@@ -17,12 +17,20 @@ Apache License 2.0, the same terms as the rest of the repository.
 
 ## Getting set up
 
-There is nothing to install. Each page is a single HTML file: edit it, then open it
-in a browser (or refresh) to see the result. Please check your change in at least
-one desktop browser and on a narrow window or phone.
+You need [Node.js](https://nodejs.org/). Run `npm install` once, then `npm run dev` to
+open the pages with a dev server that reloads on every change. Please check your change
+in at least one desktop browser and on a narrow window or phone (`npm run dev:phone`).
 
-Keep it that way: no frameworks, no build step, and no external dependencies or
-network requests, so every page keeps working when opened straight from disk.
+Keep it small: no frameworks, no build step, and no runtime dependencies or network
+requests. Node.js and the packages in `package.json` are only for development and tests.
+
+## Specs and tests
+
+- Describe new or changed behavior in the spec in `.openspec/specs/` first.
+- Game rules belong in `src/`, without page code, so they can be tested. Add tests in
+  `tests/` for every requirement you add or change.
+- `npm test` must pass, with at least 80% coverage of `src/`. CI runs it on every pull
+  request, and `main` only accepts pull requests that pass.
 
 ## Fonts and logos
 
