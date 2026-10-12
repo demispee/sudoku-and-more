@@ -4,17 +4,27 @@
   "type": "module",
   "scripts": {
     "build:wasm": "wasm-pack build game-core --target web --release",
-    "build": "npm run build:wasm && node scripts/build.js",
+    "build": "npm run build:wasm && vite build",
     "dev": "npm run build:wasm && vite",
     "dev:phone": "npm run build:wasm && vite --host",
-    "test": "npm run test:rust && npm run build:wasm && npm run test:js",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "npm run test:rust && npm run build:wasm && npm run typecheck && npm run test:js",
     "test:rust": "cargo llvm-cov --manifest-path game-core/Cargo.toml --fail-under-lines 80",
     "test:js": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@vitejs/plugin-vue": "^6.0.10",
     "@vitest/coverage-v8": "^5.0.4",
+    "@vue/test-utils": "^2.5.1",
+    "jsdom": "^30.1.2",
+    "typescript": "~6.0.3",
     "vite": "^8.3.4",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.4",
+    "vue-tsc": "^3.3.13"
+  },
+  "dependencies": {
+    "vue": "^3.5.43"
   }
 }

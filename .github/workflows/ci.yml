@@ -34,7 +34,10 @@ jobs:
       - run: npm test
       - name: Build the site
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: node scripts/build.js
+        run: npx vite build
+      - name: Make sure no licensed fonts are published
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: test -z "$(find dist -iname '*.ttf' -o -iname '*.otf' -o -iname '*.woff*')"
       - uses: actions/upload-pages-artifact@v5
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:

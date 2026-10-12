@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spot the difference \ LAB271</title>
+  <title>Sudoku \ LAB271</title>
   <style>
     /* Lab271 design system, dark theme. TT Interphases is licensed via Schuberg Philis
        and loads from a local fonts/ folder that is not shared; elsewhere the fallbacks apply. */
-    @font-face { font-family: "TT Interphases"; src: local("TT Interphases"), url("fonts/TTInterphases-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
-    @font-face { font-family: "TT Interphases"; src: local("TT Interphases Bold"), url("fonts/TTInterphases-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
-    @font-face { font-family: "TT Interphases"; src: local("TT Interphases Black"), url("fonts/TTInterphases-Black.ttf") format("truetype"); font-weight: 900; font-display: swap; }
-    @font-face { font-family: "TT Interphases Mono"; src: local("TT Interphases Mono"), url("fonts/TTInterphasesMono-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
-    @font-face { font-family: "TT Interphases Mono"; src: local("TT Interphases Mono Bold"), url("fonts/TTInterphasesMono-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+    @font-face { font-family: "TT Interphases"; src: local("TT Interphases"), url("/fonts/TTInterphases-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "TT Interphases"; src: local("TT Interphases Bold"), url("/fonts/TTInterphases-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+    @font-face { font-family: "TT Interphases"; src: local("TT Interphases Black"), url("/fonts/TTInterphases-Black.ttf") format("truetype"); font-weight: 900; font-display: swap; }
+    @font-face { font-family: "TT Interphases Mono"; src: local("TT Interphases Mono"), url("/fonts/TTInterphasesMono-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "TT Interphases Mono"; src: local("TT Interphases Mono Bold"), url("/fonts/TTInterphasesMono-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+
     :root {
       --c-canvas: #020C17;
       --c-canvas-2: #061323;
@@ -41,7 +42,7 @@
     body { overflow-x: hidden; }
     main {
       position: relative;
-      max-width: 1180px;
+      max-width: 1040px;
       margin: 0 auto;
       padding: 56px 40px 0;
       user-select: none;
@@ -96,106 +97,80 @@
       line-height: 1.09;
     }
 
-    .bar {
+    .game {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 40px;
+      align-items: flex-start;
     }
-    .label {
-      display: inline-flex;
-      align-items: center;
-      height: 28px;
-      padding: 0 14px;
-      border-radius: 999px 999px 999px 0;
-      background: var(--c-panel);
-      color: var(--c-tq);
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      white-space: nowrap;
+    .board-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: min(100%, 480px);
     }
-    .label.scene { background: transparent; border: 1px solid var(--c-border); color: var(--c-muted); }
-    select {
-      height: 44px;
-      padding: 0 16px;
-      border: 1px solid var(--c-border);
-      border-radius: 10px 10px 10px 0;
-      background: var(--c-canvas);
-      color: var(--c-text);
-      font-family: var(--mono);
-      font-size: 13px;
-      cursor: pointer;
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1;
+      min-width: 260px;
+      max-width: 420px;
     }
 
-    #pictures {
+    #board {
       position: relative;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .picture {
-      position: relative;
-      width: calc(50% - 8px);
-      box-sizing: border-box;
-      aspect-ratio: 4 / 3;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      width: 100%;
+      aspect-ratio: 1;
       border: 2px solid var(--c-muted);
       border-radius: 12px 12px 12px 0;
       overflow: hidden;
       background: var(--c-canvas-2);
-      cursor: crosshair;
     }
-    .picture svg {
-      position: absolute;
-      inset: 0;
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--c-border);
+      border-bottom: 1px solid var(--c-border);
+      font-size: min(6vw, 28px);
+      color: var(--c-tq);
+      cursor: pointer;
+      transition: background-color var(--motion);
+    }
+    .cell.br { border-right: 2px solid var(--c-muted); }
+    .cell.bb { border-bottom: 2px solid var(--c-muted); }
+    .cell.given { color: var(--c-text); font-weight: 700; }
+    .cell.hinted { color: var(--c-muted); }
+    .cell.wrong { color: var(--c-magenta); }
+    .cell.peer { background: var(--c-canvas); }
+    .cell.same { background: var(--c-border); }
+    .cell.pattern { background: var(--c-panel); }
+    .cell.selected { background: var(--c-panel); box-shadow: inset 0 0 0 2px var(--c-tq); }
+    .cell.target { box-shadow: inset 0 0 0 2px var(--c-tq); }
+    .cell.flash { animation: flash 0.8s cubic-bezier(.2, 0, .2, 1); }
+    @keyframes flash {
+      from { background: var(--c-panel); }
+    }
+    .notes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       width: 100%;
       height: 100%;
+      font-family: var(--mono);
+      font-size: min(2.3vw, 11px);
+      color: var(--c-muted);
     }
-    .marks { pointer-events: none; }
-    .found {
-      fill: none;
-      stroke: var(--c-tq);
-      stroke-width: 5;
-      filter: drop-shadow(0 0 4px #000);
-      animation: pop 0.35s cubic-bezier(.2, 0, .2, 1);
-      transform-box: fill-box;
-      transform-origin: center;
+    .notes span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    @keyframes pop {
-      from { transform: scale(1.6); opacity: 0; }
-    }
-    .miss {
-      stroke: var(--c-magenta);
-      stroke-width: 6;
-      stroke-linecap: round;
-      animation: fade 0.8s ease-out forwards;
-    }
-    @keyframes fade {
-      to { opacity: 0; }
-    }
-    .penalty {
-      fill: var(--c-magenta);
-      font: bold 22px var(--mono);
-      animation: fade 0.9s ease-out forwards;
-    }
-    .hintmark {
-      fill: none;
-      stroke: var(--c-orange);
-      stroke-width: 4;
-      stroke-dasharray: 10 8;
-      animation: pulse 0.8s ease-in-out infinite alternate;
-    }
-    @keyframes pulse {
-      to { stroke-opacity: 0.25; }
-    }
-    .revealed {
-      fill: none;
-      stroke: var(--c-magenta);
-      stroke-width: 5;
-      stroke-dasharray: 12 8;
-      filter: drop-shadow(0 0 4px #000);
+    .notes .gone {
+      color: var(--c-tq);
+      text-decoration: line-through;
     }
 
     #overlay {
@@ -208,7 +183,6 @@
       gap: 8px;
       padding: 32px;
       box-sizing: border-box;
-      border-radius: 12px 12px 12px 0;
       background: color-mix(in srgb, var(--c-canvas) 90%, transparent);
     }
     #overlay.show { display: flex; }
@@ -225,6 +199,69 @@
       color: var(--c-muted);
     }
 
+    #pad {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+    }
+    #pad button {
+      height: 48px;
+      padding: 0;
+      border: 1px solid var(--c-border);
+      border-radius: 10px 10px 10px 0;
+      background: var(--c-canvas-2);
+      color: var(--c-text);
+      font-family: var(--sans);
+      font-size: 20px;
+    }
+    #pad button:hover { background: var(--c-panel); }
+    #pad button.done { opacity: 0.45; }
+
+    .field-label {
+      display: block;
+      margin-bottom: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--c-muted);
+    }
+    select {
+      width: 100%;
+      height: 44px;
+      padding: 0 16px;
+      border: 1px solid var(--c-border);
+      border-radius: 10px 10px 10px 0;
+      background: var(--c-canvas);
+      color: var(--c-text);
+      font-family: var(--mono);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .label {
+      display: inline-flex;
+      align-items: center;
+      height: 28px;
+      padding: 0 14px;
+      border-radius: 999px 999px 999px 0;
+      background: var(--c-panel);
+      color: var(--c-tq);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
     .btn {
       height: 44px;
       padding: 0 22px;
@@ -239,7 +276,7 @@
       transition: opacity var(--motion), background-color var(--motion), color var(--motion);
     }
     .btn:hover { opacity: 0.82; }
-    .btn.primary { background: var(--c-tq); color: var(--c-canvas); }
+    .btn.primary, .btn.on { background: var(--c-tq); color: var(--c-canvas); }
     button:active { transform: scale(0.98); }
     button:focus-visible, select:focus-visible, a:focus-visible {
       outline: 2px solid var(--c-tq);
@@ -247,8 +284,6 @@
     }
 
     #message {
-      max-width: 640px;
-      margin-bottom: 20px;
       padding: 16px 22px;
       border: 1px solid var(--c-border);
       border-radius: 20px 20px 20px 0;
@@ -256,6 +291,7 @@
       font-size: 15px;
     }
     #message:empty { display: none; }
+    #message .eyebrow { display: block; margin-bottom: 6px; }
 
     .help {
       font-family: var(--mono);
@@ -265,6 +301,20 @@
       color: var(--c-muted);
     }
     .bs { color: var(--c-tq); }
+
+    .loader { display: inline-flex; gap: 4px; }
+    .loader i {
+      width: 8px;
+      height: 8px;
+      background: var(--c-tq);
+      animation: blink 1s cubic-bezier(.2, 0, .2, 1) infinite;
+    }
+    .loader i:nth-child(2) { animation-delay: 160ms; }
+    .loader i:nth-child(3) { animation-delay: 320ms; }
+    @keyframes blink {
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 1; }
+    }
 
     footer {
       display: flex;
@@ -281,9 +331,6 @@
     }
     footer svg { height: 32px; width: auto; display: block; }
 
-    @media (max-width: 760px) {
-      .picture { width: 100%; }
-    }
     @media (max-width: 640px) {
       main { padding: 40px 20px 0; }
       .slash { right: 16px; transform: scale(0.6); transform-origin: top right; }
@@ -294,44 +341,57 @@
   <div class="slash" aria-hidden="true"><span class="tq"></span><span class="or"></span></div>
   <main>
     <a class="back" href="index.html">← back</a>
-    <div class="eyebrow">LAB271 \ spot the difference</div>
-    <h1>Every detail counts</h1>
+    <div class="eyebrow">LAB271 \ sudoku</div>
+    <h1>Logic beats guessing</h1>
 
-    <div class="bar">
-      <select id="count" title="Number of differences">
-        <option value="5">5 differences \ easy</option>
-        <option value="7">7 differences \ normal</option>
-        <option value="10">10 differences \ hard</option>
-      </select>
-      <span class="label scene" id="sceneName"></span>
-    </div>
+    <div class="game">
+      <section class="board-col">
+        <div id="board">
+          <div id="overlay"></div>
+        </div>
+        <div id="pad"></div>
+      </section>
 
-    <div class="bar">
-      <span class="label">found \&nbsp;<span id="found">0</span>&nbsp;/&nbsp;<span id="total">0</span></span>
-      <span class="label">time \&nbsp;<span id="time">0:00</span></span>
-      <span class="label">misses \&nbsp;<span id="misses">0</span></span>
-      <span class="label">hints \&nbsp;<span id="hints">0</span></span>
-      <span class="label">record \&nbsp;<span id="record">–</span></span>
-      <span class="label">solved \&nbsp;<span id="solved">0</span></span>
-    </div>
+      <section class="side">
+        <div>
+          <label class="field-label" for="difficulty">difficulty</label>
+          <select id="difficulty">
+            <option value="1">1 \ very easy</option>
+            <option value="2">2 \ easy</option>
+            <option value="3">3 \ medium</option>
+            <option value="4">4 \ pointing pairs</option>
+            <option value="5">5 \ pairs</option>
+            <option value="6">6 \ x-wing and triples</option>
+            <option value="7">7 \ expert</option>
+            <option value="8">8 \ master</option>
+            <option value="9">9 \ extreme</option>
+            <option value="10">10 \ fiendish</option>
+          </select>
+        </div>
 
-    <div id="pictures">
-      <div class="picture"></div>
-      <div class="picture"></div>
-      <div id="overlay"></div>
-    </div>
+        <div class="stats">
+          <span class="label">level \&nbsp;<span id="level">0</span></span>
+          <span class="label">time \&nbsp;<span id="time">0:00</span></span>
+          <span class="label">hints \&nbsp;<span id="hints">0</span></span>
+          <span class="label">solved \&nbsp;<span id="solved">0</span></span>
+        </div>
 
-    <div class="bar">
-      <button class="btn primary" id="hintBtn">hint</button>
-      <button class="btn" id="revealBtn">show solution</button>
-      <button class="btn" id="skipBtn">next</button>
-    </div>
+        <div class="actions">
+          <button class="btn primary" id="stepBtn">step</button>
+          <button class="btn" id="hintBtn">hint</button>
+          <button class="btn" id="notesBtn">notes</button>
+          <button class="btn" id="eraseBtn">erase</button>
+          <button class="btn" id="solveBtn">solve</button>
+          <button class="btn" id="skipBtn">skip</button>
+        </div>
 
-    <div id="message">Click a difference in either picture.</div>
+        <div id="message"></div>
 
-    <div class="help">
-      a wrong click costs 5 seconds <span class="bs">\</span> a hint costs 10 seconds<br>
-      h <span class="bs">\</span> hint &nbsp; s <span class="bs">\</span> show solution &nbsp; n <span class="bs">\</span> next picture
+        <div class="help">
+          1 to 9 <span class="bs">\</span> fill in &nbsp; backspace <span class="bs">\</span> erase &nbsp; arrows <span class="bs">\</span> move<br>
+          n <span class="bs">\</span> notes &nbsp; t <span class="bs">\</span> hint &nbsp; s <span class="bs">\</span> step
+        </div>
+      </section>
     </div>
 
     <footer>
@@ -353,183 +413,333 @@
   </main>
 
   <script type="module">
-    import { SCENES } from "./src/spot-scenes.js";
-    // The rules are in Rust, compiled to WebAssembly (game-core/, ADR-0006)
+    // The sudoku rules are in Rust, compiled to WebAssembly (game-core/, ADR-0006)
     import init, {
-      SceneOrder, findHit as findHitAt, hintPenalty, hitsFound as hitsFoundAt, missPenalty,
-      pickDifferences as pickIndexes, recordKey as keyFor, totalTime,
-    } from "./game-core/pkg/game_core.js";
+      generate, hint as findHint, solverStep as takeStep, isPeer, clearNotesAround as clearNotes,
+    } from "../game-core/pkg/game_core.js";
 
     await init();
-    const MISS_PENALTY = missPenalty();
-    const HINT_PENALTY = hintPenalty();
+
+    const NEXT_PUZZLE_DELAY = 3000;
+    const GENERATE_BUDGET = 8000; // ms; after this, take the closest puzzle found
+
+    const boardEl = document.getElementById("board");
+    const overlayEl = document.getElementById("overlay");
+    const padEl = document.getElementById("pad");
+    const messageEl = document.getElementById("message");
+    const difficultyEl = document.getElementById("difficulty");
+    const notesBtn = document.getElementById("notesBtn");
+    const solveBtn = document.getElementById("solveBtn");
+
+    let puzzle, solution, values, notes, hinted;
+    let selected = null;
+    let notesMode = false;
+    let locked = false;
+    let hints = 0;
+    let startTime = 0;
+    let solvedCount = Number(localStorage.getItem("sudokuSolved")) || 0;
+
+    // Board layout: cells are numbered 0-80, row by row
+    const row = i => Math.floor(i / 9);
+    const col = i => i % 9;
+
+    // Notes are Sets in the page and bitmasks in game-core (bit n set = note n)
+    const digitsOf = mask => [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(n => mask & (1 << n));
+    const toMasks = () => notes.map(set => [...set].reduce((m, n) => m | (1 << n), 0));
+    function setNotes(masks) {
+      masks.forEach((mask, i) => { notes[i] = new Set(digitsOf(mask)); });
+    }
+
+    function clearNotesAround(i, n) {
+      setNotes(clearNotes(toMasks(), i, n));
+    }
+
     const randomSeed = () => Math.floor(Math.random() * 2 ** 32);
-
-    // Differences cross to WebAssembly as parallel lists of x, y and radius
-    function circles(found) {
-      return [active.map(d => d.x), active.map(d => d.y), active.map(d => d.r), active.map(d => (found.has(d.id) ? 1 : 0))];
-    }
-    function findHit(found, x, y) {
-      const i = findHitAt(...circles(found), x, y);
-      return i >= 0 ? active[i] : undefined;
-    }
-    const hitsFound = (found, x, y) => hitsFoundAt(...circles(found), x, y);
-    function pickDifferences(scene, count) {
-      return Array.from(pickIndexes(scene.differences.length, count, randomSeed()), i => scene.differences[i]);
-    }
-
-    const NEXT_ROUND_DELAY = 3500;
 
     // ---------- Game ----------
 
-    const pictureEls = [...document.querySelectorAll(".picture")];
-    const overlayEl = document.getElementById("overlay");
-    const messageEl = document.getElementById("message");
-    const countEl = document.getElementById("count");
-
-    const sceneOrder = new SceneOrder(SCENES.length, randomSeed());
-    const nextScene = () => SCENES[sceneOrder.next()];
-    let scene = null;
-    let active = [];        // the differences in this round
-    let found = new Set();  // ids that have been found
-    let misses = 0;
-    let hints = 0;
-    let locked = false;
-    let startTime = 0;
-    let nextRoundTimer = null;
-    let solvedCount = Number(localStorage.getItem("spotSolved")) || 0;
-    const records = JSON.parse(localStorage.getItem("spotRecords") || "{}");
-
-    function svg(content, className) {
-      return `<svg class="${className}" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">${content}</svg>`;
+    // Generating can take a second or more for some levels, so it runs in
+    // small chunks: one attempt per tick, keeping the page responsive.
+    function startJob(level) {
+      const job = { level, result: null, done: false, onDone: null, cancelled: false };
+      const startedAt = Date.now();
+      function step() {
+        if (job.cancelled) return;
+        const found = generate(level, randomSeed());
+        if (found) {
+          const result = { puzzle: Array.from(found.puzzle), solution: Array.from(found.solution), level: found.level };
+          found.free();
+          if (!job.result || Math.abs(result.level - level) < Math.abs(job.result.level - level)) {
+            job.result = result;
+          }
+        }
+        if (job.result && (job.result.level === level || Date.now() - startedAt > GENERATE_BUDGET)) {
+          job.done = true;
+          if (job.onDone) job.onDone(job.result);
+        } else {
+          setTimeout(step, 20);
+        }
+      }
+      setTimeout(step, 20);
+      return job;
     }
 
-    function recordKey() {
-      return keyFor(scene.name, active.length);
+    let nextJob = null;     // next puzzle, prepared in the background while you play
+    let waitingJob = null;  // puzzle we are waiting for right now
+    let nextGameTimer = null;
+    let solveTimer = null;  // runs while "solve" is solving
+    let marks = { pattern: new Set(), target: new Set(), removed: {} }; // highlights of the last step
+
+    function chosenLevel() {
+      return Number(difficultyEl.value);
     }
 
-    function elapsed() {
-      return totalTime(Date.now() - startTime, misses, hints);
+    function newGame() {
+      clearTimeout(nextGameTimer);
+      stopAutoSolve();
+      if (waitingJob) waitingJob.cancelled = true;
+
+      const level = chosenLevel();
+      let job = nextJob && nextJob.level === level ? nextJob : null;
+      if (nextJob && !job) nextJob.cancelled = true;
+      nextJob = null;
+      if (!job) job = startJob(level);
+
+      if (job.done) {
+        startGame(job.result);
+      } else {
+        waitingJob = job;
+        job.onDone = startGame;
+        locked = true;
+        selected = null;
+        overlayEl.innerHTML = `<span class="loader"><i></i><i></i><i></i></span>` +
+          `<span class="meta">building a level ${level} puzzle</span>`;
+        overlayEl.classList.add("show");
+      }
     }
 
-    function newRound(sameScene = false) {
-      clearTimeout(nextRoundTimer);
-      if (!sameScene || !scene) scene = nextScene();
-      active = pickDifferences(scene, Number(countEl.value));
-      const ids = new Set(active.map(d => d.id));
-
-      // The changed picture is randomly on the left or the right
-      const changedSide = Math.random() < 0.5 ? 0 : 1;
-      pictureEls.forEach((el, side) => {
-        const has = side === changedSide ? id => ids.has(id) : () => false;
-        el.innerHTML = svg(scene.draw(has), "art") + svg("", "marks");
-      });
-
-      found = new Set();
-      misses = 0;
-      hints = 0;
+    function startGame(result) {
+      waitingJob = null;
+      ({ puzzle, solution } = result);
+      document.getElementById("level").textContent = result.level;
+      values = puzzle.slice();
+      notes = values.map(() => new Set());
+      hinted = new Set();
+      selected = null;
       locked = false;
+      hints = 0;
       startTime = Date.now();
       overlayEl.classList.remove("show");
-      document.getElementById("sceneName").textContent = scene.name;
-      messageEl.textContent = "Click a difference in either picture.";
-      updateStats();
+      messageEl.textContent = "";
+      clearMarks();
+      render();
+      nextJob = startJob(chosenLevel());
     }
 
-    function marksLayers() {
-      return pictureEls.map(el => el.querySelector(".marks"));
-    }
-
-    function addMark(layer, markup, removeAfter) {
-      const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      group.innerHTML = markup;
-      layer.appendChild(group);
-      if (removeAfter) setTimeout(() => group.remove(), removeAfter);
-    }
-
-    function handleClick(event, side) {
+    function select(i) {
       if (locked) return;
-      const rect = pictureEls[side].getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width * 800;
-      const y = (event.clientY - rect.top) / rect.height * 600;
+      selected = i;
+      render();
+    }
 
-      const hit = findHit(found, x, y);
-      if (hit) {
-        found.add(hit.id);
-        marksLayers().forEach(layer =>
-          addMark(layer, `<circle class="found" cx="${hit.x}" cy="${hit.y}" r="${hit.r + 8}"/>`));
-        messageEl.textContent = found.size < active.length ? "Found one." : "";
-        updateStats();
-        if (found.size === active.length) finishRound();
-        return;
+    function enter(n) {
+      if (locked || selected === null || puzzle[selected]) return;
+      stopAutoSolve();
+      clearMarks();
+      messageEl.textContent = "";
+
+      if (notesMode && !values[selected]) {
+        const cellNotes = notes[selected];
+        cellNotes.has(n) ? cellNotes.delete(n) : cellNotes.add(n);
+      } else {
+        values[selected] = values[selected] === n ? 0 : n;
+        notes[selected].clear();
+        hinted.delete(selected);
+        if (values[selected] === solution[selected]) clearNotesAround(selected, n);
       }
+      render();
+      checkSolved();
+    }
 
-      if (hitsFound(found, x, y)) return;
-      misses++;
-      addMark(marksLayers()[side],
-        `<path class="miss" d="M${x - 12},${y - 12} L${x + 12},${y + 12} M${x + 12},${y - 12} L${x - 12},${y + 12}"/>` +
-        `<text class="penalty" x="${x + 16}" y="${y - 14}">+${MISS_PENALTY / 1000}s</text>`, 900);
-      messageEl.textContent = `No difference there. That costs ${MISS_PENALTY / 1000} seconds.`;
-      updateStats();
+    function erase() {
+      if (locked || selected === null || puzzle[selected]) return;
+      stopAutoSolve();
+      clearMarks();
+      values[selected] = 0;
+      notes[selected].clear();
+      hinted.delete(selected);
+      render();
+    }
+
+    function say(label, text) {
+      messageEl.innerHTML = `<span class="eyebrow">${label}</span>${text}`;
     }
 
     function hint() {
       if (locked) return;
-      const remaining = active.filter(d => !found.has(d.id));
-      const d = remaining[Math.floor(Math.random() * remaining.length)];
+      stopAutoSolve();
+      clearMarks();
+      const found = findHint(values, solution, selected ?? -1);
+      const { cell: target, reason } = found;
+      found.free();
+      const n = solution[target];
+      say("hint", reason === "wrong" ? `This cell was wrong. It's a ${n}.`
+        : reason === "only" ? `Only a ${n} fits in this cell.`
+        : `This cell is a ${n}.`);
+
+      values[target] = n;
+      notes[target].clear();
+      clearNotesAround(target, n);
+      hinted.add(target);
       hints++;
-      marksLayers().forEach(layer =>
-        addMark(layer, `<circle class="hintmark" cx="${d.x}" cy="${d.y}" r="${d.r * 2.6}"/>`, 2500));
-      messageEl.textContent = `Look inside the orange circle… (+${HINT_PENALTY / 1000} seconds)`;
-      updateStats();
+      selected = target;
+      render();
+      flash(target);
+      checkSolved();
     }
 
-    // Give up: show where the remaining differences were
-    function reveal() {
+    // ---------- Step & solve ----------
+
+    function clearMarks() {
+      marks = { pattern: new Set(), target: new Set(), removed: {} };
+    }
+
+    function stopAutoSolve() {
+      clearInterval(solveTimer);
+      solveTimer = null;
+      solveBtn.textContent = "solve";
+      solveBtn.classList.remove("on");
+    }
+
+    function toggleAutoSolve() {
+      if (solveTimer) return stopAutoSolve();
       if (locked) return;
-      locked = true;
-      const remaining = active.filter(d => !found.has(d.id));
-      marksLayers().forEach(layer => remaining.forEach(d =>
-        addMark(layer, `<circle class="revealed" cx="${d.x}" cy="${d.y}" r="${d.r + 8}"/>`)));
-      messageEl.textContent = `Here are the last ${remaining.length}. Press next for a new picture.`;
-      updateStats();
+      solveBtn.textContent = "stop";
+      solveBtn.classList.add("on");
+      solverStep();
+      solveTimer = setInterval(solverStep, 700);
     }
 
-    function finishRound() {
-      locked = true;
-      solvedCount++;
-      localStorage.setItem("spotSolved", solvedCount);
+    function manualStep() {
+      if (locked) return;
+      stopAutoSolve();
+      solverStep();
+    }
 
-      const time = elapsed();
-      const previous = records[recordKey()];
-      const isRecord = previous === undefined || time < previous;
-      if (isRecord) {
-        records[recordKey()] = time;
-        localStorage.setItem("spotRecords", JSON.stringify(records));
+    // One logical step, explained (see solver_step in game-core/src/sudoku.rs)
+    function solverStep() {
+      if (locked) return stopAutoSolve();
+      clearMarks();
+      const step = takeStep(values, toMasks(), solution);
+      step.values.forEach((v, i) => { values[i] = v; });
+      setNotes(step.notes);
+      step.filled.forEach(i => hinted.add(i));
+      step.pattern.forEach(i => marks.pattern.add(i));
+      step.removed.forEach((mask, i) => { if (mask) marks.removed[i] = digitsOf(mask); });
+      const { label, text, counts } = step;
+      const targets = Array.from(step.targets);
+      step.free();
+      showStep(label, text, targets, counts);
+    }
+
+    function showStep(label, text, targets, counts) {
+      targets.forEach(i => marks.target.add(i));
+      if (counts) hints++;
+      say(`step \\ ${label}`, text);
+      selected = null;
+      render();
+      checkSolved();
+    }
+
+    function checkSolved() {
+      if (!values.every((v, i) => v === solution[i])) return;
+      locked = true;
+      if (solveTimer) {
+        // Solved by "solve": keep the board visible and don't count it
+        stopAutoSolve();
+        say("solver \\ done", "The solver finished this one. Press skip for a new puzzle.");
+        render();
+        return;
       }
-
-      const extras = [];
-      if (misses) extras.push(`${misses} ${misses === 1 ? "miss" : "misses"}`);
-      if (hints) extras.push(`${hints} ${hints === 1 ? "hint" : "hints"}`);
+      solvedCount++;
+      localStorage.setItem("sudokuSolved", solvedCount);
+      const hintText = hints === 0 ? "no hints" : `${hints} ${hints === 1 ? "hint" : "hints"}`;
       overlayEl.innerHTML =
-        `<strong>${isRecord ? "New record" : "All found"} in ${formatTime(time)}</strong>` +
-        `<span class="meta">${active.length} differences` +
-        `${extras.map(e => ` \\ ${e}`).join("")}` +
-        `${isRecord ? "" : ` \\ record ${formatTime(previous)}`} \\ next picture loading</span>`;
+        `<strong>Solved in ${formatTime(Date.now() - startTime)}</strong>` +
+        `<span class="meta">level ${document.getElementById("level").textContent} \\ ${hintText} \\ next puzzle loading</span>`;
       overlayEl.classList.add("show");
-      updateStats();
-      nextRoundTimer = setTimeout(newRound, NEXT_ROUND_DELAY);
+      selected = null;
+      render();
+      nextGameTimer = setTimeout(newGame, NEXT_PUZZLE_DELAY);
     }
 
-    function updateStats() {
-      document.getElementById("found").textContent = found.size;
-      document.getElementById("total").textContent = active.length;
-      document.getElementById("misses").textContent = misses;
+    // ---------- Rendering ----------
+
+    const cells = [];
+    for (let i = 0; i < 81; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.addEventListener("click", () => select(i));
+      boardEl.insertBefore(cell, overlayEl);
+      cells.push(cell);
+    }
+
+    for (let n = 1; n <= 9; n++) {
+      const button = document.createElement("button");
+      button.textContent = n;
+      button.addEventListener("click", () => enter(n));
+      padEl.appendChild(button);
+    }
+
+    function render() {
+      if (!values) return; // first puzzle is still being made
+      const selectedValue = selected !== null ? values[selected] : 0;
+
+      cells.forEach((cell, i) => {
+        const v = values[i];
+        cell.className = "cell";
+        if (col(i) % 3 === 2 && col(i) !== 8) cell.classList.add("br");
+        if (row(i) % 3 === 2 && row(i) !== 8) cell.classList.add("bb");
+        if (puzzle[i]) cell.classList.add("given");
+        if (hinted.has(i)) cell.classList.add("hinted");
+        if (v && v !== solution[i]) cell.classList.add("wrong");
+        if (selected !== null && isPeer(i, selected)) cell.classList.add("peer");
+        if (selectedValue && v === selectedValue) cell.classList.add("same");
+        if (i === selected) cell.classList.add("selected");
+        if (marks.pattern.has(i)) cell.classList.add("pattern");
+        if (marks.target.has(i)) cell.classList.add("target");
+
+        const removed = marks.removed[i] || [];
+        if (v) {
+          cell.textContent = v;
+        } else if (notes[i].size || removed.length) {
+          let html = '<div class="notes">';
+          for (let n = 1; n <= 9; n++) {
+            if (notes[i].has(n)) html += `<span>${n}</span>`;
+            else if (removed.includes(n)) html += `<span class="gone">${n}</span>`;
+            else html += "<span></span>";
+          }
+          cell.innerHTML = html + "</div>";
+        } else {
+          cell.textContent = "";
+        }
+      });
+
+      // Dim the numbers that are already placed correctly 9 times
+      [...padEl.children].forEach((button, k) => {
+        const placed = values.filter((v, i) => v === k + 1 && v === solution[i]).length;
+        button.classList.toggle("done", placed === 9);
+      });
+
       document.getElementById("hints").textContent = hints;
       document.getElementById("solved").textContent = solvedCount;
-      const record = records[recordKey()];
-      document.getElementById("record").textContent = record === undefined ? "–" : formatTime(record);
-      document.getElementById("time").textContent = formatTime(elapsed());
+      notesBtn.classList.toggle("on", notesMode);
+    }
+
+    function flash(i) {
+      cells[i].classList.remove("flash");
+      void cells[i].offsetWidth; // restart the animation
+      cells[i].classList.add("flash");
     }
 
     function formatTime(ms) {
@@ -538,29 +748,47 @@
     }
 
     setInterval(() => {
-      if (!locked) document.getElementById("time").textContent = formatTime(elapsed());
+      if (!locked) document.getElementById("time").textContent = formatTime(Date.now() - startTime);
     }, 250);
 
     // ---------- Controls ----------
 
-    pictureEls.forEach((el, side) => el.addEventListener("click", e => handleClick(e, side)));
+    notesBtn.addEventListener("click", () => { notesMode = !notesMode; render(); });
+    document.getElementById("eraseBtn").addEventListener("click", erase);
     document.getElementById("hintBtn").addEventListener("click", hint);
-    document.getElementById("revealBtn").addEventListener("click", reveal);
-    document.getElementById("skipBtn").addEventListener("click", () => newRound());
-    countEl.value = localStorage.getItem("spotCount") || "7";
-    countEl.addEventListener("change", () => {
-      countEl.blur();
-      localStorage.setItem("spotCount", countEl.value);
-      newRound(true);
-    });
-    window.addEventListener("keydown", e => {
-      const key = e.key.toLowerCase();
-      if (key === "h") hint();
-      if (key === "s") reveal();
-      if (key === "n") newRound();
+    document.getElementById("stepBtn").addEventListener("click", manualStep);
+    solveBtn.addEventListener("click", toggleAutoSolve);
+    document.getElementById("skipBtn").addEventListener("click", newGame);
+    difficultyEl.value = localStorage.getItem("sudokuLevel") || "5";
+    difficultyEl.addEventListener("change", () => {
+      difficultyEl.blur();
+      localStorage.setItem("sudokuLevel", difficultyEl.value);
+      newGame();
     });
 
-    newRound();
+    window.addEventListener("keydown", (e) => {
+      if (e.key >= "1" && e.key <= "9") {
+        enter(Number(e.key));
+      } else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") {
+        erase();
+      } else if (e.key.toLowerCase() === "n") {
+        notesMode = !notesMode;
+        render();
+      } else if (e.key.toLowerCase() === "t") {
+        hint();
+      } else if (e.key.toLowerCase() === "s") {
+        manualStep();
+      } else if (e.key.startsWith("Arrow")) {
+        e.preventDefault();
+        const moves = { ArrowUp: -9, ArrowDown: 9, ArrowLeft: -1, ArrowRight: 1 };
+        if (selected === null) return select(0);
+        const next = selected + moves[e.key];
+        const sameRow = row(next) === row(selected);
+        if (next >= 0 && next < 81 && (Math.abs(moves[e.key]) === 9 || sameRow)) select(next);
+      }
+    });
+
+    newGame();
   </script>
 </body>
 </html>

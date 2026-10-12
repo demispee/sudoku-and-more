@@ -1,6 +1,6 @@
 ---
 domain: site
-version: 4.0.0
+version: 4.1.0
 status: accepted
 date: 2026-10-12
 ---
@@ -10,15 +10,15 @@ date: 2026-10-12
 What every page shares: how pages are built, how you move between them, how they look,
 how they are tested and published.
 
-Requirements marked **Status: planned** were changed by ADR-0007 (Vue and TypeScript for
-the pages) and are implemented in the next pull requests of that phase. Until then, the
-code follows the previous version of this spec (3.2.0).
+Requirements 1 and 4 were changed by ADR-0007 (Vue and TypeScript for the pages) and are
+being implemented one page at a time; their status says how far it is.
 
 ---
 
 ### Requirement 1: Vue pages, Rust core and no external resources [MUST]
 
-**Status:** planned (ADR-0007)
+**Status:** in progress (ADR-0007): the start page and the bouncing balls are in Vue; the
+sudoku and spot the difference are in `web/` but still plain HTML and JavaScript
 
 Every page MUST have a small entry file in `web/` (`index.html`, `sudoku.html`,
 `spot-the-difference.html`, `balls.html`), so the addresses stay the same, and its
@@ -36,7 +36,7 @@ ADR-0006 and ADR-0007.
 - WHEN `npm run dev` is running and a game is opened
 - THEN the game works fully, only with a fallback font
 
-**Tests:** `tests/site.test.js` (no external URLs; every page has its entry file)
+**Tests:** `tests/site.test.ts` (no external URLs; every page has its entry file)
 
 ---
 
@@ -44,7 +44,7 @@ ADR-0006 and ADR-0007.
 
 The start page MUST link to every game, with its name and a one-line description.
 
-**Implementation:** `index.html` (moves to `web/` with ADR-0007)
+**Implementation:** `web/index.html`, `web/src/pages/IndexPage.vue`
 
 #### Scenario: Choosing a game
 
@@ -52,7 +52,7 @@ The start page MUST link to every game, with its name and a one-line description
 - WHEN the player clicks a game card
 - THEN that game opens
 
-**Tests:** `tests/site.test.js`
+**Tests:** `tests/site.test.ts`
 
 ---
 
@@ -60,8 +60,8 @@ The start page MUST link to every game, with its name and a one-line description
 
 Every game page MUST show a `← back` link to `index.html`, visible at all times.
 
-**Implementation:** `.back` link in `sudoku.html`, `spot-the-difference.html`, `balls.html`
-(one shared back-link component with ADR-0007)
+**Implementation:** `web/src/components/BackLink.vue`; the `.back` link in
+`web/sudoku.html` and `web/spot-the-difference.html`
 
 #### Scenario: Going back
 
@@ -74,7 +74,7 @@ Every game page MUST show a `← back` link to `index.html`, visible at all time
 - GIVEN the bouncing balls page with the panel collapsed (key `H`)
 - THEN the `← back` link is still visible
 
-**Tests:** `tests/site.test.js` (the link is present; clicking it is checked by hand)
+**Tests:** `tests/site.test.ts`, `tests/balls-page.test.ts` (the link is present; clicking it is checked by hand)
 
 ---
 
@@ -90,12 +90,14 @@ TT Interphases MUST load from a local `fonts/` folder when present and otherwise
 back to Avenir Next, Poppins, Inter or the system sans serif. The font files MUST NOT be
 committed.
 
-**Status:** planned (ADR-0007): the styling moves into one shared stylesheet,
-`web/src/styles/lab271.css`, and shared layout components (back link, header, footer,
-slash), instead of being copied into every page. The fonts folder becomes
+**Status:** in progress (ADR-0007): the styling lives in one shared stylesheet and shared
+layout components, used by the start page and the bouncing balls; the sudoku and spot
+the difference still have their own copy until they move to Vue. The fonts folder is
 `web/public/fonts/`.
 
-**Implementation:** the `<style>` block of each page
+**Implementation:** `web/src/styles/lab271.css`, `web/src/components/SlashMark.vue`,
+`web/src/components/SiteFooter.vue`; the `<style>` block of `web/sudoku.html` and
+`web/spot-the-difference.html`
 
 #### Scenario: Fonts not available
 
@@ -104,13 +106,12 @@ slash), instead of being copied into every page. The fonts folder becomes
 - THEN it uses the fallback fonts and the layout still fits (for example the sudoku
   heading stays on one line on a wide screen)
 
-**Check:** compare the pages side by side; `git ls-files` lists no font files.
+**Check:** compare the pages side by side; `git ls-files` lists no font files, and CI
+refuses to publish a site with font files in it.
 
 ---
 
 ### Requirement 5: Built and published on GitHub Pages [SHOULD]
-
-**Status:** planned (ADR-0007)
 
 `npm run build` MUST compile the WASM and then build `web/` with Vite into `dist/`, so
 that it works under `/sudoku-and-more/`. After every push to `main` whose tests pass, a
@@ -138,8 +139,6 @@ Build output MUST NOT be committed.
 
 ### Requirement 6: Dev server [MUST]
 
-**Status:** planned (ADR-0007)
-
 `npm run dev` MUST compile the WASM and then start Vite's dev server for `web/`, which
 updates a changed component in the browser without reloading the page. `npm run dev:phone`
 MUST do the same and also make the server reachable from other devices on the same
@@ -164,8 +163,6 @@ network, to test on a phone.
 ---
 
 ### Requirement 7: Automated tests, type checks and coverage [MUST]
-
-**Status:** planned (ADR-0007)
 
 `npm test` MUST run:
 
@@ -198,8 +195,6 @@ network, to test on a phone.
 ---
 
 ### Requirement 8: Continuous integration [MUST]
-
-**Status:** planned (ADR-0007)
 
 GitHub Actions MUST install Rust, the WASM target, `wasm-pack` and `cargo-llvm-cov`, and
 run `npm test` (including the type check, ADR-0007) on every pull request and every push

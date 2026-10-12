@@ -1,7 +1,8 @@
 # sudoku-and-more
 
 Three small browser games. The game rules are written in Rust and compiled to
-WebAssembly; the pages are plain HTML and JavaScript.
+WebAssembly; the pages are moving to Vue 3 with TypeScript (the start page and the
+bouncing balls already are).
 
 **Play online:** <https://demispee.github.io/sudoku-and-more/>
 
@@ -33,12 +34,13 @@ git clone https://github.com/demispee/sudoku-and-more.git
 cd sudoku-and-more
 npm install        # once: installs the dev server and test tools
 npm run dev        # builds the WebAssembly, then a dev server at http://localhost:5173
-npm test           # all tests in Rust and JavaScript, with coverage
+npm test           # Rust tests, type check and component tests, all with coverage
 npm run build      # the complete site in dist/
 ```
 
 `npm run dev:phone` also makes the dev server reachable from a phone on the same wifi; it
-prints the address to open. After a change to the Rust code, start `npm run dev` again.
+prints the address to open. A changed Vue component updates in the browser right away;
+after a change to the Rust code, start `npm run dev` again.
 Opening the HTML files straight from disk does not work, because browsers block modules
 there.
 
@@ -46,15 +48,15 @@ there.
 
 | Path | What's in it |
 |------|--------------|
-| `*.html` | The pages: layout, styling, and the code that draws and handles input |
+| `web/` | The interface: one entry page per game, and in `web/src/` the Vue components, the shared Lab271 stylesheet and the bridge to the WebAssembly |
 | `game-core/` | The game rules in Rust, with their tests at the bottom of each file; compiled to WebAssembly in `game-core/pkg/` |
-| `src/` | The spot-the-difference scene drawings (SVG), which belong with the pages |
-| `tests/` | [Vitest](https://vitest.dev/) tests for `src/`, the pages and the WebAssembly bridge |
-| `scripts/build.js` | Copies the site into `dist/` |
+| `src/` | The spot-the-difference scene drawings (SVG); they move to `web/` with that page |
+| `tests/` | [Vitest](https://vitest.dev/) tests: Vue components (in a simulated browser), the WebAssembly bridge and the site |
+| `vite.config.ts` | Builds `web/` into `dist/` |
 | `.openspec/` | Specs and design decisions |
 | `.github/workflows/ci.yml` | Runs all tests on every pull request, and publishes the site from `main` |
 
-Coverage must stay at 80% or more, in Rust and in JavaScript.
+Coverage must stay at 80% or more, in Rust and in `web/src/`, and the type check must pass.
 
 ## Sudoku
 
@@ -103,7 +105,7 @@ All pages use the [Lab271](https://github.com/Lab271) design system of Schuberg
 Philis.
 
 - **Fonts:** TT Interphases is a licensed font and is **not** part of this repository. The
-  pages load it from a local `fonts/` folder if present (ignored by git) and otherwise fall
+  pages load it from a local `web/public/fonts/` folder if present (ignored by git) and otherwise fall
   back to Avenir Next, Poppins, Inter, or the system sans serif.
 - **Logos:** the Lab271 and Schuberg Philis logos are trademarks of Schuberg Philis. They
   are **not** covered by the license below and may not be reused outside this project.

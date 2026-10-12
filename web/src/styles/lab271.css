@@ -1,0 +1,178 @@
+/* Lab271 design system, dark theme (ADR-0002), shared by every page (ADR-0007).
+   TT Interphases is licensed via Schuberg Philis and loads from web/public/fonts/, which
+   is not shared; elsewhere the fallbacks apply. */
+@font-face { font-family: "TT Interphases"; src: local("TT Interphases"), url("/fonts/TTInterphases-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "TT Interphases"; src: local("TT Interphases Bold"), url("/fonts/TTInterphases-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "TT Interphases"; src: local("TT Interphases Black"), url("/fonts/TTInterphases-Black.ttf") format("truetype"); font-weight: 900; font-display: swap; }
+@font-face { font-family: "TT Interphases Mono"; src: local("TT Interphases Mono"), url("/fonts/TTInterphasesMono-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "TT Interphases Mono"; src: local("TT Interphases Mono Bold"), url("/fonts/TTInterphasesMono-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+
+:root {
+  --c-canvas: #020C17;
+  --c-canvas-2: #061323;
+  --c-panel: #082646;
+  --c-text: #FFFFFF;
+  --c-muted: #8AA0B8;
+  --c-border: #12263F;
+  --c-tq: #1EE8ED;
+  --c-orange: #FF8D33;
+  --c-magenta: #FF0089;
+  --sans: "TT Interphases", "Avenir Next", "Poppins", "Inter", sans-serif;
+  --mono: "TT Interphases Mono", "Courier New", monospace;
+  --angle-slash: 14deg;
+  --motion: 200ms cubic-bezier(.2, 0, .2, 1);
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--c-canvas);
+  color: var(--c-text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+body { overflow-x: hidden; }
+
+/* A page with a scrolling layout: centered column, slash top right, footer at the end */
+.page {
+  position: relative;
+  max-width: var(--page-width, 1040px);
+  margin: 0 auto;
+  padding: 56px 40px 0;
+}
+
+/* The one device: the refracted slash, bleeding off the top right */
+.slash {
+  position: absolute;
+  top: -90px;
+  right: 40px;
+  display: flex;
+  gap: 31px;
+  pointer-events: none;
+}
+.slash span {
+  display: block;
+  height: 240px;
+  transform: skewX(var(--angle-slash));
+}
+.slash .tq { width: 44px; border-radius: 8px; background: var(--c-tq); }
+.slash .or { width: 19px; border-radius: 4px; background: var(--c-orange); }
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 16px;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  color: var(--c-muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  transition: color var(--motion), border-color var(--motion);
+}
+.page > .back { margin-bottom: 28px; }
+.back:hover { color: var(--c-tq); border-color: var(--c-tq); }
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--c-tq);
+}
+h1 {
+  margin: 10px 0 40px;
+  max-width: 760px;
+  font-size: clamp(40px, 5vw, 68px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.09;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 999px 999px 999px 0;
+  background: var(--c-panel);
+  color: var(--c-tq);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+select {
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--c-border);
+  border-radius: 10px 10px 10px 0;
+  background: var(--c-canvas);
+  color: var(--c-text);
+  font-family: var(--mono);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn {
+  height: 44px;
+  padding: 0 22px;
+  border: 1px solid var(--c-tq);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-tq);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: opacity var(--motion), background-color var(--motion), color var(--motion);
+}
+.btn:hover { opacity: 0.82; }
+.btn.primary, .btn.on { background: var(--c-tq); color: var(--c-canvas); }
+button:active { transform: scale(0.98); }
+button:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid var(--c-tq);
+  outline-offset: 2px;
+}
+
+.message {
+  padding: 16px 22px;
+  border: 1px solid var(--c-border);
+  border-radius: 20px 20px 20px 0;
+  background: var(--c-canvas-2);
+  font-size: 15px;
+}
+.message:empty { display: none; }
+
+.help {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 2;
+  color: var(--c-muted);
+}
+.bs { color: var(--c-tq); }
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-top: 64px;
+  padding: 18px 0 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--c-muted);
+}
+footer svg { height: 32px; width: auto; display: block; }
+
+@media (max-width: 640px) {
+  .page { padding: 40px 20px 0; }
+  .slash { right: 16px; transform: scale(0.6); transform-origin: top right; }
+}
