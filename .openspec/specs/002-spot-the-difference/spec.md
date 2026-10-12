@@ -1,6 +1,6 @@
 ---
 domain: spot-the-difference
-version: 2.0.0
+version: 2.1.0
 status: accepted
 date: 2026-10-12
 ---
@@ -13,7 +13,7 @@ Two pictures side by side; find the differences as quickly as possible.
 
 ### Requirement 1: Scenes [MUST]
 
-**Status:** in progress: 5 of the 30 scenes are done; the other 25 follow in three pull
+**Status:** in progress: 14 of the 30 scenes are done; the other 16 follow in two pull
 requests
 
 There MUST be at least 30 scenes, each drawn in code as SVG, in varied themes, each with
@@ -26,7 +26,16 @@ There MUST be at least 30 scenes, each drawn in code as SVG, in varied themes, e
 | 3 | Perfume & Pearls | 10 |
 | 4 | The Swan | 11 |
 | 5 | Cocktails & Disco Ball | 11 |
-| 6–30 | Planned: coral reef, outer space, bakery, autumn forest, city at night, beach, winter village, farm, flower garden, desert oasis, haunted house, kitchen shelf, music room, steam train, mountain lake, jungle, North Pole, hot-air balloons, reading nook, picnic, aquarium, pirate ship, toy room, Japanese garden, fruit market | 10–12 each |
+| 6 | Coral Reef | 12 |
+| 7 | Outer Space | 12 |
+| 8 | The Bakery | 12 |
+| 9 | Autumn Forest | 11 |
+| 10 | City at Night | 12 |
+| 11 | A Day at the Beach | 12 |
+| 12 | Winter Village | 12 |
+| 13 | The Farm | 12 |
+| 14 | Flower Garden | 12 |
+| 15–30 | Planned: desert oasis, haunted house, kitchen shelf, music room, steam train, mountain lake, jungle, North Pole, hot-air balloons, reading nook, picnic, aquarium, pirate ship, toy room, Japanese garden, fruit market | 10–12 each |
 
 Every difference MUST be fair to find:
 

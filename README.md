@@ -7,10 +7,10 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 
 | Page | What it is |
 |------|------------|
-| [`sudoku.html`](sudoku.html) | Sudoku with difficulty levels 1 to 10, notes, hints, and a solver that explains each step |
-| [`spot-the-difference.html`](spot-the-difference.html) | Spot the difference with five hand-drawn SVG scenes |
-| [`balls.html`](balls.html) | Bouncing balls: click to add balls, toggle gravity |
-| [`index.html`](index.html) | Start page with links to the three games |
+| [`sudoku.html`](web/sudoku.html) | Sudoku with difficulty levels 1 to 10, notes, hints, and a solver that explains each step |
+| [`spot-the-difference.html`](web/spot-the-difference.html) | Spot the difference with scenes drawn in code |
+| [`balls.html`](web/balls.html) | Bouncing balls: click to add balls, toggle gravity |
+| [`index.html`](web/index.html) | Start page with links to the three games |
 
 ## Running it
 
@@ -79,9 +79,8 @@ Keyboard: `1` to `9` fill in, `Backspace` erases, arrow keys move, `N` toggles n
 
 ## Spot the difference
 
-Five scenes (champagne and diamonds, a peacock, a vanity table with perfume and pearls, a
-crowned swan on a moonlit lake, and a cocktail bar with a disco ball), each with 10 to 12
-possible differences. Every round picks 5, 7, or 10 of them at random, and the changed
+Scenes in all kinds of themes, from champagne and diamonds or a coral reef to a city at
+night or a winter village, each with 10 to 12 possible differences. Every round picks 5, 7, or 10 of them at random, and the changed
 picture is randomly on the left or the right.
 
 - **Misses and hints cost time** (5 and 10 seconds), so clicking around at random doesn't pay.
