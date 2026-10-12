@@ -33,7 +33,9 @@ CI fails on formatting or clippy warnings.
   - `web/src/sudoku/` and `web/src/spot/`: each game's state and actions (`useSudoku.ts`,
     `useSpot.ts`, composables that the tests can drive without a browser) and its
     components. The bouncing balls are small enough to live in `BallsPage.vue`.
-  - `web/src/scenes.ts`: the spot-the-difference drawings, as SVG strings.
+  - `web/src/scenes/`: the spot-the-difference drawings as SVG strings, one file per scene,
+    with shared drawing helpers in `helpers.ts` and the list in `index.ts`. Every scene must
+    pass the fairness tests in `tests/scenes.test.ts`.
   - `web/src/styles/lab271.css`: the Lab271 design system, shared by all Vue pages.
   - `web/src/wasm.ts`: loads the WebAssembly (`loadWasm()`) and re-exports its functions.
   - `web/public/fonts/`: the licensed fonts, ignored by git.

@@ -5,9 +5,14 @@ import { describe, expect, test } from "vitest";
 import { SCENES, seeded } from "../web/src/scenes";
 
 const none = () => false;
+const MIN_RADIUS = 10; // picture units; a difference smaller than this is too hard to see
 
 describe("Requirement 1: scenes", () => {
-  test("there are five scenes with 10 to 12 possible differences each", () => {
+  test("every scene has its own name", () => {
+    expect(new Set(SCENES.map(s => s.name)).size).toBe(SCENES.length);
+  });
+
+  test("the first five scenes and their differences", () => {
     expect(SCENES.map(s => [s.name, s.differences.length])).toEqual([
       ["Champagne & Diamonds", 12],
       ["The Peacock", 10],
@@ -18,15 +23,29 @@ describe("Requirement 1: scenes", () => {
   });
 
   describe.each(SCENES)("$name", scene => {
-    test("every difference has its own id and lies inside the picture", () => {
+    test("has 10 to 12 differences, each with its own id", () => {
       const ids = scene.differences.map(d => d.id);
+      expect(ids.length).toBeGreaterThanOrEqual(10);
+      expect(ids.length).toBeLessThanOrEqual(12);
       expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test("every difference is big enough and lies wholly inside the picture", () => {
       for (const d of scene.differences) {
-        expect(d.x).toBeGreaterThanOrEqual(0);
-        expect(d.x).toBeLessThanOrEqual(800);
-        expect(d.y).toBeGreaterThanOrEqual(0);
-        expect(d.y).toBeLessThanOrEqual(600);
-        expect(d.r).toBeGreaterThan(0);
+        expect(d.r, d.id).toBeGreaterThanOrEqual(MIN_RADIUS);
+        expect(d.x - d.r, d.id).toBeGreaterThanOrEqual(0);
+        expect(d.y - d.r, d.id).toBeGreaterThanOrEqual(0);
+        expect(d.x + d.r, d.id).toBeLessThanOrEqual(800);
+        expect(d.y + d.r, d.id).toBeLessThanOrEqual(600);
+      }
+    });
+
+    test("no two differences overlap, so a click is never ambiguous", () => {
+      const list = scene.differences;
+      for (const [i, a] of list.entries()) {
+        for (const b of list.slice(i + 1)) {
+          expect(Math.hypot(a.x - b.x, a.y - b.y), `${a.id} and ${b.id}`).toBeGreaterThanOrEqual(a.r + b.r);
+        }
       }
     });
 

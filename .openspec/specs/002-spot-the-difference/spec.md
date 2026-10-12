@@ -1,6 +1,6 @@
 ---
 domain: spot-the-difference
-version: 1.3.0
+version: 2.0.0
 status: accepted
 date: 2026-10-12
 ---
@@ -13,26 +13,44 @@ Two pictures side by side; find the differences as quickly as possible.
 
 ### Requirement 1: Scenes [MUST]
 
-There MUST be five scenes, each drawn in code as SVG, each with 10 to 12 possible
-differences:
+**Status:** in progress: 5 of the 30 scenes are done; the other 25 follow in three pull
+requests
 
-| Scene | Possible differences |
-|-------|---------------------|
-| Champagne & Diamonds | 12 |
-| The Peacock | 10 |
-| Perfume & Pearls | 10 |
-| The Swan | 11 |
-| Cocktails & Disco Ball | 11 |
+There MUST be at least 30 scenes, each drawn in code as SVG, in varied themes, each with
+10 to 12 possible differences. Every scene MUST have its own name.
+
+| # | Scene | Possible differences |
+|---|-------|---------------------|
+| 1 | Champagne & Diamonds | 12 |
+| 2 | The Peacock | 10 |
+| 3 | Perfume & Pearls | 10 |
+| 4 | The Swan | 11 |
+| 5 | Cocktails & Disco Ball | 11 |
+| 6–30 | Planned: coral reef, outer space, bakery, autumn forest, city at night, beach, winter village, farm, flower garden, desert oasis, haunted house, kitchen shelf, music room, steam train, mountain lake, jungle, North Pole, hot-air balloons, reading nook, picnic, aquarium, pirate ship, toy room, Japanese garden, fruit market | 10–12 each |
+
+Every difference MUST be fair to find:
+
+- it MUST visibly change the picture;
+- its click area MUST be a circle of at least 10 units (in the 800 × 600 picture) that lies
+  wholly inside the picture;
+- the click areas of two differences in a scene MUST NOT overlap, so a click never finds
+  the wrong one.
 
 Apart from the chosen differences, both pictures MUST be identical; anything random in a
 drawing MUST use a seeded generator.
 
-**Implementation:** `web/src/scenes.ts::SCENES`, `seeded()`, the `draw…()` and `…Differences()` functions; `web/src/spot/SpotPicture.vue`
+**Implementation:** `web/src/scenes/index.ts::SCENES`, one file per scene in
+`web/src/scenes/`, `web/src/scenes/helpers.ts::seeded()`; `web/src/spot/SpotPicture.vue`
 
 #### Scenario: Comparing the pictures
 
 - GIVEN a new round
 - THEN the pictures differ only in the differences of this round
+
+#### Scenario: Two differences close together
+
+- GIVEN a scene with two differences near each other
+- THEN their click areas don't overlap, and a click inside one finds that one
 
 **Tests:** `tests/scenes.test.ts` ("Requirement 1"); `tests/use-spot.test.ts` ("Requirement 1 and 3"); `tests/spot-page.test.ts` ("Requirement 1")
 
