@@ -9,7 +9,7 @@ must do; the ADRs say **why** it is built the way it is.
    (and an ADR for a design decision).
 2. **Branch.** Work on a branch such as `feat/…` or `fix/…`, never on `main`.
 3. **Build and test.** Implement the change with tests; `npm test` must pass, with at
-   least 80% coverage of `src/`. Look at it with `npm run dev`.
+   least 80% coverage (Rust and JavaScript). Look at it with `npm run dev`.
 4. **Pull request.** Push the branch and open a pull request. CI runs the tests again.
 5. **Merge.** The owner reviews and merges; then GitHub Pages publishes it.
 
@@ -20,7 +20,7 @@ on purpose. See ADR-0004 and ADR-0005.
 
 | # | Spec | Covers |
 |---|------|--------|
-| [000](specs/000-site/spec.md) | Site | Pages and modules, start page, back links, design system, hosting, dev server, tests, CI |
+| [000](specs/000-site/spec.md) | Site | Pages and Rust core, start page, back links, design system, build and hosting, dev server, tests, CI |
 | [001](specs/001-sudoku/spec.md) | Sudoku | Generator, difficulty 1–10, input, notes, hints, step solver |
 | [002](specs/002-spot-the-difference/spec.md) | Spot the difference | Scenes, rounds, clicks, penalties, records |
 | [003](specs/003-bouncing-balls/spec.md) | Bouncing balls | Physics, colors, controls |
@@ -32,8 +32,9 @@ on purpose. See ADR-0004 and ADR-0005.
 | [0001](adr/0001-single-file-pages.md) | Every page is one self-contained HTML file | Superseded by 0004 |
 | [0002](adr/0002-lab271-design-system.md) | All pages use the Lab271 design system; licensed fonts stay out of the repo | Accepted |
 | [0003](adr/0003-difficulty-by-human-techniques.md) | Sudoku difficulty is rated by the techniques a person needs | Accepted |
-| [0004](adr/0004-modules-and-automated-tests.md) | Game logic in modules, tested with Vitest, 80% coverage, CI | Accepted |
+| [0004](adr/0004-modules-and-automated-tests.md) | Game logic in modules, tested with Vitest, 80% coverage, CI | Partly superseded by 0006 |
 | [0005](adr/0005-branch-and-pull-request-workflow.md) | Every change goes through a branch and a pull request | Accepted |
+| [0006](adr/0006-game-rules-in-rust-and-webassembly.md) | Game rules in Rust, compiled to WebAssembly; build step and deploy from CI | Accepted |
 
 ## Format
 
