@@ -27,11 +27,12 @@ CI fails on formatting or clippy warnings.
 
 - `web/`: the interface; Vite's root.
   - `web/*.html`: one entry per page, so the addresses stay the same. A Vue page's entry
-    only mounts `web/src/main-<page>.ts`. `web/sudoku.html` and
-    `web/spot-the-difference.html` are not in Vue yet and still have inline styles and
-    scripts.
+    only mounts `web/src/main-<page>.ts`. `web/spot-the-difference.html` is not in Vue
+    yet and still has inline styles and scripts.
   - `web/src/pages/`: one component per page; `web/src/components/`: shared pieces
     (`BackLink`, `SlashMark`, `SiteFooter`).
+  - `web/src/sudoku/`: the sudoku's state and actions (`useSudoku.ts`, a composable that
+    the tests can drive without a browser) and its components (board, number pad).
   - `web/src/styles/lab271.css`: the Lab271 design system, shared by all Vue pages.
   - `web/src/wasm.ts`: loads the WebAssembly (`loadWasm()`) and re-exports its functions.
   - `web/public/fonts/`: the licensed fonts, ignored by git.
@@ -43,6 +44,8 @@ CI fails on formatting or clippy warnings.
   bridge its types: slices are typed arrays (`Uint8Array`, `Uint16Array`, `Float64Array`).
 - `src/`: the spot-the-difference scene drawings (SVG strings), until that page moves.
 - `tests/`: Vitest tests, grouped by spec requirement (`describe("Requirement N: …")`).
+  `tests/helpers.ts` has `seedRandom()`, `memoryStore()` and `runUntil()` for games
+  that use randomness, localStorage and timers (with `vi.useFakeTimers()`).
   Component tests start with `// @vitest-environment jsdom` and load the real WASM with
   `loadWasmForTests()` from `tests/wasm-setup.ts`. In jsdom, build file paths with
   `node:path` `resolve()`, not `new URL()`.

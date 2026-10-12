@@ -1,6 +1,6 @@
 ---
 domain: sudoku
-version: 1.2.0
+version: 1.3.0
 status: accepted
 date: 2026-10-12
 ---
@@ -45,7 +45,7 @@ The generator SHOULD find a puzzle of exactly the chosen level. If it has not fo
 after 8 seconds, it MUST use the closest level it found, and the level label MUST show the
 actual level.
 
-**Implementation:** `game-core/src/sudoku.rs::TECHNIQUES`, `rate()`, `level_of()`; `web/sudoku.html::startJob()`
+**Implementation:** `game-core/src/sudoku.rs::TECHNIQUES`, `rate()`, `level_of()`; `web/src/sudoku/useSudoku.ts::startJob()`
 
 #### Scenario: Choosing a level
 
@@ -53,7 +53,7 @@ actual level.
 - WHEN the puzzle is ready
 - THEN the label reads `level \ 5` and the puzzle needs pairs but nothing harder
 
-**Tests:** `game-core/src/sudoku.rs` (the `requirement_2_…` tests); `tests/wasm.test.ts` for the bridge
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_2_…` tests); `tests/use-sudoku.test.ts` ("Requirement 2"); `tests/sudoku-page.test.ts` ("Requirement 2 and 10"); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -63,7 +63,7 @@ Generating MUST NOT freeze the page. While the player solves a puzzle, the next 
 same level MUST be prepared in the background. If the player has to wait, a loader with
 `building a level N puzzle` MUST be shown.
 
-**Implementation:** `web/sudoku.html::startJob()`, `newGame()`
+**Implementation:** `web/src/sudoku/useSudoku.ts::startJob()`, `newGame()`; `web/src/sudoku/SudokuBoard.vue` (the loader)
 
 #### Scenario: Next puzzle
 
@@ -71,7 +71,9 @@ same level MUST be prepared in the background. If the player has to wait, a load
 - WHEN the next puzzle starts
 - THEN it usually appears at once, because it was prepared in the background
 
-**Check:** choose level 9 and watch the loader; the page stays responsive.
+**Tests:** `tests/use-sudoku.test.ts` ("Requirement 3")
+
+**Check:** on level 9, the page stays responsive while the loader shows.
 
 ---
 
@@ -85,7 +87,7 @@ Backspace, Delete, 0 and `erase` MUST clear the selected cell.
 When a correct number is placed, that number MUST be removed from the notes of every cell
 in the same row, column and box.
 
-**Implementation:** `web/sudoku.html::select()`, `enter()`, `erase()`; `game-core/src/sudoku.rs::clear_notes_around()`
+**Implementation:** `web/src/sudoku/useSudoku.ts::select()`, `move()`, `enter()`, `erase()`; `game-core/src/sudoku.rs::clear_notes_around()`; `web/src/pages/SudokuPage.vue::onKey()`, `web/src/sudoku/NumberPad.vue`
 
 #### Scenario: A wrong number
 
@@ -93,9 +95,7 @@ in the same row, column and box.
 - WHEN the player enters 7
 - THEN the 7 is shown in magenta
 
-**Tests:** `game-core/src/sudoku.rs` (the `requirement_4_…` tests); `tests/wasm.test.ts` for the bridge
-
-**Check:** typing, the pad and erase are checked by hand.
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_4_…` tests); `tests/use-sudoku.test.ts` ("Requirement 4"); `tests/sudoku-page.test.ts` ("Requirement 4"); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -104,7 +104,7 @@ in the same row, column and box.
 With notes mode on (`notes` button or key `N`), entering a number MUST toggle it as a small
 note in the cell instead of filling the cell. Notes MUST only be added to empty cells.
 
-**Implementation:** `web/sudoku.html::enter()`, `render()`
+**Implementation:** `web/src/sudoku/useSudoku.ts::enter()`, `toggleNotes()`; `web/src/sudoku/SudokuBoard.vue`
 
 #### Scenario: Toggling a note
 
@@ -112,7 +112,7 @@ note in the cell instead of filling the cell. Notes MUST only be added to empty 
 - WHEN the player presses 3 twice
 - THEN the note 3 appears and disappears again
 
-**Check:** turn notes on and toggle a few numbers.
+**Tests:** `tests/use-sudoku.test.ts` ("Requirement 5"); `tests/sudoku-page.test.ts` ("Requirement 5")
 
 ---
 
@@ -125,7 +125,7 @@ note in the cell instead of filling the cell. Notes MUST only be added to empty 
 2. Otherwise, if an empty cell is selected, it MUST fill that cell.
 3. Otherwise it MUST fill the empty cell with the fewest options.
 
-**Implementation:** `game-core/src/sudoku.rs::choose_hint()`; `web/sudoku.html::hint()`
+**Implementation:** `game-core/src/sudoku.rs::choose_hint()`; `web/src/sudoku/useSudoku.ts::hint()`
 
 #### Scenario: Mistake on the board
 
@@ -133,7 +133,7 @@ note in the cell instead of filling the cell. Notes MUST only be added to empty 
 - WHEN the player presses `hint`
 - THEN that number is corrected and the message says it was wrong
 
-**Tests:** `game-core/src/sudoku.rs` (the `requirement_6_…` tests); `tests/wasm.test.ts` for the bridge
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_6_…` tests); `tests/use-sudoku.test.ts` ("Requirement 6"); `tests/sudoku-page.test.ts` ("Requirement 6 and 7"); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -151,7 +151,7 @@ technique. It MUST work on the player's notes and highlight the cells involved. 
 
 Every step except filling in notes MUST count as a hint.
 
-**Implementation:** `game-core/src/sudoku.rs::solver_step()`, `next_step()`; `web/sudoku.html::showStep()`
+**Implementation:** `game-core/src/sudoku.rs::solver_step()`, `next_step()`; `web/src/sudoku/useSudoku.ts::takeStep()`
 
 #### Scenario: Following the solver
 
@@ -160,7 +160,7 @@ Every step except filling in notes MUST count as a hint.
 - THEN one technique is applied, the message names it, and the affected cells are
   highlighted
 
-**Tests:** `game-core/src/sudoku.rs` (the `requirement_7_…` tests); `tests/wasm.test.ts` for the bridge
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_7_…` tests); `tests/use-sudoku.test.ts` ("Requirement 7"); `tests/sudoku-page.test.ts` ("Requirement 6 and 7"); `tests/wasm.test.ts` for the bridge
 
 ---
 
@@ -170,7 +170,7 @@ Every step except filling in notes MUST count as a hint.
 change to `stop` while it runs. Any input by the player MUST stop it. A puzzle finished by
 auto-solve MUST NOT count as solved.
 
-**Implementation:** `web/sudoku.html::toggleAutoSolve()`, `stopAutoSolve()`, `checkSolved()`
+**Implementation:** `web/src/sudoku/useSudoku.ts::toggleAutoSolve()`, `stopAutoSolve()`, `checkSolved()`
 
 #### Scenario: Letting the solver finish
 
@@ -179,7 +179,7 @@ auto-solve MUST NOT count as solved.
 - THEN the board fills step by step, the message says the solver finished, and the solved
   counter does not change
 
-**Check:** press `solve`, wait, and see the solved counter stay the same.
+**Tests:** `tests/use-sudoku.test.ts` ("Requirement 8"); `tests/sudoku-page.test.ts` ("Requirement 8")
 
 ---
 
@@ -190,7 +190,7 @@ show the time, the level and the number of hints. The solved counter MUST go up 
 be saved in the browser. After 3 seconds a new puzzle of the same level MUST start.
 `skip` MUST start a new puzzle at any time.
 
-**Implementation:** `web/sudoku.html::checkSolved()`, `newGame()`
+**Implementation:** `web/src/sudoku/useSudoku.ts::checkSolved()`, `newGame()`; `web/src/sudoku/SudokuBoard.vue` (the result)
 
 #### Scenario: Completed
 
@@ -198,7 +198,7 @@ be saved in the browser. After 3 seconds a new puzzle of the same level MUST sta
 - WHEN the player fills in the correct number
 - THEN the overlay shows `Solved in m:ss`, and 3 seconds later a new puzzle starts
 
-**Check:** finish a puzzle (level 1 is quick).
+**Tests:** `tests/use-sudoku.test.ts` ("Requirement 9"); `tests/sudoku-page.test.ts` ("Requirement 9")
 
 ---
 
@@ -207,7 +207,7 @@ be saved in the browser. After 3 seconds a new puzzle of the same level MUST sta
 The chosen level and the number of solved puzzles SHOULD be remembered in the browser
 (`localStorage` keys `sudokuLevel` and `sudokuSolved`). The default level is 5.
 
-**Implementation:** `web/sudoku.html` controls section
+**Implementation:** `web/src/sudoku/useSudoku.ts::useSudoku()`, `setLevel()`
 
 #### Scenario: Coming back
 
@@ -215,4 +215,4 @@ The chosen level and the number of solved puzzles SHOULD be remembered in the br
 - WHEN they reload the page
 - THEN level 8 is selected and the counter reads 3
 
-**Check:** change the level, reload the page.
+**Tests:** `tests/use-sudoku.test.ts` ("Requirement 10"); `tests/sudoku-page.test.ts` ("Requirement 2 and 10")

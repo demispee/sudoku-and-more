@@ -28,9 +28,7 @@ describe("Requirement 1: Vue pages, Rust core and no external resources", () => 
   });
 
   test("the pages that are not in Vue yet import the WebAssembly module", () => {
-    for (const page of ["sudoku.html", "spot-the-difference.html"]) {
-      expect(read(`web/${page}`)).toContain('from "../game-core/pkg/game_core.js"');
-    }
+    expect(read("web/spot-the-difference.html")).toContain('from "../game-core/pkg/game_core.js"');
   });
 });
 
@@ -53,7 +51,11 @@ describe("Requirement 3: back to the start page", () => {
     expect([link.attributes("href"), link.text()]).toEqual(["index.html", "← back"]);
   });
 
-  test.each(["sudoku.html", "spot-the-difference.html"])("%s has a back link", page => {
-    expect(read(`web/${page}`)).toMatch(/<a class="back" href="index\.html">← back<\/a>/);
+  test("spot the difference has a back link", () => {
+    expect(read("web/spot-the-difference.html")).toMatch(/<a class="back" href="index\.html">← back<\/a>/);
+  });
+
+  test.each(["SudokuPage.vue", "BallsPage.vue"])("%s shows the back link", page => {
+    expect(read(`web/src/pages/${page}`)).toContain("<BackLink />");
   });
 });
