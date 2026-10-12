@@ -1,8 +1,8 @@
 # Claude Code instructions — sudoku-and-more
 
 Three browser games (sudoku, spot the difference, bouncing balls). The game rules are in
-Rust, compiled to WebAssembly (ADR-0006); the interface is moving to Vue 3 with
-TypeScript (ADR-0007). The site is built with Vite and published to GitHub Pages by CI
+Rust, compiled to WebAssembly (ADR-0006); the interface is Vue 3 with TypeScript
+(ADR-0007). The site is built with Vite and published to GitHub Pages by CI
 from `main`.
 
 ## Commands
@@ -27,12 +27,13 @@ CI fails on formatting or clippy warnings.
 
 - `web/`: the interface; Vite's root.
   - `web/*.html`: one entry per page, so the addresses stay the same. A Vue page's entry
-    only mounts `web/src/main-<page>.ts`. `web/spot-the-difference.html` is not in Vue
-    yet and still has inline styles and scripts.
+    only mounts `web/src/main-<page>.ts`.
   - `web/src/pages/`: one component per page; `web/src/components/`: shared pieces
     (`BackLink`, `SlashMark`, `SiteFooter`).
-  - `web/src/sudoku/`: the sudoku's state and actions (`useSudoku.ts`, a composable that
-    the tests can drive without a browser) and its components (board, number pad).
+  - `web/src/sudoku/` and `web/src/spot/`: each game's state and actions (`useSudoku.ts`,
+    `useSpot.ts`, composables that the tests can drive without a browser) and its
+    components. The bouncing balls are small enough to live in `BallsPage.vue`.
+  - `web/src/scenes.ts`: the spot-the-difference drawings, as SVG strings.
   - `web/src/styles/lab271.css`: the Lab271 design system, shared by all Vue pages.
   - `web/src/wasm.ts`: loads the WebAssembly (`loadWasm()`) and re-exports its functions.
   - `web/public/fonts/`: the licensed fonts, ignored by git.
@@ -42,7 +43,6 @@ CI fails on formatting or clippy warnings.
   Randomness goes through the seeded `random::Rng`, so tests are repeatable.
 - `game-core/pkg/`: built by `wasm-pack`; never edit or commit it. Its `.d.ts` gives the
   bridge its types: slices are typed arrays (`Uint8Array`, `Uint16Array`, `Float64Array`).
-- `src/`: the spot-the-difference scene drawings (SVG strings), until that page moves.
 - `tests/`: Vitest tests, grouped by spec requirement (`describe("Requirement N: …")`).
   `tests/helpers.ts` has `seedRandom()`, `memoryStore()` and `runUntil()` for games
   that use randomness, localStorage and timers (with `vi.useFakeTimers()`).
