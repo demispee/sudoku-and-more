@@ -14,6 +14,8 @@ npm test           # Rust tests + coverage, WASM build, vue-tsc, then Vitest + c
 npm run typecheck  # only the type check
 npm run lint:rust  # cargo fmt --check and cargo clippy -D warnings (CI runs it too)
 npm run build      # the complete site in dist/
+npm run mutants    # by hand: mutation testing of game-core/ (cargo-mutants, ~8 min)
+npm run bench      # by hand: how long the sudoku generator takes per level
 ```
 
 Rust is installed with rustup through Homebrew. If `cargo` is not found, the shell needs
@@ -61,7 +63,10 @@ CI fails on formatting or clippy warnings.
    `refactor/…` or `chore/…`.
 3. **Build and test.** Put game rules in `game-core/` and interface code in Vue components;
    test every requirement you add or change. Run `npm test`; it must pass, with at least
-   80% coverage of Rust and of `web/src/`.
+   80% coverage of Rust and of `web/src/`. Every bug fix gets a test that fails without
+   the fix, with `regression` in its name (`regression_…` in Rust, `"regression: …"` in
+   Vitest). After a larger change to the rules, run `npm run mutants`; after changing the
+   generator or solver, `npm run bench` (ADR-0008).
 4. **Check in the browser.** Run `npm run dev` and try the change in the page itself; tests
    don't cover how a page looks or feels.
 5. **Pull request.** Push the branch and open a PR with `gh pr create`. Say which spec

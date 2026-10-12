@@ -39,6 +39,11 @@ and tests.
   (`vue-tsc`), and at least 80% coverage of `web/src/`. CI runs it on every pull request,
   and `main` only accepts pull requests that pass.
 - Run `cargo clippy` and `cargo fmt` in `game-core/` before committing Rust code.
+- Every bug fix comes with a test that fails without the fix, with `regression` in its
+  name (`regression_…` in Rust, `"regression: …"` in Vitest).
+- After a larger change to the game rules, run `npm run mutants` (needs
+  `brew install cargo-mutants`, about 8 minutes) and add tests for the gaps it finds.
+  After changing the sudoku generator or solver, run `npm run bench`. See ADR-0008.
 
 ## Fonts and logos
 

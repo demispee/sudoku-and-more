@@ -1,6 +1,6 @@
 ---
 domain: site
-version: 5.0.0
+version: 5.1.0
 status: accepted
 date: 2026-10-12
 ---
@@ -162,6 +162,10 @@ network, to test on a phone.
   or when the coverage of lines, statements, functions or branches of `web/src/` is below
   80%.
 
+Every bug fix MUST come with a test that fails without the fix, with `regression` in its
+name. See ADR-0008, which also describes the checks that run by hand (`npm run mutants`,
+`npm run bench`).
+
 **Implementation:** `package.json`, `vitest.config.ts`, `tsconfig.json`, `tests/`,
 `game-core/src/`
 
@@ -176,6 +180,11 @@ network, to test on a phone.
 - GIVEN a component that passes a string where the Rust bridge expects a number
 - WHEN `npm test` runs
 - THEN the type check fails and names the file and line
+
+#### Scenario: A bug is fixed
+
+- GIVEN a pull request that fixes a bug
+- THEN it adds a test with `regression` in its name that fails without the fix
 
 **Check:** `npm test` passes on `main`.
 
