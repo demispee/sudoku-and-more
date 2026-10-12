@@ -487,7 +487,7 @@
     let nextJob = null;     // next puzzle, prepared in the background while you play
     let waitingJob = null;  // puzzle we are waiting for right now
     let nextGameTimer = null;
-    let solveTimer = null;  // runs while "Los op" is solving
+    let solveTimer = null;  // runs while "solve" is solving
     let marks = { pattern: new Set(), target: new Set(), removed: {} }; // highlights of the last step
 
     function chosenLevel() {
@@ -655,7 +655,7 @@
       if (!values.every((v, i) => v === solution[i])) return;
       locked = true;
       if (solveTimer) {
-        // Solved by "Los op": keep the board visible and don't count it
+        // Solved by "solve": keep the board visible and don't count it
         stopAutoSolve();
         say("solver \\ done", "The solver finished this one. Press skip for a new puzzle.");
         render();
