@@ -28,6 +28,14 @@ describe("Requirement 1: scenes", () => {
       ["Winter Village", 12],
       ["The Farm", 12],
       ["Flower Garden", 12],
+      ["Desert Oasis", 12],
+      ["Haunted House", 12],
+      ["Kitchen Shelf", 12],
+      ["The Music Room", 12],
+      ["The Steam Train", 12],
+      ["Mountain Lake", 12],
+      ["The Jungle", 12],
+      ["The North Pole", 12],
     ]);
   });
 

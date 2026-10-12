@@ -1,6 +1,6 @@
 ---
 domain: spot-the-difference
-version: 2.1.0
+version: 2.2.0
 status: accepted
 date: 2026-10-12
 ---
@@ -13,8 +13,8 @@ Two pictures side by side; find the differences as quickly as possible.
 
 ### Requirement 1: Scenes [MUST]
 
-**Status:** in progress: 14 of the 30 scenes are done; the other 16 follow in two pull
-requests
+**Status:** in progress: 22 of the 30 scenes are done; the last 8 follow in one pull
+request
 
 There MUST be at least 30 scenes, each drawn in code as SVG, in varied themes, each with
 10 to 12 possible differences. Every scene MUST have its own name.
@@ -35,7 +35,15 @@ There MUST be at least 30 scenes, each drawn in code as SVG, in varied themes, e
 | 12 | Winter Village | 12 |
 | 13 | The Farm | 12 |
 | 14 | Flower Garden | 12 |
-| 15–30 | Planned: desert oasis, haunted house, kitchen shelf, music room, steam train, mountain lake, jungle, North Pole, hot-air balloons, reading nook, picnic, aquarium, pirate ship, toy room, Japanese garden, fruit market | 10–12 each |
+| 15 | Desert Oasis | 12 |
+| 16 | Haunted House | 12 |
+| 17 | Kitchen Shelf | 12 |
+| 18 | The Music Room | 12 |
+| 19 | The Steam Train | 12 |
+| 20 | Mountain Lake | 12 |
+| 21 | The Jungle | 12 |
+| 22 | The North Pole | 12 |
+| 23–30 | Planned: hot-air balloons, reading nook, picnic, aquarium, pirate ship, toy room, Japanese garden, fruit market | 10–12 each |
 
 Every difference MUST be fair to find:
 
