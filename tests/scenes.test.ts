@@ -12,13 +12,22 @@ describe("Requirement 1: scenes", () => {
     expect(new Set(SCENES.map(s => s.name)).size).toBe(SCENES.length);
   });
 
-  test("the first five scenes and their differences", () => {
+  test("the scenes and their differences match the table in the spec", () => {
     expect(SCENES.map(s => [s.name, s.differences.length])).toEqual([
       ["Champagne & Diamonds", 12],
       ["The Peacock", 10],
       ["Perfume & Pearls", 10],
       ["The Swan", 11],
       ["Cocktails & Disco Ball", 11],
+      ["Coral Reef", 12],
+      ["Outer Space", 12],
+      ["The Bakery", 12],
+      ["Autumn Forest", 11],
+      ["City at Night", 12],
+      ["A Day at the Beach", 12],
+      ["Winter Village", 12],
+      ["The Farm", 12],
+      ["Flower Garden", 12],
     ]);
   });
 
