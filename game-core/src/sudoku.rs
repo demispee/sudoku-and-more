@@ -919,6 +919,12 @@ mod tests {
         assert_eq!(units()[9], [0, 9, 18, 27, 36, 45, 54, 63, 72]);
         assert_eq!(units()[26], [60, 61, 62, 69, 70, 71, 78, 79, 80]);
         assert!(peers().iter().all(|p| p.len() == 20));
+        // 27 different units, and every cell is in exactly one row, column and box
+        let mut sorted: Vec<Vec<usize>> = units().iter().map(|u| u.to_vec()).collect();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(sorted.len(), 27);
+        assert!((0..81).all(|i| units().iter().filter(|u| u.contains(&i)).count() == 3));
         assert_eq!(
             (unit_name(0), unit_name(9), unit_name(26)),
             ("row 1".into(), "column 1".into(), "box 9".into())
@@ -970,6 +976,11 @@ mod tests {
         assert_eq!(level_of(rating(4), 28), 5);
         assert_eq!(level_of(rating(5), 28), 6);
         assert_eq!(level_of(rating(7), 28), 6);
+        // Exactly at the edges between levels 1, 2 and 3
+        assert_eq!(level_of(rating(2), 35), 1);
+        assert_eq!(level_of(rating(2), 34), 2);
+        assert_eq!(level_of(rating(2), 31), 2);
+        assert_eq!(level_of(rating(2), 30), 3);
     }
 
     #[test]
@@ -979,6 +990,24 @@ mod tests {
         assert_eq!(level_of(stuck(35), 25), 8);
         assert_eq!(level_of(stuck(40), 25), 9);
         assert_eq!(level_of(stuck(50), 25), 10);
+        // Exactly at the edges between levels 7, 8, 9 and 10
+        assert_eq!(level_of(stuck(29), 25), 7);
+        assert_eq!(level_of(stuck(30), 25), 8);
+        assert_eq!(level_of(stuck(37), 25), 8);
+        assert_eq!(level_of(stuck(38), 25), 9);
+        assert_eq!(level_of(stuck(45), 25), 9);
+        assert_eq!(level_of(stuck(46), 25), 10);
+    }
+
+    #[test]
+    fn requirement_2_counts_the_empty_cells_left_when_the_techniques_run_out() {
+        assert_eq!(
+            rate(&[0; 81]),
+            Rating {
+                tier: STUCK,
+                empty: 81
+            }
+        );
     }
 
     #[test]
@@ -1301,15 +1330,38 @@ mod tests {
         let mut notes = candidate_masks(&values);
         let mut saw_elimination = false;
         for _ in 0..200 {
+            let before = notes;
             let step = solver_step(&mut values, &mut notes, &solution);
             if step.filled.is_empty() && step.label != "notes" && step.label != "fix" {
                 assert!(!step.targets.is_empty());
                 assert!(step.targets.iter().all(|&i| step.removed[i] != 0));
+                // Exactly the notes that were there before and are gone now
+                assert!((0..81).all(|i| step.removed[i] == before[i] & !notes[i]));
                 saw_elimination = true;
                 break;
             }
         }
         assert!(saw_elimination);
+    }
+
+    #[test]
+    fn requirement_7_without_a_technique_fills_a_cell_with_the_fewest_notes() {
+        let solution = solved(&hard());
+        let mut values = hard();
+        let mut notes = [0; 81];
+        for _ in 0..500 {
+            let before = notes;
+            let step = solver_step(&mut values, &mut notes, &solution);
+            if step.label == "no technique" {
+                let fewest = (0..81)
+                    .filter(|&i| before[i] != 0)
+                    .map(|i| bit_count(before[i]))
+                    .min();
+                assert_eq!(Some(bit_count(before[step.filled[0]])), fewest);
+                return;
+            }
+        }
+        panic!("the techniques never ran out");
     }
 
     #[test]
