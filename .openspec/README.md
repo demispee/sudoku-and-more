@@ -20,7 +20,7 @@ on purpose. See ADR-0004 and ADR-0005.
 
 | # | Spec | Covers |
 |---|------|--------|
-| [000](specs/000-site/spec.md) | Site | Pages and Rust core, start page, back links, design system, build and hosting, dev server, tests, CI |
+| [000](specs/000-site/spec.md) | Site | Vue pages and Rust core, start page, back links, design system, build and hosting, dev server, tests and type checks, CI |
 | [001](specs/001-sudoku/spec.md) | Sudoku | Generator, difficulty 1–10, input, notes, hints, step solver |
 | [002](specs/002-spot-the-difference/spec.md) | Spot the difference | Scenes, rounds, clicks, penalties, records |
 | [003](specs/003-bouncing-balls/spec.md) | Bouncing balls | Physics, colors, controls |
@@ -29,12 +29,13 @@ on purpose. See ADR-0004 and ADR-0005.
 
 | # | Decision | Status |
 |---|----------|--------|
-| [0001](adr/0001-single-file-pages.md) | Every page is one self-contained HTML file | Superseded by 0004 |
+| [0001](adr/0001-single-file-pages.md) | Every page is one self-contained HTML file | Superseded by 0004 and 0007 |
 | [0002](adr/0002-lab271-design-system.md) | All pages use the Lab271 design system; licensed fonts stay out of the repo | Accepted |
 | [0003](adr/0003-difficulty-by-human-techniques.md) | Sudoku difficulty is rated by the techniques a person needs | Accepted |
 | [0004](adr/0004-modules-and-automated-tests.md) | Game logic in modules, tested with Vitest, 80% coverage, CI | Partly superseded by 0006 |
 | [0005](adr/0005-branch-and-pull-request-workflow.md) | Every change goes through a branch and a pull request | Accepted |
-| [0006](adr/0006-game-rules-in-rust-and-webassembly.md) | Game rules in Rust, compiled to WebAssembly; build step and deploy from CI | Accepted |
+| [0006](adr/0006-game-rules-in-rust-and-webassembly.md) | Game rules in Rust, compiled to WebAssembly; build step and deploy from CI | Accepted; pages part superseded by 0007 |
+| [0007](adr/0007-vue-and-typescript-for-the-pages.md) | Vue 3 and TypeScript for the pages, built with Vite | Accepted |
 
 ## Format
 

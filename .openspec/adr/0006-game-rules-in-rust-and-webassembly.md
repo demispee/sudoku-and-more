@@ -1,6 +1,6 @@
 # ADR-0006: Game rules in Rust, compiled to WebAssembly
 
-**Status:** Accepted
+**Status:** Accepted; the pages part is superseded by ADR-0007 (Vue and TypeScript)
 **Date:** 2026-10-12
 **Supersedes:** ADR-0004 in part (where the game rules live, and "no build step")
 
