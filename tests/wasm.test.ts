@@ -3,7 +3,7 @@
 // compiled module loads and that values cross the bridge correctly.
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  Ministry, SceneOrder, ShyField, World, ballColors, formsPerDay, shyShapes, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
+  Ministry, ReverseSnake, SceneOrder, ShyField, World, ballColors, formsPerDay, shyShapes, snakeGridSize, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
   missPenalty, pickDifferences, recordKey, solverStep, totalTime,
 } from "../web/src/wasm";
 import { loadWasmForTests } from "./wasm-setup";
@@ -112,5 +112,17 @@ describe("shy squares through WebAssembly", () => {
     expect(field.squares()[0]).toBeGreaterThan(squares[0]!);
     expect(Array.from(shyShapes())).toEqual([620, 200, 780, 400, 6, 12]);
     field.free();
+  });
+});
+
+describe("reverse snake through WebAssembly", () => {
+  test("gives the snake as x, y bytes, the apple, the status and the time", () => {
+    const game = new ReverseSnake();
+    expect(Array.from(game.snake())).toEqual([2, 0, 1, 0, 0, 0]);
+    expect([game.appleX, game.appleY, game.status, snakeGridSize()]).toEqual([10, 10, "playing", 20]);
+    game.steer(2);
+    game.update(200);
+    expect([game.appleY, game.elapsed]).toEqual([11, 200]);
+    game.free();
   });
 });
