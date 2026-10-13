@@ -1,13 +1,17 @@
 ---
 domain: reverse-snake
 version: 1.0.0
-status: accepted
+status: withdrawn
 date: 2026-10-13
 ---
 
 # 006 — Reverse snake
 
 Snake, the other way around: you are the apple, and the snake is hungry.
+
+> **Withdrawn on 2026-10-13.** The game was removed from the site: a snake that is as fast
+> as the apple and always takes the shortest path catches it within seconds, so there was
+> no strategy to play. This spec is kept as a record; the code is in the git history.
 
 ---
 

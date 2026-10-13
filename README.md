@@ -12,7 +12,6 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 | [`balls.html`](web/balls.html) | Bouncing balls: click to add balls, toggle gravity |
 | [`ministry.html`](web/ministry.html) | The Ministry of Odd Forms: stamp absurd forms by a rulebook that grows every day |
 | [`shy-squares.html`](web/shy-squares.html) | Shy squares: herd squares that flee from your cursor into a pen |
-| [`reverse-snake.html`](web/reverse-snake.html) | Reverse snake: you are the apple, and the snake is hungry |
 | [`mastermind.html`](web/mastermind.html) | Mastermind: break a secret code on a realistic 3D board |
 | [`index.html`](web/index.html) | Start page with links to the games |
 
@@ -112,15 +111,6 @@ All artwork is drawn in code as SVG.
   the harder they run. Use that to drive them into the pen on the right.
 - Every level has 2 more squares (up to 20), and they get a little faster. `R` restarts
   the level; the best time per level is kept in your browser.
-
-## Reverse snake
-
-- You are the apple: run with the arrow keys, WASD or the buttons, at most one cell per
-  tick of the snake.
-- The snake takes the shortest way to you, around its own body. It grows every 3 seconds
-  and gets a little faster every 10 seconds.
-- If it traps itself, you win. `Space` pauses; your longest survival is kept in your
-  browser.
 
 ## Mastermind
 

@@ -21,7 +21,6 @@ export default defineConfig({
         balls: page("balls"),
         ministry: page("ministry"),
         shy: page("shy-squares"),
-        snake: page("reverse-snake"),
         mastermind: page("mastermind"),
       },
     },
