@@ -10,8 +10,9 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["web/src/**/*.{ts,vue}"],
-      // The entry files only mount a page; the pages themselves are tested
-      exclude: ["web/src/main-*.ts"],
+      // The entry files only mount a page; the pages themselves are tested. The 3D board
+      // needs WebGL, which jsdom doesn't have: it is checked in the browser (ADR-0009)
+      exclude: ["web/src/main-*.ts", "web/src/mastermind/scene.ts"],
       reporter: ["text", "html"],
       thresholds: { lines: 80, statements: 80, functions: 80, branches: 80 },
     },

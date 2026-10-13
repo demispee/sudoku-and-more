@@ -22,6 +22,7 @@ export default defineConfig({
         ministry: page("ministry"),
         shy: page("shy-squares"),
         snake: page("reverse-snake"),
+        mastermind: page("mastermind"),
       },
     },
   },

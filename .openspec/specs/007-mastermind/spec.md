@@ -1,6 +1,6 @@
 ---
 domain: mastermind
-version: 1.0.0
+version: 1.1.0
 status: accepted
 date: 2026-10-13
 ---
@@ -32,11 +32,12 @@ is hidden under a shield at the end of the board until the game is over.
 
 ### Requirement 2: Placing pegs [MUST]
 
-The board MUST have 10 rows of 4 holes; the player fills the lowest open row. Clicking a
+The board MUST have 10 rows of 4 holes; the player fills the first open row. Clicking a
 colour in the peg tray and then a hole MUST place that colour there; clicking a filled
-hole of the open row MUST take its peg out again. The keys 1–6 MUST place a colour in
-the first empty hole, and Backspace MUST take out the last peg placed. `check` (or Enter)
-MUST only work when all 4 holes of the row are filled.
+hole of the open row MUST take its peg out again. The colours MAY also be chosen with
+buttons under the board. The keys 1–6 MUST place a colour in the first empty hole, and
+Backspace MUST take out the last peg placed. `check` (or Enter) MUST only work when all 4
+holes of the row are filled.
 
 **Implementation:** `web/src/mastermind/useMastermind.ts`, `web/src/pages/MastermindPage.vue`
 
@@ -119,6 +120,9 @@ browser has no WebGL, the page MUST say so instead of showing an empty board.
 
 **Check:** by hand with `npm run dev`: the board looks like wood and plastic in light, not
 like a flat drawing; pegs drop into the holes; dragging turns it within its limits.
+
+**Tests:** `tests/mastermind-page.test.ts` (the message without WebGL; the board is
+disposed of when the page closes)
 
 ---
 
