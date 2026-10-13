@@ -127,8 +127,9 @@ All artwork is drawn in code as SVG.
 - Click a dish and then a hole, or press `1`–`6`; `Backspace` takes the last peg out and
   `Enter` checks the row. A black answer peg is a right colour in the right hole, a white
   one a right colour in another hole.
-- The board is drawn in 3D with three.js; drag to turn it. Everything on it is made in
-  code, without image or model files (ADR-0009).
+- The board is a modern 3D object in a studio, drawn with three.js. It floats, the pegs
+  bounce in, and the light follows your mouse; drag it and it springs back. Everything on
+  it is made in code, without image or model files (ADR-0009).
 
 ## Specs
 
