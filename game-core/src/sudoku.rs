@@ -168,6 +168,19 @@ pub struct Found {
     pub name: String,
     pub text: String,
     pub pattern: Vec<usize>,
+    /// Per cell, the numbers whose options the technique relied on
+    pub looks_at: Masks,
+}
+
+const ALL: u16 = 0b11_1111_1110;
+
+/// `mask` in each of `cells`, nothing elsewhere
+fn looks_at(cells: impl IntoIterator<Item = usize>, mask: u16) -> Masks {
+    let mut masks = [0; 81];
+    for i in cells {
+        masks[i] = mask;
+    }
+    masks
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -299,6 +312,7 @@ fn naked_single(s: &mut State) -> Option<Found> {
         name: "Naked single".into(),
         text: format!("Only a {n} still fits in this cell."),
         pattern: vec![i],
+        looks_at: looks_at([i], ALL),
     })
 }
 
@@ -317,6 +331,7 @@ fn hidden_single(s: &mut State) -> Option<Found> {
                     name: "Hidden single".into(),
                     text: format!("In {}, the {n} only fits here.", unit_name(k)),
                     pattern: unit.to_vec(),
+                    looks_at: looks_at(*unit, 1 << n),
                 });
             }
         }
@@ -363,6 +378,7 @@ fn locked_candidates(s: &mut State) -> Option<Found> {
                             unit_name(k2)
                         ),
                         pattern: spots,
+                        looks_at: looks_at(*unit, bit),
                     });
                 }
             }
@@ -399,6 +415,7 @@ fn naked_subset(s: &mut State, k: usize) -> Option<Found> {
                         unit_name(u),
                         unit_name(u)
                     ),
+                    looks_at: looks_at(combo.iter().copied(), ALL),
                     pattern: combo,
                 });
             }
@@ -449,6 +466,7 @@ fn hidden_subset(s: &mut State, k: usize) -> Option<Found> {
                         list_text(&combo)
                     ),
                     pattern: cells,
+                    looks_at: looks_at(*unit, keep),
                 });
             }
         }
@@ -529,6 +547,7 @@ fn fish(s: &mut State, size: usize) -> Option<Found> {
                             .flat_map(|&b| bases[b])
                             .filter(|&i| s.cand[i] & bit != 0)
                             .collect(),
+                        looks_at: looks_at(base_indexes.iter().flat_map(|&b| bases[b]), bit),
                     });
                 }
             }
@@ -571,6 +590,7 @@ fn xy_wing(s: &mut State) -> Option<Found> {
                              if it's a {b}, the other one does. So cells that see both wings can't be a {c}."
                         ),
                         pattern: vec![pivot, w1, w2],
+                        looks_at: looks_at([pivot, w1, w2], ALL),
                     });
                 }
             }
@@ -666,18 +686,6 @@ pub struct StepResult {
     pub filled: Vec<usize>,
 }
 
-/// The cells whose options a technique looked at: its pattern, and every row, column or
-/// box that holds two or more of those cells
-fn premise(found: &Found) -> Vec<usize> {
-    let mut cells = found.pattern.clone();
-    for unit in units() {
-        if unit.iter().filter(|i| found.pattern.contains(i)).count() >= 2 {
-            cells.extend(unit);
-        }
-    }
-    cells
-}
-
 /// One number filled in, explained. The solver works out the options itself and applies
 /// the easiest techniques until a cell has one number left, then keeps only the
 /// techniques that number needed. The player's notes only lose what those ruled out.
@@ -695,11 +703,15 @@ pub fn solver_step(values: &mut Grid, notes: &mut Masks, solution: &Grid) -> Ste
 
     // A wrong number would make every deduction after it wrong, so fix that first
     if let Some(w) = (0..81).find(|&i| values[i] != 0 && values[i] != solution[i]) {
+        let before = *notes;
         values[w] = solution[w];
         notes[w] = 0;
         clear_notes_around(notes, w, solution[w]);
         let text = format!("This cell was wrong. It's a {}.", solution[w]);
-        return result("fix", text, vec![w], true);
+        let mut step = result("fix", text, vec![w], true);
+        // Show the notes it crossed out around the cell, as every other step does
+        step.removed = std::array::from_fn(|i| before[i] & !notes[i]);
+        return step;
     }
     if !values.contains(&0) {
         return result("done", "The puzzle is solved.".into(), vec![], false);
@@ -751,7 +763,7 @@ pub fn solver_step(values: &mut Grid, notes: &mut Masks, solution: &Grid) -> Ste
                 // A later technique that stays may only work because of this one
                 let relied_on = used[k + 1..]
                     .iter()
-                    .any(|(later, _)| premise(later).into_iter().any(|i| used[k].1[i] != 0));
+                    .any(|(later, _)| (0..81).any(|i| used[k].1[i] & later.looks_at[i] != 0));
                 if relied_on {
                     continue;
                 }
@@ -781,6 +793,7 @@ pub fn solver_step(values: &mut Grid, notes: &mut Masks, solution: &Grid) -> Ste
                     "No technique applies here; it takes chains or trial and error. This cell is a {n}."
                 ),
                 pattern: Vec::new(),
+                looks_at: [0; 81],
             };
             (cell, n, found)
         }
@@ -1206,6 +1219,19 @@ mod tests {
     // ----- Requirement 7: step solver -----
 
     #[test]
+    fn regression_requirement_7_a_fix_shows_the_notes_it_crossed_out() {
+        let solution = solved(&hard());
+        let mut values = hard();
+        values[1] = solution[1] % 9 + 1;
+        let mut notes = candidate_masks(&hard());
+        let before = notes;
+        let step = solver_step(&mut values, &mut notes, &solution);
+        assert_eq!(step.label, "fix");
+        assert!((0..81).all(|i| step.removed[i] == before[i] & !notes[i]));
+        assert!(step.removed.iter().any(|&m| m == 1 << solution[1]));
+    }
+
+    #[test]
     fn requirement_7_corrects_a_wrong_number_first() {
         let solution = solved(&hard());
         let mut values = hard();
@@ -1290,6 +1316,18 @@ mod tests {
             step.label,
             "box-line reduction, then xy-wing, then naked single"
         );
+    }
+
+    #[test]
+    fn regression_requirement_7_leaves_out_a_technique_about_other_numbers() {
+        // The pointing pair only crosses out 6s, which the hidden pair on 2 and 8 and the
+        // hidden single on 9 don't look at, so it isn't needed
+        let mut values = parse(
+            "530400000180000054294580000465000030973805402821340509712650043649100005358024000",
+        );
+        let solution = solved(&values);
+        let step = solver_step(&mut values, &mut [0; 81], &solution);
+        assert_eq!(step.label, "hidden pair, then hidden single");
     }
 
     #[test]
