@@ -1258,8 +1258,10 @@ mod tests {
                 panic!("one number per step")
             };
             assert_eq!(values[i], solution[i]);
-            // Notes only lose numbers, and `removed` says exactly which
+            // Notes only lose numbers, never the right one, and `removed` says exactly which
             assert!((0..81).all(|j| notes[j] & !before[j] == 0));
+            assert!((0..81).all(|j| values[j] != 0 || notes[j] & (1 << solution[j]) != 0));
+            assert!(!step.text.starts_with("Then"));
             assert!((0..81).all(|j| j == i || step.removed[j] == before[j] & !notes[j]));
             // Crossed out by a technique, not just because the number went in nearby
             let by_technique = (0..81).any(|j| {
