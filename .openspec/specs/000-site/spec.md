@@ -1,6 +1,6 @@
 ---
 domain: site
-version: 5.1.0
+version: 5.2.0
 status: accepted
 date: 2026-10-12
 ---
@@ -15,7 +15,8 @@ how they are tested and published.
 ### Requirement 1: Vue pages, Rust core and no external resources [MUST]
 
 Every page MUST have a small entry file in `web/` (`index.html`, `sudoku.html`,
-`spot-the-difference.html`, `balls.html`), so the addresses stay the same, and its
+`spot-the-difference.html`, `balls.html`, `ministry.html`, `shy-squares.html`,
+`reverse-snake.html`), so the addresses stay the same, and its
 interface MUST be Vue 3 components in TypeScript in `web/src/`. The components show state
 and send actions; the rules of each game MUST live in the Rust crate `game-core/`,
 compiled to WebAssembly, which does not touch the DOM. Pages MUST NOT load anything from
