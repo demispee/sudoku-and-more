@@ -666,6 +666,18 @@ pub struct StepResult {
     pub filled: Vec<usize>,
 }
 
+/// The cells whose options a technique looked at: its pattern, and every row, column or
+/// box that holds two or more of those cells
+fn premise(found: &Found) -> Vec<usize> {
+    let mut cells = found.pattern.clone();
+    for unit in units() {
+        if unit.iter().filter(|i| found.pattern.contains(i)).count() >= 2 {
+            cells.extend(unit);
+        }
+    }
+    cells
+}
+
 /// One number filled in, explained. The solver works out the options itself and applies
 /// the easiest techniques until a cell has one number left, then keeps only the
 /// techniques that number needed. The player's notes only lose what those ruled out.
@@ -736,6 +748,13 @@ pub fn solver_step(values: &mut Grid, notes: &mut Masks, solution: &Grid) -> Ste
                 }
             };
             for k in (0..used.len()).rev() {
+                // A later technique that stays may only work because of this one
+                let relied_on = used[k + 1..]
+                    .iter()
+                    .any(|(later, _)| premise(later).into_iter().any(|i| used[k].1[i] != 0));
+                if relied_on {
+                    continue;
+                }
                 let step = used.remove(k);
                 if !holds(&used) {
                     used.insert(k, step);
@@ -1253,6 +1272,22 @@ mod tests {
             }
         }
         assert!(saw_elimination);
+    }
+
+    #[test]
+    fn regression_requirement_7_keeps_a_technique_that_a_later_one_relies_on() {
+        // The box-line reduction leaves the XY-Wing's middle cell with two options; without
+        // it, the explanation claimed an XY-Wing that wasn't there
+        let g = attempt(7, &mut Rng::new(15)).unwrap();
+        let mut values = g.puzzle;
+        for _ in 0..16 {
+            solver_step(&mut values, &mut [0; 81], &g.solution);
+        }
+        let step = solver_step(&mut values, &mut [0; 81], &g.solution);
+        assert_eq!(
+            step.label,
+            "box-line reduction, then xy-wing, then naked single"
+        );
     }
 
     #[test]
