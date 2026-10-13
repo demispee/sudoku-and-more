@@ -8,7 +8,7 @@ import BackLink from "../web/src/components/BackLink.vue";
 import SiteFooter from "../web/src/components/SiteFooter.vue";
 import IndexPage from "../web/src/pages/IndexPage.vue";
 
-const GAMES = ["sudoku.html", "spot-the-difference.html", "balls.html", "ministry.html", "shy-squares.html"];
+const GAMES = ["sudoku.html", "spot-the-difference.html", "balls.html", "ministry.html", "shy-squares.html", "reverse-snake.html"];
 // Paths from the project folder: in jsdom, URL is the browser's, which node:fs can't read
 const read = (file: string) => readFileSync(resolve(file), "utf8");
 const filesIn = (dir: string, ext: string): string[] =>
@@ -46,7 +46,7 @@ describe("Requirement 2: start page", () => {
   test("links to every game, with its name and a description", () => {
     const links = mount(IndexPage).findAll("a.game");
     expect(links.map(a => a.attributes("href"))).toEqual(GAMES);
-    expect(links.map(a => a.find("strong").text())).toEqual(["Sudoku", "Spot the difference", "Bouncing balls", "The Ministry of Odd Forms", "Shy squares"]);
+    expect(links.map(a => a.find("strong").text())).toEqual(["Sudoku", "Spot the difference", "Bouncing balls", "The Ministry of Odd Forms", "Shy squares", "Reverse snake"]);
     links.forEach(a => expect(a.find("span").text().length).toBeGreaterThan(10));
   });
 
@@ -61,7 +61,7 @@ describe("Requirement 3: back to the start page", () => {
     expect([link.attributes("href"), link.text()]).toEqual(["index.html", "← back"]);
   });
 
-  test.each(["SudokuPage.vue", "SpotPage.vue", "BallsPage.vue", "MinistryPage.vue", "ShyPage.vue"])("%s shows the back link", page => {
+  test.each(["SudokuPage.vue", "SpotPage.vue", "BallsPage.vue", "MinistryPage.vue", "ShyPage.vue", "SnakePage.vue"])("%s shows the back link", page => {
     expect(read(`web/src/pages/${page}`)).toContain("<BackLink />");
   });
 });
