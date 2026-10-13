@@ -54,7 +54,7 @@ license.
 ## Commits
 
 Short, imperative messages that say what the change does, for example
-`Add keyboard shortcut for notes` or `Fix hint on a full board`.
+`Add keyboard shortcut for notes` or `Fix step on a full board`.
 
 ## Using AI agents
 
