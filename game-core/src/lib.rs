@@ -9,7 +9,6 @@ pub mod mastermind;
 pub mod ministry;
 pub mod random;
 pub mod shy;
-pub mod snake;
 pub mod spot;
 pub mod sudoku;
 
@@ -493,76 +492,6 @@ pub fn shy_shapes() -> Vec<f64> {
     ]
 }
 
-// ---------- Reverse snake ----------
-
-#[wasm_bindgen(js_name = ReverseSnake)]
-pub struct JsReverseSnake(snake::Game);
-
-impl Default for JsReverseSnake {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[wasm_bindgen(js_class = ReverseSnake)]
-impl JsReverseSnake {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> JsReverseSnake {
-        JsReverseSnake(snake::Game::new())
-    }
-
-    /// Lets `ms` of time pass
-    pub fn update(&mut self, ms: f64) {
-        self.0.update(ms);
-    }
-
-    /// Moves the apple: 0 up, 1 right, 2 down, 3 left
-    pub fn steer(&mut self, direction: u8) {
-        self.0.steer(direction as usize);
-    }
-
-    /// x and y of every cell of the snake, head first
-    pub fn snake(&self) -> Vec<u8> {
-        self.0
-            .snake
-            .iter()
-            .flat_map(|&(x, y)| [x as u8, y as u8])
-            .collect()
-    }
-
-    #[wasm_bindgen(getter, js_name = appleX)]
-    pub fn apple_x(&self) -> u8 {
-        self.0.apple.0 as u8
-    }
-
-    #[wasm_bindgen(getter, js_name = appleY)]
-    pub fn apple_y(&self) -> u8 {
-        self.0.apple.1 as u8
-    }
-
-    /// "playing", "eaten" or "stuck"
-    #[wasm_bindgen(getter)]
-    pub fn status(&self) -> String {
-        match self.0.status {
-            snake::Status::Playing => "playing",
-            snake::Status::Eaten => "eaten",
-            snake::Status::Stuck => "stuck",
-        }
-        .into()
-    }
-
-    /// Time played, in ms
-    #[wasm_bindgen(getter)]
-    pub fn elapsed(&self) -> f64 {
-        self.0.elapsed
-    }
-}
-
-#[wasm_bindgen(js_name = snakeGridSize)]
-pub fn snake_grid_size() -> u8 {
-    snake::SIZE as u8
-}
-
 // ---------- Mastermind ----------
 
 #[wasm_bindgen(js_name = Mastermind)]
@@ -784,28 +713,5 @@ mod tests {
         }
         assert_eq!(lost.status(), "lost");
         assert_eq!(JsMastermind::new(5, 1).0.code.len(), 5);
-    }
-
-    #[test]
-    fn snake_bridge() {
-        let mut game = JsReverseSnake::default();
-        assert_eq!(game.snake(), vec![2, 0, 1, 0, 0, 0]);
-        assert_eq!(
-            (game.apple_x(), game.apple_y(), snake_grid_size()),
-            (10, 10, 20)
-        );
-        game.steer(1);
-        assert_eq!(game.apple_x(), 11);
-        game.update(200.0);
-        assert_eq!((game.status().as_str(), game.elapsed()), ("playing", 200.0));
-        assert_ne!(game.snake()[0..2], [2, 0]);
-        for _ in 0..100 {
-            game.update(200.0);
-        }
-        assert_eq!(game.status(), "eaten");
-        let mut stuck = JsReverseSnake::new();
-        stuck.0.snake = [(0, 0), (1, 0), (1, 1), (0, 1), (0, 2)].into();
-        stuck.update(200.0);
-        assert_eq!(stuck.status(), "stuck");
     }
 }
