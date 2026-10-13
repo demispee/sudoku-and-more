@@ -1,6 +1,6 @@
 ---
 domain: sudoku
-version: 2.1.0
+version: 2.2.0
 status: accepted
 date: 2026-10-12
 ---
@@ -130,25 +130,35 @@ kept so that the other requirements keep theirs.
 `step` (key `S`) MUST fill in one correct number, explain it in the message box, and
 count as a hint. In order:
 
-1. If there is a wrong number, correct it.
+1. If there is a wrong number, correct it: the selected cell first, if it is wrong.
 2. Otherwise, work out all the options of every empty cell itself, without showing them
    or using the player's notes, and apply the easiest techniques until one cell has only
    one number left. Fill in that number. The message MUST name only the techniques that
    number needed, and the cells of those techniques MUST be highlighted.
-3. If no technique gets that far, fill in the empty cell with the fewest options and say
-   that it needs chains or trial and error.
+3. If no technique gets that far, try a cell with two options: assume the wrong one and
+   follow the singles. If that leads to a contradiction within 8 numbers, fill in the
+   other option and show the reasoning, choosing the shortest contradiction. If none is
+   found, fill in the empty cell with the fewest options and say that no technique gets
+   further.
 
 The player's notes MUST only lose numbers, never gain them: every note those techniques
 ruled out MUST be crossed out, and the filled-in number MUST be removed from the notes
 around it (as in Requirement 4).
 
-**Implementation:** `game-core/src/sudoku.rs::solver_step()`, `next_step()`; `web/src/sudoku/useSudoku.ts::takeStep()`
+**Implementation:** `game-core/src/sudoku.rs::solver_step()`, `next_step()`, `trial()`; `web/src/sudoku/useSudoku.ts::takeStep()`
 
 #### Scenario: A step without notes
 
 - GIVEN a new puzzle without any notes
 - WHEN the player presses `step`
 - THEN one number is filled in, the message says why, and no notes appear
+
+#### Scenario: A step where the techniques run out
+
+- GIVEN a puzzle where no technique fills in a number, and a cell that is a 3 or a 5
+- WHEN the player presses `step`
+- THEN the message says that if it were a 5, the singles would lead to a contradiction,
+  and the 3 is filled in
 
 #### Scenario: A step that needs an X-Wing
 
