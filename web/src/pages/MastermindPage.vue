@@ -105,13 +105,13 @@ h1 { margin-bottom: 24px; }
 .check { margin-left: auto; }
 .board-wrap { position: relative; }
 .board {
-  height: clamp(320px, calc(100vh - 380px), 720px);
+  height: clamp(420px, calc(100vh - 300px), 860px);
   border-radius: 18px 18px 18px 4px;
   overflow: hidden;
-  background: #07090c;
+  background: #1b1433;
 }
 /* On a narrow screen the board fits the width, so a tall frame is only empty table */
-@media (max-width: 700px) { .board { height: auto; aspect-ratio: 3 / 2; } }
+@media (max-width: 700px) { .board { height: auto; aspect-ratio: 4 / 5; } }
 .board :deep(canvas) { display: block; width: 100%; height: 100%; cursor: grab; }
 .no-webgl { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 24px; text-align: center; }
 .overlay {
