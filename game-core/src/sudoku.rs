@@ -686,11 +686,108 @@ pub struct StepResult {
     pub filled: Vec<usize>,
 }
 
+/// The most numbers a trial may follow before it has to reach a contradiction
+pub const TRIAL_STEPS: usize = 8;
+
+fn cell_name(i: usize) -> String {
+    format!("row {}, column {}", row(i) + 1, col(i) + 1)
+}
+
+/// What has gone wrong on this board, if anything: a cell without options, or a number
+/// that no longer fits anywhere in a row, column or box. Also gives the cells to show.
+fn contradiction(s: &State) -> Option<(String, Vec<usize>)> {
+    if let Some(i) = (0..81).find(|&i| s.grid[i] == 0 && s.cand[i] == 0) {
+        let text = format!("the cell in {} has no number left", cell_name(i));
+        return Some((text, vec![i]));
+    }
+    for (k, unit) in units().iter().enumerate() {
+        for n in 1..=9u8 {
+            if unit
+                .iter()
+                .all(|&i| s.grid[i] != n && s.cand[i] & (1 << n) == 0)
+            {
+                let text = format!("the {n} no longer fits anywhere in {}", unit_name(k));
+                return Some((text, unit.to_vec()));
+            }
+        }
+    }
+    None
+}
+
+/// When the techniques run out: assume the wrong one of a cell's two options and follow
+/// the singles. Returns the cell whose wrong option leads to a contradiction soonest.
+fn trial(grid: &Grid, options: &Masks, solution: &Grid) -> Option<(usize, Found)> {
+    let mut best: Option<(usize, usize, Found)> = None; // numbers followed, cell, explanation
+    for cell in (0..81).filter(|&i| grid[i] == 0 && bit_count(options[i]) == 2) {
+        let (right, both) = (solution[cell], digits_of(options[cell]));
+        let wrong = if both[0] == right { both[1] } else { both[0] };
+        let mut s = State {
+            grid: *grid,
+            cand: *options,
+        };
+        place(&mut s, cell, wrong);
+        let mut forced: Vec<usize> = Vec::new();
+        let ending = loop {
+            if let Some(found) = contradiction(&s) {
+                break Some(found);
+            }
+            let before = s.grid;
+            if forced.len() == TRIAL_STEPS
+                || naked_single(&mut s)
+                    .or_else(|| hidden_single(&mut s))
+                    .is_none()
+            {
+                break None;
+            }
+            forced.push((0..81).find(|&i| s.grid[i] != before[i]).expect("placed"));
+        };
+        let Some((what, cells)) = ending else {
+            continue;
+        };
+        if best.as_ref().is_some_and(|(len, ..)| *len <= forced.len()) {
+            continue;
+        }
+        let chain: Vec<String> = forced
+            .iter()
+            .map(|&i| format!("a {} ({})", s.grid[i], cell_name(i)))
+            .collect();
+        let reasoning = if chain.is_empty() {
+            format!("then {what}")
+        } else {
+            format!("that forces {}, and then {what}", chain.join(", then "))
+        };
+        let mut pattern: Vec<usize> = [cell]
+            .into_iter()
+            .chain(forced.clone())
+            .chain(cells)
+            .collect();
+        pattern.sort();
+        pattern.dedup();
+        let found = Found {
+            name: "Trial".into(),
+            text: format!(
+                "No technique gets further here, so try something. This cell is a {} or a {}. \
+                 Suppose it's a {wrong}: {reasoning}. So it can't be a {wrong}; it's a {right}.",
+                both[0], both[1]
+            ),
+            pattern,
+            looks_at: [0; 81],
+        };
+        best = Some((forced.len(), cell, found));
+    }
+    best.map(|(_, cell, found)| (cell, found))
+}
+
 /// One number filled in, explained. The solver works out the options itself and applies
 /// the easiest techniques until a cell has one number left, then keeps only the
 /// techniques that number needed. The player's notes only lose what those ruled out.
 /// Changes `values` and `notes` in place.
-pub fn solver_step(values: &mut Grid, notes: &mut Masks, solution: &Grid) -> StepResult {
+pub fn solver_step(
+    values: &mut Grid,
+    notes: &mut Masks,
+    solution: &Grid,
+    selected: Option<usize>,
+) -> StepResult {
     let result = |label: &str, text: String, filled: Vec<usize>, counts: bool| StepResult {
         label: label.into(),
         text,
@@ -701,8 +798,10 @@ pub fn solver_step(values: &mut Grid, notes: &mut Masks, solution: &Grid) -> Ste
         filled,
     };
 
-    // A wrong number would make every deduction after it wrong, so fix that first
-    if let Some(w) = (0..81).find(|&i| values[i] != 0 && values[i] != solution[i]) {
+    // A wrong number would make every deduction after it wrong, so fix that first: the
+    // selected one if it is wrong
+    let wrong = |i: &usize| values[*i] != 0 && values[*i] != solution[*i];
+    if let Some(w) = selected.filter(wrong).or_else(|| (0..81).find(wrong)) {
         let before = *notes;
         values[w] = solution[w];
         notes[w] = 0;
@@ -776,26 +875,31 @@ pub fn solver_step(values: &mut Grid, notes: &mut Masks, solution: &Grid) -> Ste
         }
         None => {
             used.clear();
-            let cell = (0..81)
-                .filter(|&i| values[i] == 0)
-                .reduce(|a, b| {
-                    if bit_count(options[b]) < bit_count(options[a]) {
-                        b
-                    } else {
-                        a
-                    }
-                })
-                .expect("a cell is still empty here");
-            let n = solution[cell];
-            let found = Found {
-                name: "No technique".into(),
-                text: format!(
-                    "No technique applies here; it takes chains or trial and error. This cell is a {n}."
-                ),
-                pattern: Vec::new(),
-                looks_at: [0; 81],
-            };
-            (cell, n, found)
+            if let Some((cell, found)) = trial(values, &options, solution) {
+                (cell, solution[cell], found)
+            } else {
+                let cell = (0..81)
+                    .filter(|&i| values[i] == 0)
+                    .reduce(|a, b| {
+                        if bit_count(options[b]) < bit_count(options[a]) {
+                            b
+                        } else {
+                            a
+                        }
+                    })
+                    .expect("a cell is still empty here");
+                let n = solution[cell];
+                let found = Found {
+                    name: "No technique".into(),
+                    text: format!(
+                        "No technique gets further here, and trying doesn't lead to a short \
+                     contradiction. This cell is a {n}."
+                    ),
+                    pattern: Vec::new(),
+                    looks_at: [0; 81],
+                };
+                (cell, n, found)
+            }
         }
     };
 
@@ -1225,10 +1329,23 @@ mod tests {
         values[1] = solution[1] % 9 + 1;
         let mut notes = candidate_masks(&hard());
         let before = notes;
-        let step = solver_step(&mut values, &mut notes, &solution);
+        let step = solver_step(&mut values, &mut notes, &solution, None);
         assert_eq!(step.label, "fix");
         assert!((0..81).all(|i| step.removed[i] == before[i] & !notes[i]));
         assert!(step.removed.iter().any(|&m| m == 1 << solution[1]));
+    }
+
+    #[test]
+    fn requirement_7_corrects_the_selected_wrong_number_first() {
+        let solution = solved(&hard());
+        let mut values = hard();
+        values[1] = solution[1] % 9 + 1;
+        values[2] = solution[2] % 9 + 1;
+        let step = solver_step(&mut values, &mut [0; 81], &solution, Some(2));
+        assert_eq!((step.label.as_str(), step.filled), ("fix", vec![2]));
+        // An empty or correct selected cell doesn't change which one comes first
+        let step = solver_step(&mut values, &mut [0; 81], &solution, Some(3));
+        assert_eq!(step.filled, vec![1]);
     }
 
     #[test]
@@ -1236,7 +1353,7 @@ mod tests {
         let solution = solved(&hard());
         let mut values = hard();
         values[1] = solution[1] % 9 + 1;
-        let step = solver_step(&mut values, &mut [0; 81], &solution);
+        let step = solver_step(&mut values, &mut [0; 81], &solution, None);
         assert_eq!(
             (step.label.as_str(), step.targets, step.filled, step.counts),
             ("fix", vec![1], vec![1], true)
@@ -1249,7 +1366,7 @@ mod tests {
         let solution = solved(&hard());
         let mut values = hard();
         let mut notes = [0; 81];
-        let step = solver_step(&mut values, &mut notes, &solution);
+        let step = solver_step(&mut values, &mut notes, &solution, None);
         assert_eq!((step.filled.len(), step.counts), (1, true));
         let i = step.filled[0];
         assert_eq!((step.targets, values[i]), (vec![i], solution[i]));
@@ -1263,7 +1380,7 @@ mod tests {
         values[40] = 0;
         let mut notes = [0; 81];
         notes[40] = 1 << solution[40];
-        let step = solver_step(&mut values, &mut notes, &solution);
+        let step = solver_step(&mut values, &mut notes, &solution, None);
         assert_eq!(
             (step.label.as_str(), step.filled, step.counts),
             ("naked single", vec![40], true)
@@ -1279,7 +1396,7 @@ mod tests {
         let mut saw_elimination = false;
         while values.contains(&0) {
             let before = notes;
-            let step = solver_step(&mut values, &mut notes, &solution);
+            let step = solver_step(&mut values, &mut notes, &solution, None);
             let [i] = step.filled[..] else {
                 panic!("one number per step")
             };
@@ -1309,9 +1426,9 @@ mod tests {
         let g = attempt(7, &mut Rng::new(15)).unwrap();
         let mut values = g.puzzle;
         for _ in 0..16 {
-            solver_step(&mut values, &mut [0; 81], &g.solution);
+            solver_step(&mut values, &mut [0; 81], &g.solution, None);
         }
-        let step = solver_step(&mut values, &mut [0; 81], &g.solution);
+        let step = solver_step(&mut values, &mut [0; 81], &g.solution, None);
         assert_eq!(
             step.label,
             "box-line reduction, then xy-wing, then naked single"
@@ -1326,8 +1443,56 @@ mod tests {
             "530400000180000054294580000465000030973805402821340509712650043649100005358024000",
         );
         let solution = solved(&values);
-        let step = solver_step(&mut values, &mut [0; 81], &solution);
+        let step = solver_step(&mut values, &mut [0; 81], &solution, None);
         assert_eq!(step.label, "hidden pair, then hidden single");
+    }
+
+    #[test]
+    fn requirement_7_when_the_techniques_run_out_it_tries_a_cell_with_two_options() {
+        let solution = solved(&hard());
+        let mut values = hard();
+        for _ in 0..81 {
+            let before = values;
+            let step = solver_step(&mut values, &mut [0; 81], &solution, None);
+            if step.label != "trial" {
+                continue;
+            }
+            let i = step.filled[0];
+            let options = candidate_masks(&before);
+            assert_eq!((bit_count(options[i]), values[i]), (2, solution[i]));
+            let wrong = digits_of(options[i] & !(1 << solution[i]))[0];
+            assert!(step.text.contains(&format!("Suppose it's a {wrong}:")));
+            assert!(step.text.ends_with(&format!("it's a {}.", solution[i])));
+            assert!(step.pattern.contains(&i));
+            // Following the wrong number with singles really goes wrong within the limit
+            let mut s = State {
+                grid: before,
+                cand: options,
+            };
+            place(&mut s, i, wrong);
+            for _ in 0..TRIAL_STEPS {
+                if contradiction(&s).is_some() {
+                    break;
+                }
+                naked_single(&mut s).or_else(|| hidden_single(&mut s));
+            }
+            assert!(contradiction(&s).is_some());
+            return;
+        }
+        panic!("no step had to try a cell");
+    }
+
+    #[test]
+    fn requirement_7_a_trial_says_when_a_cell_runs_out_of_numbers() {
+        // Assuming the 2 here leaves no number at all for a cell in the same row
+        let mut s = open_state();
+        s.cand[1] = bits(&[2]);
+        place(&mut s, 0, 2);
+        let (text, cells) = contradiction(&s).unwrap();
+        assert_eq!(
+            (text.as_str(), cells),
+            ("the cell in row 1, column 2 has no number left", vec![1])
+        );
     }
 
     #[test]
@@ -1336,8 +1501,12 @@ mod tests {
         let mut values = hard();
         for _ in 0..81 {
             let options = candidate_masks(&values);
-            let step = solver_step(&mut values, &mut [0; 81], &solution);
+            let step = solver_step(&mut values, &mut [0; 81], &solution, None);
             if step.label == "no technique" {
+                assert!(
+                    step.text
+                        .contains("trying doesn't lead to a short contradiction")
+                );
                 let fewest = (0..81)
                     .filter(|&i| options[i] != 0)
                     .map(|i| bit_count(options[i]))
@@ -1359,15 +1528,15 @@ mod tests {
             if !values.contains(&0) {
                 break;
             }
-            let step = solver_step(&mut values, &mut notes, &solution);
+            let step = solver_step(&mut values, &mut notes, &solution, None);
             labels.push(step.label);
             assert!((0..81).all(|i| values[i] == 0 || values[i] == solution[i]));
         }
         assert_eq!(values, solution);
         // On this puzzle the techniques run out, so it also has to fall back
-        assert!(labels.iter().any(|l| l.ends_with("no technique")));
+        assert!(labels.iter().any(|l| l == "trial"));
         // Once solved, a step does nothing
-        let step = solver_step(&mut values, &mut notes, &solution);
+        let step = solver_step(&mut values, &mut notes, &solution, None);
         assert_eq!((step.label.as_str(), step.counts), ("done", false));
     }
 }

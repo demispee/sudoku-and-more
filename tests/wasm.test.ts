@@ -31,7 +31,7 @@ describe("sudoku through WebAssembly", () => {
 
   test("takes and returns typed arrays", () => {
     const { puzzle, solution } = puzzleFor(1, 7);
-    const step = solverStep(puzzle, new Uint16Array(81), solution);
+    const step = solverStep(puzzle, new Uint16Array(81), solution, -1);
     expect(step.counts).toBe(true);
     expect(step.notes).toBeInstanceOf(Uint16Array);
     expect(step.values).toBeInstanceOf(Uint8Array);

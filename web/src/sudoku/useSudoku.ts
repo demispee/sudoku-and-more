@@ -248,7 +248,8 @@ export function useSudoku(store: Store = localStorage) {
   function takeStep() {
     if (locked.value) return stopAutoSolve();
     clearMarks();
-    const result = solverStep(Uint8Array.from(values.value), Uint16Array.from(notes.value), Uint8Array.from(solution.value));
+    const result = solverStep(
+      Uint8Array.from(values.value), Uint16Array.from(notes.value), Uint8Array.from(solution.value), selected.value ?? -1);
     values.value = Array.from(result.values);
     notes.value = Array.from(result.notes);
     result.filled.forEach(i => hinted.value.add(i));
