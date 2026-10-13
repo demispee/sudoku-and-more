@@ -558,17 +558,15 @@ pub struct JsMastermind(mastermind::Game);
 
 #[wasm_bindgen(js_class = Mastermind)]
 impl JsMastermind {
+    /// A new game of a level: 0 classic, 1 hard (see `mastermindLevels`)
     #[wasm_bindgen(constructor)]
-    pub fn new(seed: u32) -> JsMastermind {
-        JsMastermind(mastermind::Game::new(seed))
+    pub fn new(seed: u32, level: u8) -> JsMastermind {
+        JsMastermind(mastermind::Game::new(seed, level as usize))
     }
 
-    /// Checks a row of 4 colours (0–5); gives [black, white], or nothing when the row
-    /// can't be checked
+    /// Checks a full row of colours; gives [black, white], or nothing when the row can't
+    /// be checked
     pub fn check(&mut self, guess: &[u8]) -> Vec<u8> {
-        let Ok(guess) = guess.try_into() else {
-            return Vec::new();
-        };
         self.0
             .check(guess)
             .map_or(Vec::new(), |(black, white)| vec![black, white])
@@ -590,19 +588,23 @@ impl JsMastermind {
         if self.0.status == mastermind::Status::Playing {
             Vec::new()
         } else {
-            self.0.code.to_vec()
+            self.0.code.clone()
         }
     }
 }
 
-/// Holes per row, colours and rows
-#[wasm_bindgen(js_name = mastermindShape)]
-pub fn mastermind_shape() -> Vec<u8> {
-    vec![
-        mastermind::HOLES as u8,
-        mastermind::COLOURS,
-        mastermind::ROWS as u8,
-    ]
+/// Holes and colours of every level, one pair after the other
+#[wasm_bindgen(js_name = mastermindLevels)]
+pub fn mastermind_levels() -> Vec<u8> {
+    mastermind::LEVELS
+        .iter()
+        .flat_map(|&(holes, colours)| [holes as u8, colours])
+        .collect()
+}
+
+#[wasm_bindgen(js_name = mastermindRows)]
+pub fn mastermind_rows() -> u8 {
+    mastermind::ROWS as u8
 }
 
 #[cfg(test)]
@@ -749,21 +751,25 @@ mod tests {
 
     #[test]
     fn mastermind_bridge() {
-        assert_eq!(mastermind_shape(), vec![4, 6, 10]);
-        let mut game = JsMastermind::new(5);
-        let code = game.0.code;
+        assert_eq!(
+            (mastermind_levels(), mastermind_rows()),
+            (vec![4, 6, 5, 8], 10)
+        );
+        let mut game = JsMastermind::new(5, 0);
+        let code = game.0.code.clone();
         assert!(game.code().is_empty());
         assert!(game.check(&[0, 1, 2]).is_empty());
-        let wrong = code.map(|p| (p + 1) % 6);
+        let wrong: Vec<u8> = code.iter().map(|p| (p + 1) % 6).collect();
         assert_eq!(game.check(&wrong)[0], 0);
         assert_eq!(game.status(), "playing");
         assert_eq!(game.check(&code), vec![4, 0]);
-        assert_eq!((game.status(), game.code()), ("won".into(), code.to_vec()));
-        let mut lost = JsMastermind::new(5);
+        assert_eq!((game.status(), game.code()), ("won".into(), code));
+        let mut lost = JsMastermind::new(5, 0);
         for _ in 0..10 {
             lost.check(&wrong);
         }
         assert_eq!(lost.status(), "lost");
+        assert_eq!(JsMastermind::new(5, 1).0.code.len(), 5);
     }
 
     #[test]

@@ -4,7 +4,7 @@
 // @vitest-environment jsdom
 import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import type { BoardEvents, BoardState } from "../web/src/mastermind/scene";
+import type { BoardEvents, BoardState, Level } from "../web/src/mastermind/scene";
 import type { MastermindGame } from "../web/src/mastermind/useMastermind";
 import MastermindPage from "../web/src/pages/MastermindPage.vue";
 import { seedRandom } from "./helpers";
@@ -14,14 +14,15 @@ const board = vi.hoisted(() => ({
   fail: false,
   events: null as BoardEvents | null,
   last: null as BoardState | null,
+  level: null as Level | null,
   disposed: 0,
 }));
 
 vi.mock("../web/src/mastermind/scene", () => ({
-  PEG_COLOURS: ["#c8102e", "#f0661a", "#f4c20d", "#1d9a3d", "#1652c4", "#6a2ca0"],
-  createBoard: (_: HTMLElement, events: BoardEvents) => {
+  createBoard: (_: HTMLElement, events: BoardEvents, level: Level) => {
     if (board.fail) throw new Error("no WebGL");
     board.events = events;
+    board.level = level;
     return { update: (s: BoardState) => (board.last = s), dispose: () => board.disposed++ };
   },
 }));
@@ -51,21 +52,21 @@ const press = async (key: string, init: KeyboardEventInit = {}) => {
 };
 
 describe("Requirement 2: placing pegs", () => {
-  test("clicks on the board and keys place pegs; the board is told", async () => {
+  test("colours on the board, the buttons and keys place pegs; a clicked peg comes out", async () => {
     board.events!.colour(4);
-    board.events!.hole(1);
     await page.vm.$nextTick();
-    expect(board.last).toMatchObject({ current: 0, selected: 4, code: null });
-    expect(board.last!.rows[0]!.pegs).toEqual([null, 4, null, null]);
+    expect(board.last).toMatchObject({ current: 0, code: null, hop: { colour: 4, count: 1 } });
+    expect(board.last!.rows[0]!.pegs).toEqual([4, null, null, null]);
     await press("1");
-    await press("7"); // not a colour
+    await press("7"); // not a colour on classic
     await press("2", { metaKey: true });
     await press("3", { repeat: true });
-    expect(game.rows.value[0]!.pegs).toEqual([0, 4, null, null]);
-    await press("Backspace");
-    expect(game.rows.value[0]!.pegs).toEqual([null, 4, null, null]);
     await page.findAll(".colour")[5]!.trigger("click");
-    expect(page.find(".colour.on").attributes("aria-label")).toBe("purple");
+    expect(game.rows.value[0]!.pegs).toEqual([4, 0, 5, null]);
+    board.events!.hole(1);
+    await press("Backspace");
+    expect(game.rows.value[0]!.pegs).toEqual([4, null, null, null]);
+    expect(page.findAll(".colour")).toHaveLength(6);
   });
 
   test("check only works for a full row", async () => {
@@ -77,6 +78,28 @@ describe("Requirement 2: placing pegs", () => {
     await page.find(".check").trigger("click");
     expect(page.find(".row").text()).toBe("2");
     expect(board.last!.rows[0]!.answer).not.toBeNull();
+  });
+});
+
+describe("Requirement 8 and 9: levels and palettes", () => {
+  test("hard gets a new board with 5 holes and 8 colours, and the keys up to 8", async () => {
+    expect(board.level).toEqual({ holes: 4, colours: 6 });
+    const before = board.disposed;
+    await page.findAll(".level")[1]!.trigger("click");
+    await page.vm.$nextTick();
+    expect([board.level, board.disposed]).toEqual([{ holes: 5, colours: 8 }, before + 1]);
+    expect(page.find(".level.on").text()).toBe("hard");
+    await press("8");
+    expect(board.last!.rows[0]!.pegs).toEqual([7, null, null, null, null]);
+    expect(page.findAll(".colour")).toHaveLength(8);
+  });
+
+  test("the colours button changes the palette of the board and the buttons", async () => {
+    const vivid = board.last!.colours[0];
+    await page.find(".palette").trigger("click");
+    expect(page.find(".palette").text()).toBe("colours \\ warm");
+    expect(board.last!.colours[0]).not.toBe(vivid);
+    expect(page.find(".colour .dot").attributes("style")).toContain("background");
   });
 });
 

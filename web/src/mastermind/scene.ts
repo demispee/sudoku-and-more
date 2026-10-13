@@ -19,10 +19,17 @@ export interface BoardState {
   rows: { pegs: (number | null)[]; answer: [number, number] | null }[];
   /** The open row */
   current: number;
-  /** The colour chosen in the tray */
-  selected: number;
   /** The secret code, once the game is over */
   code: number[] | null;
+  /** The colour of every peg colour, from the palette */
+  colours: string[];
+  /** The last colour placed, counted, so the tray ball can hop at every click */
+  hop: { colour: number; count: number } | null;
+}
+
+export interface Level {
+  holes: number;
+  colours: number;
 }
 
 export interface BoardEvents {
@@ -35,20 +42,13 @@ export interface Board {
   dispose(): void;
 }
 
-/** Red, orange, yellow, green, blue, purple */
-export const PEG_COLOURS = ["#ff2d55", "#ff8a1f", "#ffd21f", "#00d68f", "#2f6bff", "#a54dff"];
-
 // Sizes in cm. The player looks from the bottom edge: row 1 is nearest (large z), the
-// code is at the far end, and the holes of a row run along x.
-const W = 12.4;
+// code is at the far end, and the holes of a row run along x. The width follows the level.
 const D = 27;
 const MID_Z = -0.5; // the board's centre
 const TOP = 1.3; // the board's top, above the bottom of the board
-const HOLE_X = [-4.2, -2.4, -0.6, 1.2];
 const rowZ = (r: number) => 7.6 - r * 1.9;
 const CODE_Z = -12.4;
-const ANSWER = [[3.2, -0.4], [4.0, -0.4], [3.2, 0.4], [4.0, 0.4]] as const; // x, dz
-const wellX = (c: number) => -5 + c * 2;
 const WELL_Z = 11.2;
 const FLOAT = 2.4; // how high the board hangs above the floor
 const PEG_R = 0.62;
@@ -98,7 +98,7 @@ function backdrop() {
 }
 
 /** A soft-touch graphite surface with the row numbers printed on it */
-function graphite() {
+function graphite(W: number, numberX: number) {
   const pw = 1024;
   const ph = Math.round((pw * D) / W);
   const colour = document.createElement("canvas");
@@ -114,9 +114,9 @@ function graphite() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#6f7686";
-  for (let r = 0; r < 10; r++) ctx.fillText(String(r + 1), px(-5.45), py(rowZ(r)));
+  for (let r = 0; r < 10; r++) ctx.fillText(String(r + 1), px(numberX), py(rowZ(r)));
   ctx.fillStyle = "#8a92a6";
-  ctx.fillRect(px(-5.2), py(-10.9) - 1.5, px(5.2) - px(-5.2), 3); // a line before the code
+  ctx.fillRect(px(-W / 2 + 1), py(-10.9) - 1.5, px(W / 2 - 1) - px(-W / 2 + 1), 3); // a line before the code
   // A fine grain for the bump map, so the surface catches the light like soft plastic
   const h = height.getContext("2d")!;
   const grain = h.createImageData(pw, ph);
@@ -140,8 +140,34 @@ function spring(s: Spring, goal: number, dt: number, stiffness: number, damping:
   s.x += s.v * dt;
 }
 
-export function createBoard(container: HTMLElement, events: BoardEvents): Board {
+/** Where everything goes for a level: the holes, the answer pegs and the tray */
+function layout({ holes, colours }: Level) {
+  const holeX = Array.from({ length: holes }, (_, i) => i * 1.8);
+  const cols = Math.ceil(holes / 2);
+  const last = holeX[holes - 1]!;
+  const answer = Array.from({ length: holes }, (_, k) => {
+    const back = k < cols;
+    return [last + 1.95 + (back ? k : k - cols) * 0.78, back ? -0.4 : 0.4] as const; // x, dz
+  });
+  const right = answer[cols - 1]![0] + 1.6;
+  const left = holeX[0]! - 2.0;
+  const W = right - left;
+  const shift = -(left + right) / 2; // centre the board on x = 0
+  const spacing = Math.min(2, (W - 2.6) / (colours - 1));
+  return {
+    W,
+    holeX: holeX.map(x => x + shift),
+    answer: answer.map(([x, dz]) => [x + shift, dz] as const),
+    wellX: (c: number) => (c - (colours - 1) / 2) * spacing,
+    numberX: left + shift + 0.75,
+    codeX: (holeX[0]! + last) / 2 + shift,
+    lidW: last - holeX[0]! + 2.2,
+  };
+}
+
+export function createBoard(container: HTMLElement, events: BoardEvents, level: Level): Board {
   if (!document.createElement("canvas").getContext("webgl2")) throw new Error("no WebGL");
+  const { W, holeX: HOLE_X, answer: ANSWER, wellX, numberX, codeX, lidW } = layout(level);
   const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
   const renderer = new WebGLRenderer({ antialias: true });
@@ -202,7 +228,7 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
   rig.position.set(0, FLOAT, 0);
   scene.add(rig);
 
-  const surface = graphite();
+  const surface = graphite(W, numberX);
   const map = texture(surface.colour, true);
   const bumpMap = texture(surface.height, false);
   for (const t of [map, bumpMap]) {
@@ -226,7 +252,7 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
     for (const [x, dz] of ANSWER) hole(x, rowZ(r) + dz, 0.17);
   }
   for (const x of HOLE_X) hole(x, CODE_Z, 0.42);
-  for (let c = 0; c < 6; c++) hole(wellX(c), WELL_Z, 0.55);
+  for (let c = 0; c < level.colours; c++) hole(wellX(c), WELL_Z, 0.55);
   const bodyGeometry = new ExtrudeGeometry(outline, {
     depth: 0.8, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 4, curveSegments: 24,
   });
@@ -248,16 +274,16 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
   rig.add(body, plate, floor);
 
   // The shield over the code, on a hinge at the far edge
-  const lidGeometry = new ExtrudeGeometry(roundedRect(0, 0, 7.6, 2.9, 0.6), {
+  const lidGeometry = new ExtrudeGeometry(roundedRect(0, 0, lidW, 2.9, 0.6), {
     depth: 1.1, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 4,
   });
   lidGeometry.rotateX(-Math.PI / 2);
   const hinge = new Group();
-  hinge.position.set(-1.5, TOP + 1.3, CODE_Z - 1.55);
+  hinge.position.set(codeX, TOP + 1.3, CODE_Z - 1.55);
   const lid = new Mesh(lidGeometry, soft);
   lid.position.set(0, -1.2, 1.55);
   lid.castShadow = lid.receiveShadow = true;
-  const pin = new Mesh(new CylinderGeometry(0.16, 0.16, 7.2, 24), metal);
+  const pin = new Mesh(new CylinderGeometry(0.16, 0.16, lidW - 0.4, 24), metal);
   pin.rotation.z = Math.PI / 2;
   hinge.add(lid, pin);
   rig.add(hinge);
@@ -279,7 +305,7 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
   const candy = (color: string) => new MeshPhysicalMaterial({
     color, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05, iridescence: 0.4, iridescenceIOR: 1.3,
   });
-  const pegMaterials = PEG_COLOURS.map(candy);
+  const pegMaterials = Array.from({ length: level.colours }, () => candy("#ffffff"));
   const answerMaterials = [
     new MeshPhysicalMaterial({ color: "#0a0a0f", roughness: 0.1, clearcoat: 1, clearcoatRoughness: 0.04 }),
     new MeshPhysicalMaterial({ color: "#e4dff0", roughness: 0.22, clearcoat: 1, iridescence: 0.7, iridescenceIOR: 1.4 }),
@@ -290,7 +316,7 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
     return m;
   };
 
-  // The tray: a ball in each well; the chosen one floats up
+  // The tray: a ball in each well
   const targets: Object3D[] = [];
   const hidden = new MeshBasicMaterial({ visible: false });
   const wellBalls = pegMaterials.map((material, c) => {
@@ -337,7 +363,7 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     const tanV = Math.tan((camera.fov * Math.PI) / 360);
-    const distance = Math.max(8.6 / (tanV * camera.aspect), 15.5 / tanV);
+    const distance = Math.max((W / 2 + 2.4) / (tanV * camera.aspect), 15.5 / tanV);
     camera.position.set(LOOK.x, LOOK.y + distance * Math.cos(TILT), LOOK.z + distance * Math.sin(TILT));
     camera.lookAt(LOOK.x, LOOK.y, LOOK.z);
   }
@@ -358,6 +384,8 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
   const pops = new Map<Mesh, number>(); // answer peg → when it pops up
   const jumps = new Map<Mesh, number>(); // peg → when its jumps start
   let clock = 0;
+  let hopCount = 0;
+  const hops = new Map<Mesh, number>(); // tray ball → when its hop started
   let won = false;
   const shield: Spring = { x: 0, v: 0 };
   // The board's springs: turn and tilt from dragging; dip and lean from a landing peg
@@ -427,7 +455,12 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
         });
       }
     }
-    wellBalls.forEach((b, c) => (b.userData.chosen = c === next.selected));
+    next.colours.forEach((colour, c) => pegMaterials[c]?.color.set(colour));
+    if (next.hop && next.hop.count !== hopCount) {
+      hopCount = next.hop.count;
+      const b = wellBalls[next.hop.colour];
+      if (b) hops.set(b, clock);
+    }
   }
 
   // ---------- Pointer ----------
@@ -561,15 +594,16 @@ export function createBoard(container: HTMLElement, events: BoardEvents): Board 
     else spring(shield, open, dt, 9, 6);
     hinge.rotation.x = -shield.x * 1.95;
 
-    // The open row is lit; the chosen ball floats above its well
+    // The open row is lit; a tray ball hops when its colour is placed
     rings.forEach(ring => {
       ring.visible = !!state && !state.code;
       ring.position.z += (rowZ(state?.current ?? 0) - ring.position.z) * Math.min(1, dt * 10);
     });
     glow.opacity = 0.65 + 0.35 * Math.sin(clock * 3);
-    for (const b of wellBalls) {
-      const lift = b.userData.chosen ? 1.5 + (still ? 0 : 0.15 * Math.sin(clock * 2.4)) : 0;
-      b.position.y += (WELL_Y + lift - b.position.y) * Math.min(1, dt * 8);
+    for (const [b, start] of hops) {
+      const t = (clock - start) / 0.42;
+      b.position.y = WELL_Y + (t < 1 ? Math.sin(t * Math.PI) * 1.1 : 0);
+      if (t >= 1) hops.delete(b);
     }
 
     composer.render();
