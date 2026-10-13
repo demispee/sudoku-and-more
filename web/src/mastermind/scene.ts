@@ -22,6 +22,8 @@ export interface BoardState {
   current: number;
   /** The secret code, once the game is over */
   code: number[] | null;
+  /** Whether the code was broken, once the game is over (decided in Rust) */
+  won: boolean;
   /** The colour of every peg colour, from the palette */
   colours: string[];
   /** The palette's studio */
@@ -169,7 +171,9 @@ function layout({ holes, colours }: Level) {
 }
 
 export function createBoard(container: HTMLElement, events: BoardEvents, level: Level): Board {
-  if (!document.createElement("canvas").getContext("webgl2")) throw new Error("no WebGL");
+  const probe = document.createElement("canvas").getContext("webgl2");
+  if (!probe) throw new Error("no WebGL");
+  probe.getExtension("WEBGL_lose_context")?.loseContext(); // give the test context back
   const { W, holeX: HOLE_X, answer: ANSWER, wellX, numberX, codeX, lidW } = layout(level);
   const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
@@ -329,7 +333,10 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
   });
   const pegMaterials = Array.from({ length: level.colours }, () => candy("#ffffff"));
   const answerMaterials = [
-    new MeshPhysicalMaterial({ color: "#0a0a0f", roughness: 0.1, clearcoat: 1, clearcoatRoughness: 0.04 }),
+    // Black with a light sheen at its edge, so it stands out from an empty hole
+    new MeshPhysicalMaterial({
+      color: "#0a0a0f", roughness: 0.1, clearcoat: 1, clearcoatRoughness: 0.04, sheen: 1, sheenColor: "#9aa3b8",
+    }),
     new MeshPhysicalMaterial({ color: "#e4dff0", roughness: 0.22, clearcoat: 1, iridescence: 0.7, iridescenceIOR: 1.4 }),
   ];
   const peg = (material: Material, size = ball) => {
@@ -478,15 +485,12 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
       if (colour === undefined) remove(`c${h}`);
       else show(`c${h}`, pegMaterials[colour]!, x, PEG_Y, CODE_Z, "place");
     });
-    if (!next.code) won = false;
-    if (ended) {
+    won = !!next.code && next.won;
+    if (ended && won) {
       const r = next.rows.filter(row => row.answer).length - 1; // the last checked row
-      won = next.rows[r]?.answer?.[0] === 4;
-      if (won) {
-        HOLE_X.forEach((_, h) => {
-          for (const key of [`${r}:${h}`, `c${h}`]) jumps.set(placed.get(key)!, clock + 0.7 + h * 0.09);
-        });
-      }
+      HOLE_X.forEach((_, h) => {
+        for (const key of [`${r}:${h}`, `c${h}`]) jumps.set(placed.get(key)!, clock + 0.7 + h * 0.09);
+      });
     }
     next.colours.forEach((colour, c) => pegMaterials[c]?.color.set(colour));
     if (next.hop && next.hop.count !== hopCount) {
@@ -674,7 +678,9 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
     pmrem.dispose();
     bloom.dispose();
     composer.dispose();
+    key.shadow.dispose();
     renderer.dispose();
+    renderer.forceContextLoss(); // free the GPU at once, not when the page is garbage collected
     canvas.remove();
   }
 
