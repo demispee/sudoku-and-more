@@ -7,6 +7,7 @@
 pub mod balls;
 pub mod ministry;
 pub mod random;
+pub mod shy;
 pub mod spot;
 pub mod sudoku;
 
@@ -421,6 +422,63 @@ pub fn forms_per_day() -> u32 {
     ministry::FORMS_PER_DAY
 }
 
+// ---------- Shy squares ----------
+
+#[wasm_bindgen(js_name = ShyField)]
+pub struct JsShyField(shy::Field);
+
+#[wasm_bindgen(js_class = ShyField)]
+impl JsShyField {
+    #[wasm_bindgen(constructor)]
+    pub fn new(level: u32, seed: u32) -> JsShyField {
+        JsShyField(shy::Field::new(level, seed))
+    }
+
+    /// One frame; `on_field` is false when the cursor is not on the field
+    pub fn step(&mut self, x: f64, y: f64, on_field: bool) {
+        self.0.step(on_field.then_some((x, y)));
+    }
+
+    /// x, y and caught (1 or 0) for every square
+    pub fn squares(&self) -> Vec<f64> {
+        self.0
+            .squares
+            .iter()
+            .flat_map(|s| [s.x, s.y, s.caught as u8 as f64])
+            .collect()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn count(&self) -> u32 {
+        self.0.squares.len() as u32
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn caught(&self) -> u32 {
+        self.0.caught() as u32
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn done(&self) -> bool {
+        self.0.done()
+    }
+}
+
+/// The pen as left, top, right and bottom of its inside, the wall thickness, and half the
+/// side of a square
+#[wasm_bindgen(js_name = shyShapes)]
+pub fn shy_shapes() -> Vec<f64> {
+    let p = shy::PEN;
+    vec![
+        p.left,
+        p.top,
+        p.right,
+        p.bottom,
+        shy::WALLS[2].right - p.right,
+        shy::HALF,
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -549,5 +607,17 @@ mod tests {
         assert!(game.stamp(true).is_none());
         game.next_day();
         assert_eq!(game.day(), 1);
+    }
+
+    #[test]
+    fn shy_bridge() {
+        let mut field = JsShyField::new(1, 3);
+        assert_eq!((field.count(), field.caught(), field.done()), (6, 0, false));
+        let before = field.squares();
+        assert_eq!(before.len(), 18);
+        field.step(before[0] - 20.0, before[1], true);
+        assert_ne!(field.squares()[0], before[0]);
+        field.step(0.0, 0.0, false);
+        assert_eq!(shy_shapes(), vec![620.0, 200.0, 780.0, 400.0, 6.0, 12.0]);
     }
 }

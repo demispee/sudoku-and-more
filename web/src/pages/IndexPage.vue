@@ -14,6 +14,7 @@ const games: Game[] = [
   { href: "spot-the-difference.html", name: "Spot the difference", text: "From coral reefs to city skylines, each scene with hidden differences" },
   { href: "balls.html", name: "Bouncing balls", text: "Click to add balls and toggle gravity" },
   { href: "ministry.html", name: "The Ministry of Odd Forms", text: "Stamp absurd forms by a rulebook that gets stranger every day" },
+  { href: "shy-squares.html", name: "Shy squares", text: "Squares that are afraid of your cursor. Herd them into the pen" },
 ];
 </script>
 

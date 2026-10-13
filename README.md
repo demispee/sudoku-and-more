@@ -11,6 +11,7 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 | [`spot-the-difference.html`](web/spot-the-difference.html) | Spot the difference with scenes drawn in code |
 | [`balls.html`](web/balls.html) | Bouncing balls: click to add balls, toggle gravity |
 | [`ministry.html`](web/ministry.html) | The Ministry of Odd Forms: stamp absurd forms by a rulebook that grows every day |
+| [`shy-squares.html`](web/shy-squares.html) | Shy squares: herd squares that flee from your cursor into a pen |
 | [`index.html`](web/index.html) | Start page with links to the games |
 
 ## Running it
@@ -100,6 +101,13 @@ All artwork is drawn in code as SVG.
   fits decides; "do the opposite" rules turn the older ones around; no rule means approve.
 - A wrong stamp spills tea and tells you which rule you missed. Three times and you're
   fired.
+
+## Shy squares
+
+- Squares within 120 pixels of your mouse or finger run away from it; the closer you get,
+  the harder they run. Use that to drive them into the pen on the right.
+- Every level has 2 more squares (up to 20), and they get a little faster. `R` restarts
+  the level; the best time per level is kept in your browser.
 
 ## Specs
 
