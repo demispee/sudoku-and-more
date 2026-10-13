@@ -27,7 +27,7 @@ on purpose. See ADR-0004 and ADR-0005.
 | [004](specs/004-ministry-of-odd-forms/spec.md) | The Ministry of Odd Forms | Forms, a rulebook that grows every day, stamping, strikes |
 | [005](specs/005-shy-squares/spec.md) | Shy squares | Squares that flee the cursor, a pen, levels |
 | [006](specs/006-reverse-snake/spec.md) | Reverse snake | You are the apple; a snake that hunts and grows |
-| [007](specs/007-mastermind/spec.md) | Mastermind | Secret code, answer pegs, a realistic 3D board |
+| [007](specs/007-mastermind/spec.md) | Mastermind | Secret code, answer pegs, a modern 3D board that moves |
 
 ## ADRs
 

@@ -1,14 +1,14 @@
 ---
 domain: mastermind
-version: 1.1.0
+version: 2.0.0
 status: accepted
 date: 2026-10-13
 ---
 
 # 007 — Mastermind
 
-The classic code-breaking game, on a board that looks real: lacquered wood, glossy
-plastic pegs, light and shadows (ADR-0009).
+The classic code-breaking game, on a modern 3D board that looks real and moves a little:
+glossy pegs, light, shadows and a studio backdrop (ADR-0009).
 
 ---
 
@@ -95,15 +95,21 @@ rows it took (or that the code wasn't broken), and `again` (or Enter) starts a n
 
 ---
 
-### Requirement 5: A realistic board [MUST]
+### Requirement 5: A modern, realistic board [MUST]
 
-The board MUST be drawn in 3D with three.js (ADR-0009), and look like a real game on a
-table, not like a drawing:
+The board MUST be drawn in 3D with three.js (ADR-0009), and look like a real, modern
+object in a studio, not like a drawing:
 
-- a board of dark lacquered wood with a visible grain, 10 rows of round holes, small
-  holes for the answer pegs, and a hinged shield over the code;
-- glossy plastic pegs that reflect the light; a placed peg drops into its hole;
-- soft light from above with real shadows on the board and the table;
+- the player looks at the board from its bottom edge: row 1 is nearest, row 10 furthest
+  away, and the shield with the code at the far end. The 4 holes of a row, and the
+  colours of the peg tray in front of the board, MUST run from left to right;
+- a board of dark, soft-matte graphite with rounded edges and a thin polished rim;
+  10 rows of round holes, small holes for the answer pegs, and a thin light around the
+  holes of the open row;
+- glossy pegs in bright, deep colours with a slight pearly shine; pearl-white and
+  glossy black answer pegs;
+- a studio backdrop that curves from the floor into the wall, in a soft colour gradient,
+  with a key light that casts real shadows and coloured light from the sides;
 - the player MAY drag to tilt and turn the board a little, within limits, so it never
   ends up upside down.
 
@@ -112,14 +118,16 @@ browser has no WebGL, the page MUST say so instead of showing an empty board.
 
 **Implementation:** `web/src/mastermind/scene.ts`, `web/src/pages/MastermindPage.vue`
 
-#### Scenario: Turning the board
+#### Scenario: A row from left to right
 
-- GIVEN the board on the screen
-- WHEN the player drags it sideways
-- THEN it turns with the drag and stops at its limit
+- GIVEN a new game
+- WHEN the player types 1, 2, 3, 4
+- THEN the four pegs stand next to each other from left to right in the row nearest to
+  the player
 
-**Check:** by hand with `npm run dev`: the board looks like wood and plastic in light, not
-like a flat drawing; pegs drop into the holes; dragging turns it within its limits.
+**Check:** by hand with `npm run dev`: the board looks like a modern object in a studio,
+not like a flat drawing; row 1 is at the front; the open row is lit; dragging turns the
+board within its limits.
 
 **Tests:** `tests/mastermind-page.test.ts` (the message without WebGL; the board is
 disposed of when the page closes)
@@ -140,3 +148,31 @@ The fewest rows needed to break a code SHOULD be kept in the browser (`localStor
 - THEN the best becomes 4, and the overlay says it is the best yet
 
 **Tests:** `tests/use-mastermind.test.ts`
+
+---
+
+### Requirement 7: A board that moves [SHOULD]
+
+The board SHOULD feel alive, a little:
+
+- it floats and sways slowly, as if it hangs in the air;
+- the light follows the pointer a little, so the shine moves over the pegs;
+- after a drag it springs back to where it was, overshooting a little;
+- a peg drops into its hole with a bounce, and the board dips briefly under it;
+- the answer pegs of a checked row pop up one by one;
+- when the code is broken, the pegs of the winning row jump and the shield falls open;
+  when it isn't, the shield opens slowly.
+
+When the browser asks for less motion (`prefers-reduced-motion`), the board SHOULD stand
+still and only the pegs and the shield move.
+
+**Implementation:** `web/src/mastermind/scene.ts`
+
+#### Scenario: Letting go
+
+- GIVEN the player drags the board to its limit
+- WHEN they let go
+- THEN the board swings back past its resting place and settles there
+
+**Check:** by hand with `npm run dev`, also with "reduce motion" switched on in the
+operating system.
