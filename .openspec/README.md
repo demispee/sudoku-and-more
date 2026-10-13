@@ -21,7 +21,7 @@ on purpose. See ADR-0004 and ADR-0005.
 | # | Spec | Covers |
 |---|------|--------|
 | [000](specs/000-site/spec.md) | Site | Vue pages and Rust core, start page, back links, design system, build and hosting, dev server, tests and type checks, CI |
-| [001](specs/001-sudoku/spec.md) | Sudoku | Generator, difficulty 1–10, input, notes, hints, step solver |
+| [001](specs/001-sudoku/spec.md) | Sudoku | Generator, difficulty 1–10, input, notes, step solver, auto-solve |
 | [002](specs/002-spot-the-difference/spec.md) | Spot the difference | Scenes, rounds, clicks, penalties, records |
 | [003](specs/003-bouncing-balls/spec.md) | Bouncing balls | Physics, colors, controls |
 
