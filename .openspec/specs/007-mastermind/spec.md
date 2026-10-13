@@ -1,6 +1,6 @@
 ---
 domain: mastermind
-version: 3.0.0
+version: 3.1.0
 status: accepted
 date: 2026-10-13
 ---
@@ -212,7 +212,11 @@ visit starts with classic.
 The player SHOULD be able to change the colours of the pegs with a button: **vivid**
 (bright, the default), **warm**, **cool** and **tropical**. Every palette MUST have 8
 colours that are easy to tell apart, also in lightness, so the hard level stays fair.
-Changing the palette MUST only change how the pegs look, not the game. The choice SHOULD
+Each palette SHOULD also have its own studio: the colours of the backdrop and of the
+lights from the sides fit the palette (vivid purple with magenta and cyan, warm amber and
+terracotta, cool midnight blue and teal, tropical deep jungle green with lime and
+flamingo). Changing the palette MUST only change how the pegs and the studio look, not
+the game. The choice SHOULD
 be kept in the browser (`localStorage` key `mastermindPalette`).
 
 **Implementation:** `web/src/mastermind/palettes.ts`; `web/src/pages/MastermindPage.vue`;
@@ -222,8 +226,8 @@ be kept in the browser (`localStorage` key `mastermindPalette`).
 
 - GIVEN a game with 3 checked rows
 - WHEN the player switches the palette to warm
-- THEN every peg on the board and in the tray gets its warm colour, and the rows and
-  answer pegs stay the same
+- THEN every peg on the board and in the tray gets its warm colour, the studio turns
+  amber and terracotta, and the rows and answer pegs stay the same
 
 **Tests:** `tests/mastermind-palettes.test.ts` (every palette has 8 colours that differ
 enough in hue or lightness)
