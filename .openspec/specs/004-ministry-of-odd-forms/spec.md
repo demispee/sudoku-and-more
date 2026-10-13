@@ -1,6 +1,6 @@
 ---
 domain: ministry-of-odd-forms
-version: 1.0.0
+version: 1.1.0
 status: accepted
 date: 2026-10-13
 ---
@@ -107,7 +107,8 @@ MUST show the day, the forms stamped and the strikes.
 
 ### Requirement 5: Fired [MUST]
 
-After 3 strikes (over all days, not per day), the player MUST be fired: an overlay says
+After 3 strikes (over all days, not per day; a form that runs out of time counts too, see
+Requirement 7), the player MUST be fired: an overlay says
 how many days they lasted and how many forms they stamped right, and `reapply` (or Enter)
 starts a new game with a new seed.
 
@@ -128,3 +129,28 @@ The best result (most days, then most forms) SHOULD be kept in the browser
 (`localStorage` key `ministryBest`) and shown on the page.
 
 **Implementation:** `web/src/ministry/useMinistry.ts`
+
+---
+
+### Requirement 7: Time per form [MUST]
+
+Every form MUST have a time limit: 12 seconds on day 1, 1 second less every day, and never
+less than 5 seconds. A bar along the form MUST show the time left; in the last 3 seconds it
+MUST turn red. When the time runs out, the form MUST get an EXPIRED stamp, count as a
+strike, and the page MUST say "Too slow! The applicant left."; then the next form appears.
+The clock MUST stand still while the minister's memo is shown, after being fired, and
+while the page is hidden (another tab).
+
+**Implementation:** `game-core/src/ministry.rs` (the limit per day, a form that runs out);
+`web/src/ministry/useMinistry.ts` (the clock); `web/src/pages/MinistryPage.vue` (the bar)
+
+#### Scenario: Too slow
+
+- GIVEN day 1 and a new form
+- WHEN the player waits 12 seconds without stamping
+- THEN the form is stamped EXPIRED, the strikes go up by 1, and the next form appears
+
+#### Scenario: Less time every day
+
+- GIVEN day 4
+- THEN every form has 9 seconds; on day 8 and later, 5 seconds
