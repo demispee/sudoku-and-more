@@ -1,8 +1,8 @@
 ---
 domain: site
-version: 5.2.0
+version: 5.3.0
 status: accepted
-date: 2026-10-12
+date: 2026-10-13
 ---
 
 # 000 — Site
@@ -16,12 +16,13 @@ how they are tested and published.
 
 Every page MUST have a small entry file in `web/` (`index.html`, `sudoku.html`,
 `spot-the-difference.html`, `balls.html`, `ministry.html`, `shy-squares.html`,
-`reverse-snake.html`), so the addresses stay the same, and its
+`reverse-snake.html`, `mastermind.html`), so the addresses stay the same, and its
 interface MUST be Vue 3 components in TypeScript in `web/src/`. The components show state
 and send actions; the rules of each game MUST live in the Rust crate `game-core/`,
-compiled to WebAssembly, which does not touch the DOM. Pages MUST NOT load anything from
+compiled to WebAssembly, which does not touch the DOM. The only runtime packages are
+Vue and, for the Mastermind board, three.js (ADR-0009). Pages MUST NOT load anything from
 the internet. The only optional extra is the fonts folder (see Requirement 4). See
-ADR-0006 and ADR-0007.
+ADR-0006, ADR-0007 and ADR-0009.
 
 **Implementation:** `web/`, `game-core/`
 
