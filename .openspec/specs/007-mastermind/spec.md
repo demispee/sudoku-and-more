@@ -1,6 +1,6 @@
 ---
 domain: mastermind
-version: 2.0.0
+version: 2.1.0
 status: accepted
 date: 2026-10-13
 ---
@@ -33,13 +33,19 @@ is hidden under a shield at the end of the board until the game is over.
 ### Requirement 2: Placing pegs [MUST]
 
 The board MUST have 10 rows of 4 holes; the player fills the first open row. Clicking a
-colour in the peg tray and then a hole MUST place that colour there; clicking a filled
-hole of the open row MUST take its peg out again. The colours MAY also be chosen with
-buttons under the board. The keys 1–6 MUST place a colour in the first empty hole, and
-Backspace MUST take out the last peg placed. `check` (or Enter) MUST only work when all 4
-holes of the row are filled.
+colour, in the tray on the board or with the buttons under it, MUST put a peg of that
+colour in the first empty hole of the open row. Clicking a peg of the open row MUST take
+it out again, so the next colour fills that hole. The keys 1–6 MUST do the same as
+clicking a colour, and Backspace MUST take out the last peg placed. `check` (or Enter)
+MUST only work when all 4 holes of the row are filled.
 
 **Implementation:** `web/src/mastermind/useMastermind.ts`, `web/src/pages/MastermindPage.vue`
+
+#### Scenario: Fixing a mistake
+
+- GIVEN red, blue and green in the open row
+- WHEN the player clicks the blue peg, and then yellow
+- THEN the row is red, yellow, green and an empty hole
 
 #### Scenario: An unfinished row
 
@@ -159,6 +165,7 @@ The board SHOULD feel alive, a little:
 - the light follows the pointer a little, so the shine moves over the pegs;
 - after a drag it springs back to where it was, overshooting a little;
 - a peg drops into its hole with a bounce, and the board dips briefly under it;
+- a ball in the tray hops when its colour is clicked;
 - the answer pegs of a checked row pop up one by one;
 - when the code is broken, the pegs of the winning row jump and the shield falls open;
   when it isn't, the shield opens slowly.
