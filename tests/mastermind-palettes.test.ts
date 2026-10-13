@@ -29,6 +29,13 @@ describe("Requirement 9: colour palettes", () => {
     }
   });
 
+  test.each(PALETTES.map(p => [p.name, p.studio] as const))("%s has a studio with a dark floor", (_, studio) => {
+    for (const colour of Object.values(studio)) expect(colour).toMatch(/^#[0-9a-f]{6}$/);
+    // A dark floor and wall keep the pegs standing out
+    expect(oklab(studio.low)[0]).toBeLessThan(0.25);
+    expect(oklab(studio.high)[0]).toBeLessThan(0.5);
+  });
+
   test("the names are vivid, warm, cool and tropical; an unknown name gives vivid", () => {
     expect(PALETTES.map(p => p.name)).toEqual(["vivid", "warm", "cool", "tropical"]);
     expect(palette("disco").name).toBe("vivid");

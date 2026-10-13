@@ -5,6 +5,7 @@
 import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import type { BoardEvents, BoardState, Level } from "../web/src/mastermind/scene";
+import { PALETTES } from "../web/src/mastermind/palettes";
 import type { MastermindGame } from "../web/src/mastermind/useMastermind";
 import MastermindPage from "../web/src/pages/MastermindPage.vue";
 import { seedRandom } from "./helpers";
@@ -99,6 +100,8 @@ describe("Requirement 8 and 9: levels and palettes", () => {
     await page.find(".palette").trigger("click");
     expect(page.find(".palette").text()).toBe("colours \\ warm");
     expect(board.last!.colours[0]).not.toBe(vivid);
+    expect(board.last!.studio).toEqual(PALETTES[1]!.studio); // the studio turns warm too
+    expect(page.find(".board").attributes("style")).toContain("background");
     expect(page.find(".colour .dot").attributes("style")).toContain("background");
   });
 });
