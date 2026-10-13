@@ -3,7 +3,7 @@
 // compiled module loads and that values cross the bridge correctly.
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  SceneOrder, World, ballColors, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
+  Ministry, SceneOrder, World, ballColors, formsPerDay, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
   missPenalty, pickDifferences, recordKey, solverStep, totalTime,
 } from "../web/src/wasm";
 import { loadWasmForTests } from "./wasm-setup";
@@ -84,5 +84,19 @@ describe("bouncing balls through WebAssembly", () => {
     expect(world.count).toBe(0);
     expect(ballColors()).toHaveLength(8);
     world.free();
+  });
+});
+
+describe("the Ministry of Odd Forms through WebAssembly", () => {
+  test("gives the form as strings and the rulebook as a list, and stamps", () => {
+    const game = new Ministry(3);
+    expect([typeof game.name, typeof game.species, typeof game.hat, typeof game.number]).toEqual(["string", "string", "boolean", "number"]);
+    expect(game.rules()).toHaveLength(1);
+    const stamp = game.stamp(game.rightStamp())!;
+    expect([stamp.right, game.stamped, game.today]).toEqual([true, 1, 1]);
+    expect(stamp.rule).toBeLessThanOrEqual(1);
+    stamp.free();
+    expect(formsPerDay()).toBe(10);
+    game.free();
   });
 });

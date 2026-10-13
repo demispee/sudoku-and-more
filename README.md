@@ -1,6 +1,6 @@
 # sudoku-and-more
 
-Three small browser games. The game rules are written in Rust and compiled to
+Small browser games. The game rules are written in Rust and compiled to
 WebAssembly; the pages are Vue 3 components in TypeScript.
 
 **Play online:** <https://demispee.github.io/sudoku-and-more/>
@@ -10,7 +10,8 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 | [`sudoku.html`](web/sudoku.html) | Sudoku with difficulty levels 1 to 10, notes, and a solver that explains each number it fills in |
 | [`spot-the-difference.html`](web/spot-the-difference.html) | Spot the difference with scenes drawn in code |
 | [`balls.html`](web/balls.html) | Bouncing balls: click to add balls, toggle gravity |
-| [`index.html`](web/index.html) | Start page with links to the three games |
+| [`ministry.html`](web/ministry.html) | The Ministry of Odd Forms: stamp absurd forms by a rulebook that grows every day |
+| [`index.html`](web/index.html) | Start page with links to the games |
 
 ## Running it
 
@@ -90,6 +91,15 @@ picture is randomly on the left or the right.
 - **Records** are kept per scene and number of differences, in your browser.
 
 All artwork is drawn in code as SVG.
+
+## The Ministry of Odd Forms
+
+- Each form has an applicant with a name, a species, a hat or not, a favourite number, a
+  weekday and a doodle. Stamp it with `A` (approve) or `R` (reject).
+- You start with one rule and get a new one every day of 10 forms. The newest rule that
+  fits decides; "do the opposite" rules turn the older ones around; no rule means approve.
+- A wrong stamp spills tea and tells you which rule you missed. Three times and you're
+  fired.
 
 ## Specs
 
