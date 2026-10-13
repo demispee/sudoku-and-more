@@ -49,15 +49,13 @@ nothing scares the squares.
 - WHEN it moves past the edge of the field
 - THEN nothing scares the squares until it comes back
 
-**Tests:** `game-core/src/shy.rs`, `tests/use-shy.test.ts`, `tests/shy-page.test.ts`
-
 #### Scenario: Scaring a square
 
 - GIVEN a square standing still
 - WHEN the cursor comes within 120 pixels on its left
 - THEN the square moves away to the right
 
-**Tests:** `game-core/src/shy.rs`
+**Tests:** `game-core/src/shy.rs`, `tests/use-shy.test.ts`, `tests/shy-page.test.ts`
 
 ---
 
