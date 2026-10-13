@@ -3,7 +3,7 @@
 // compiled module loads and that values cross the bridge correctly.
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  SceneOrder, World, ballColors, clearNotesAround, findHit, generate, hint, hintPenalty, hitsFound, isPeer,
+  SceneOrder, World, ballColors, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
   missPenalty, pickDifferences, recordKey, solverStep, totalTime,
 } from "../web/src/wasm";
 import { loadWasmForTests } from "./wasm-setup";
@@ -31,23 +31,14 @@ describe("sudoku through WebAssembly", () => {
 
   test("takes and returns typed arrays", () => {
     const { puzzle, solution } = puzzleFor(1, 7);
-    const first = solverStep(puzzle, new Uint16Array(81), solution);
-    expect(first.label).toBe("notes");
-    expect(first.counts).toBe(false);
-    expect(first.notes).toBeInstanceOf(Uint16Array);
-
-    const second = solverStep(first.values, first.notes, solution);
-    expect(second.counts).toBe(true);
-    expect(second.targets.length).toBeGreaterThan(0);
-    expect(typeof second.text).toBe("string");
-  });
-
-  test("hint takes -1 for no selected cell", () => {
-    const { puzzle, solution } = puzzleFor(1, 9);
-    const found = hint(puzzle, solution, -1);
-    expect(found).toBeDefined();
-    expect(["only", "easiest"]).toContain(found!.reason);
-    expect(puzzle[found!.cell]).toBe(0);
+    const step = solverStep(puzzle, new Uint16Array(81), solution);
+    expect(step.counts).toBe(true);
+    expect(step.notes).toBeInstanceOf(Uint16Array);
+    expect(step.values).toBeInstanceOf(Uint8Array);
+    expect(step.filled).toHaveLength(1);
+    expect(step.targets).toEqual(step.filled);
+    expect(typeof step.text).toBe("string");
+    step.free();
   });
 
   test("peers and notes", () => {

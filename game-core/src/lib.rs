@@ -13,7 +13,7 @@ use wasm_bindgen::prelude::*;
 
 use random::Rng;
 use spot::Difference;
-use sudoku::{Grid, HintReason, Masks};
+use sudoku::{Grid, Masks};
 
 fn grid(cells: &[u8]) -> Grid {
     cells.try_into().expect("a grid has 81 cells")
@@ -62,42 +62,6 @@ pub fn generate(level: u8, seed: u32) -> Option<Puzzle> {
         puzzle: g.puzzle.to_vec(),
         solution: g.solution.to_vec(),
         level: g.level,
-    })
-}
-
-#[wasm_bindgen]
-pub struct Hint {
-    cell: u8,
-    reason: String,
-}
-
-#[wasm_bindgen]
-impl Hint {
-    #[wasm_bindgen(getter)]
-    pub fn cell(&self) -> u8 {
-        self.cell
-    }
-
-    /// "wrong", "selected", "only" or "easiest"
-    #[wasm_bindgen(getter)]
-    pub fn reason(&self) -> String {
-        self.reason.clone()
-    }
-}
-
-/// The cell a hint fills in; `selected` is -1 when no cell is selected
-#[wasm_bindgen]
-pub fn hint(values: &[u8], solution: &[u8], selected: i32) -> Option<Hint> {
-    let selected = usize::try_from(selected).ok();
-    sudoku::choose_hint(&grid(values), &grid(solution), selected).map(|(cell, reason)| Hint {
-        cell: cell as u8,
-        reason: match reason {
-            HintReason::Wrong => "wrong",
-            HintReason::Selected => "selected",
-            HintReason::Only => "only",
-            HintReason::Easiest => "easiest",
-        }
-        .into(),
     })
 }
 
@@ -368,31 +332,22 @@ mod tests {
     }
 
     #[test]
-    fn hint_names_its_reason_and_accepts_no_selection() {
-        let mut values = solution();
-        values[10] = 0;
-        let h = hint(&values, &solution(), -1).unwrap();
-        assert_eq!((h.cell(), h.reason().as_str()), (10, "only"));
-        assert_eq!(hint(&hard(), &solution(), 1).unwrap().reason(), "selected");
-        assert_eq!(hint(&[0; 81], &solution(), -1).unwrap().reason(), "easiest");
-        let mut wrong = hard();
-        wrong[1] = solution()[1] % 9 + 1;
-        assert_eq!(hint(&wrong, &solution(), -1).unwrap().reason(), "wrong");
-        assert!(hint(&solution(), &solution(), -1).is_none());
-    }
-
-    #[test]
     fn solver_step_returns_the_new_board_and_notes() {
-        let first = solver_step(&hard(), &[0; 81], &solution());
-        assert_eq!((first.label().as_str(), first.counts()), ("notes", false));
-        assert!(first.text().contains("note"));
-        assert_eq!(first.values(), hard());
-
-        let second = solver_step(&first.values(), &first.notes(), &solution());
-        assert!(second.counts());
-        assert!(!second.targets().is_empty());
-        assert!(second.filled().len() + second.removed().iter().filter(|&&m| m != 0).count() > 0);
-        assert!(second.pattern().iter().all(|&i| i < 81));
+        let notes = sudoku::candidate_masks(&grid(&hard()));
+        let step = solver_step(&hard(), &notes, &solution());
+        assert!(step.counts() && !step.label().is_empty() && !step.text().is_empty());
+        let [i] = step.filled()[..] else { panic!() };
+        assert_eq!(step.targets(), [i]);
+        assert_eq!(step.values()[i as usize], solution()[i as usize]);
+        assert_eq!(step.notes()[i as usize], 0);
+        assert!(
+            step.notes()
+                .iter()
+                .zip(notes)
+                .all(|(&new, old)| new & !old == 0)
+        );
+        assert_eq!(step.removed().len(), 81);
+        assert!(step.pattern().iter().all(|&i| i < 81));
     }
 
     #[test]
@@ -406,7 +361,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "81 cells")]
     fn a_short_grid_is_rejected() {
-        hint(&[0; 10], &solution(), -1);
+        solver_step(&[0; 10], &[0; 81], &solution());
     }
     #[test]
     fn spot_bridge() {

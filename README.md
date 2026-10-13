@@ -7,7 +7,7 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 
 | Page | What it is |
 |------|------------|
-| [`sudoku.html`](web/sudoku.html) | Sudoku with difficulty levels 1 to 10, notes, hints, and a solver that explains each step |
+| [`sudoku.html`](web/sudoku.html) | Sudoku with difficulty levels 1 to 10, notes, and a solver that explains each number it fills in |
 | [`spot-the-difference.html`](web/spot-the-difference.html) | Spot the difference with scenes drawn in code |
 | [`balls.html`](web/balls.html) | Bouncing balls: click to add balls, toggle gravity |
 | [`index.html`](web/index.html) | Start page with links to the three games |
@@ -70,12 +70,13 @@ Coverage must stay at 80% or more, in Rust and in `web/src/`, and the type check
   | 6 | Triples, X-Wing, XY-Wing, or Swordfish |
   | 7 to 10 | Those techniques run out; chains or trial and error are needed. The earlier they run out, the higher the level |
 
-- **Step** applies one logical step and explains it on the board. **Solve** keeps stepping
+- **Step** fills in one number and explains which techniques lead to it, highlighting
+  their cells; your notes lose what those techniques rule out. **Solve** keeps stepping
   until the puzzle is done.
 - The next puzzle is generated in the background while you play.
 
 Keyboard: `1` to `9` fill in, `Backspace` erases, arrow keys move, `N` toggles notes,
-`T` gives a hint, `S` takes a step.
+`S` takes a step.
 
 ## Spot the difference
 

@@ -17,7 +17,6 @@ function onKey(event: KeyboardEvent) {
   if (key >= "1" && key <= "9") game.enter(Number(key));
   else if (key === "Backspace" || key === "Delete" || key === "0") game.erase();
   else if (key.toLowerCase() === "n") game.toggleNotes();
-  else if (key.toLowerCase() === "t") game.hint();
   else if (key.toLowerCase() === "s") game.step();
   else if (key.startsWith("Arrow")) {
     event.preventDefault();
@@ -74,7 +73,6 @@ defineExpose({ game });
 
         <div class="actions">
           <button class="btn primary step" @click="game.step">step</button>
-          <button class="btn hint" @click="game.hint">hint</button>
           <button class="btn notes" :class="{ on: notesMode }" @click="game.toggleNotes">notes</button>
           <button class="btn erase" @click="game.erase">erase</button>
           <button class="btn solve" :class="{ on: autoSolving }" @click="game.toggleAutoSolve">{{ autoSolving ? "stop" : "solve" }}</button>
@@ -85,7 +83,7 @@ defineExpose({ game });
 
         <div class="help">
           1 to 9 <span class="bs">\</span> fill in &nbsp; backspace <span class="bs">\</span> erase &nbsp; arrows <span class="bs">\</span> move<br>
-          n <span class="bs">\</span> notes &nbsp; t <span class="bs">\</span> hint &nbsp; s <span class="bs">\</span> step
+          n <span class="bs">\</span> notes &nbsp; s <span class="bs">\</span> step
         </div>
       </section>
     </div>

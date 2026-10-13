@@ -1,14 +1,14 @@
 ---
 domain: sudoku
-version: 1.3.0
+version: 2.0.0
 status: accepted
 date: 2026-10-12
 ---
 
 # 001 — Sudoku
 
-A sudoku with difficulty levels 1 to 10, notes, hints, and a solver that explains every
-step it takes.
+A sudoku with difficulty levels 1 to 10, notes, and a solver that fills in one number at a
+time and explains why.
 
 ---
 
@@ -116,51 +116,46 @@ note in the cell instead of filling the cell. Notes MUST only be added to empty 
 
 ---
 
-### Requirement 6: Hint [MUST]
+### Requirement 6: Hint [REMOVED]
 
-`hint` (key `T`) MUST fill in one correct number, explain it, and count as a hint:
-
-1. If there is a wrong number, it MUST correct that one first (the selected one if it is
-   wrong).
-2. Otherwise, if an empty cell is selected, it MUST fill that cell.
-3. Otherwise it MUST fill the empty cell with the fewest options.
-
-**Implementation:** `game-core/src/sudoku.rs::choose_hint()`; `web/src/sudoku/useSudoku.ts::hint()`
-
-#### Scenario: Mistake on the board
-
-- GIVEN the board has a wrong number
-- WHEN the player presses `hint`
-- THEN that number is corrected and the message says it was wrong
-
-**Tests:** `game-core/src/sudoku.rs` (the `requirement_6_…` tests); `tests/use-sudoku.test.ts` ("Requirement 6"); `tests/sudoku-page.test.ts` ("Requirement 6 and 7"); `tests/wasm.test.ts` for the bridge
+Removed in 2.0.0: `step` (Requirement 7) does the same and explains why. The number is
+kept so that the other requirements keep theirs.
 
 ---
 
 ### Requirement 7: Step solver [MUST]
 
-`step` (key `S`) MUST take one logical step and explain it in the message box, naming the
-technique. It MUST work on the player's notes and highlight the cells involved. In order:
+`step` (key `S`) MUST fill in one correct number, explain it in the message box, and
+count as a hint. In order:
 
-1. Correct a wrong number, if any.
-2. If an empty cell has no notes, fill in all possible notes first.
-3. Restore a correct number that was crossed out of the notes.
-4. Apply the easiest technique that makes progress.
-5. If no technique applies, fill in one cell and say that it needs chains or trial and
-   error.
+1. If there is a wrong number, correct it.
+2. Otherwise, work out all the options of every empty cell itself, without showing them
+   or using the player's notes, and apply the easiest techniques until one cell has only
+   one number left. Fill in that number. The message MUST name only the techniques that
+   number needed, and the cells of those techniques MUST be highlighted.
+3. If no technique gets that far, fill in the empty cell with the fewest options and say
+   that it needs chains or trial and error.
 
-Every step except filling in notes MUST count as a hint.
+The player's notes MUST only lose numbers, never gain them: every note those techniques
+ruled out MUST be crossed out, and the filled-in number MUST be removed from the notes
+around it (as in Requirement 4).
 
 **Implementation:** `game-core/src/sudoku.rs::solver_step()`, `next_step()`; `web/src/sudoku/useSudoku.ts::takeStep()`
 
-#### Scenario: Following the solver
+#### Scenario: A step without notes
 
-- GIVEN a puzzle with notes filled in
+- GIVEN a new puzzle without any notes
 - WHEN the player presses `step`
-- THEN one technique is applied, the message names it, and the affected cells are
-  highlighted
+- THEN one number is filled in, the message says why, and no notes appear
 
-**Tests:** `game-core/src/sudoku.rs` (the `requirement_7_…` tests); `tests/use-sudoku.test.ts` ("Requirement 7"); `tests/sudoku-page.test.ts` ("Requirement 6 and 7"); `tests/wasm.test.ts` for the bridge
+#### Scenario: A step that needs an X-Wing
+
+- GIVEN the player's notes, and a cell that only gets one number left after an X-Wing on 7
+- WHEN the player presses `step`
+- THEN that number is filled in, the message names the X-Wing, its cells are highlighted,
+  and the 7s the X-Wing ruled out are crossed out of the player's notes
+
+**Tests:** `game-core/src/sudoku.rs` (the `requirement_7_…` tests); `tests/use-sudoku.test.ts` ("Requirement 7"); `tests/sudoku-page.test.ts` ("Requirement 7"); `tests/wasm.test.ts` for the bridge
 
 ---
 
