@@ -10,7 +10,7 @@ export interface Game {
 }
 
 const games: Game[] = [
-  { href: "sudoku.html", name: "Sudoku", text: "Difficulty 1 to 10, hints, and a solver that explains every step" },
+  { href: "sudoku.html", name: "Sudoku", text: "Difficulty 1 to 10, notes, and a solver that explains every number" },
   { href: "spot-the-difference.html", name: "Spot the difference", text: "From coral reefs to city skylines, each scene with hidden differences" },
   { href: "balls.html", name: "Bouncing balls", text: "Click to add balls and toggle gravity" },
 ];

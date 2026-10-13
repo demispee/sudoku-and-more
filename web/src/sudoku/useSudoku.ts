@@ -160,15 +160,19 @@ export function useSudoku(store: Store = localStorage) {
   }
 
   // ---------- Playing ----------
+  // Anything the player does stops auto-solve, even when it changes nothing
 
   function select(i: number) {
+    stopAutoSolve();
     if (locked.value) return;
     selected.value = i;
   }
 
   function move(key: string) {
     const step = MOVES[key];
-    if (step === undefined || locked.value) return;
+    if (step === undefined) return;
+    stopAutoSolve();
+    if (locked.value) return;
     if (selected.value === null) return select(0);
     const next = selected.value + step;
     const sameRow = row(next) === row(selected.value);
@@ -180,9 +184,9 @@ export function useSudoku(store: Store = localStorage) {
   }
 
   function enter(n: number) {
+    stopAutoSolve();
     const i = selected.value;
     if (locked.value || i === null || puzzle.value[i]) return;
-    stopAutoSolve();
     clearMarks();
     message.value = null;
 
@@ -198,9 +202,9 @@ export function useSudoku(store: Store = localStorage) {
   }
 
   function erase() {
+    stopAutoSolve();
     const i = selected.value;
     if (locked.value || i === null || puzzle.value[i]) return;
-    stopAutoSolve();
     clearMarks();
     values.value[i] = 0;
     notes.value[i] = 0;
@@ -208,6 +212,7 @@ export function useSudoku(store: Store = localStorage) {
   }
 
   function toggleNotes() {
+    stopAutoSolve();
     notesMode.value = !notesMode.value;
   }
 
