@@ -1,6 +1,6 @@
 ---
 domain: sudoku
-version: 2.0.0
+version: 2.1.0
 status: accepted
 date: 2026-10-12
 ---
@@ -82,7 +82,9 @@ same level MUST be prepared in the background. If the player has to wait, a load
 The player MUST be able to select a cell by clicking it or with the arrow keys, and enter
 1–9 with the keyboard or the number pad. Given numbers MUST NOT be editable. Entering the
 number a cell already holds MUST clear it. A wrong number MUST be shown in magenta.
-Backspace, Delete, 0 and `erase` MUST clear the selected cell.
+Backspace, Delete, 0 and `erase` MUST clear the selected cell. Keys pressed with Ctrl, Cmd
+or Alt, and keys typed in the level list, MUST be left to the browser; holding `S` MUST take
+one step, not many.
 
 When a correct number is placed, that number MUST be removed from the notes of every cell
 in the same row, column and box.
