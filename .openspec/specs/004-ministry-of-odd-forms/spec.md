@@ -44,8 +44,8 @@ fields and a verdict: approve, reject, or "do the opposite". Examples:
 - "Names with a double letter are rejected."
 - "If the favourite number is 7, do the opposite."
 
-The game MUST start with one rule; each new day MUST add one rule from the pool that is
-not in the book yet. The rulebook MUST always be visible, newest rule on top, numbered.
+The game MUST start with one rule, "Reject anyone wearing a hat."; each new day MUST add
+one rule from the pool that is not in the book yet. The rulebook MUST always be visible, newest rule on top, numbered.
 
 The right stamp for a form MUST be decided like this:
 1. Go through the rules from newest to oldest; the first rule whose condition matches

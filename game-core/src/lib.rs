@@ -5,6 +5,7 @@
 //! and arrays, and are what the pages import from `game-core/pkg/game_core.js`.
 
 pub mod balls;
+pub mod ministry;
 pub mod random;
 pub mod spot;
 pub mod sudoku;
@@ -301,6 +302,125 @@ pub fn ball_colors() -> Vec<String> {
         .collect()
 }
 
+// ---------- The Ministry of Odd Forms ----------
+
+#[wasm_bindgen(js_name = Ministry)]
+pub struct JsMinistry(ministry::Ministry);
+
+/// What a stamp did: whether it was right, and the rule that decided (its number in the
+/// book, 1 = oldest, or 0 when no rule applies)
+#[wasm_bindgen(js_name = MinistryStamp)]
+pub struct JsMinistryStamp {
+    pub right: bool,
+    pub approve: bool,
+    pub rule: u32,
+}
+
+#[wasm_bindgen(js_class = Ministry)]
+impl JsMinistry {
+    #[wasm_bindgen(constructor)]
+    pub fn new(seed: u32) -> JsMinistry {
+        JsMinistry(ministry::Ministry::new(seed))
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn day(&self) -> u32 {
+        self.0.day
+    }
+
+    /// Forms stamped today
+    #[wasm_bindgen(getter)]
+    pub fn today(&self) -> u32 {
+        self.0.today
+    }
+
+    /// Forms stamped right
+    #[wasm_bindgen(getter)]
+    pub fn stamped(&self) -> u32 {
+        self.0.stamped
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn strikes(&self) -> u32 {
+        self.0.strikes
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn fired(&self) -> bool {
+        self.0.fired()
+    }
+
+    #[wasm_bindgen(getter, js_name = dayOver)]
+    pub fn day_over(&self) -> bool {
+        self.0.day_over()
+    }
+
+    /// The rulebook as texts, oldest first
+    pub fn rules(&self) -> Vec<String> {
+        self.0
+            .book
+            .iter()
+            .map(|&r| ministry::RULES[r].text.to_string())
+            .collect()
+    }
+
+    /// The form on the desk: name, species, weekday and doodle color
+    #[wasm_bindgen(getter)]
+    pub fn name(&self) -> String {
+        ministry::NAMES[self.0.form.name].into()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn species(&self) -> String {
+        ministry::SPECIES[self.0.form.species].into()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn hat(&self) -> bool {
+        self.0.form.hat
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn number(&self) -> u8 {
+        self.0.form.number
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn weekday(&self) -> String {
+        ministry::WEEKDAYS[self.0.form.weekday].into()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn doodle(&self) -> String {
+        ministry::DOODLES[self.0.form.doodle].into()
+    }
+
+    /// Stamps the form on the desk; undefined when stamping isn't possible now
+    pub fn stamp(&mut self, approve: bool) -> Option<JsMinistryStamp> {
+        self.0.stamp(approve).map(|s| JsMinistryStamp {
+            right: s.right,
+            approve: s.decision.approve,
+            rule: s.decision.rule.map_or(0, |k| k as u32 + 1),
+        })
+    }
+
+    #[wasm_bindgen(js_name = nextDay)]
+    pub fn next_day(&mut self) {
+        self.0.next_day();
+    }
+
+    /// The stamp the rulebook asks for on the form on the desk: true = approve
+    #[wasm_bindgen(js_name = rightStamp)]
+    pub fn right_stamp(&self) -> bool {
+        ministry::decide(&self.0.form, &self.0.book).approve
+    }
+}
+
+#[wasm_bindgen(js_name = formsPerDay)]
+pub fn forms_per_day() -> u32 {
+    ministry::FORMS_PER_DAY
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -401,5 +521,33 @@ mod tests {
         assert_eq!(world.count(), 0);
         assert_eq!(ball_colors().len(), 8);
         assert_eq!(ball_colors()[1], "#1EE8ED");
+    }
+
+    #[test]
+    fn ministry_bridge() {
+        let mut game = JsMinistry::new(4);
+        assert_eq!(
+            (game.day(), game.today(), game.stamped(), game.strikes()),
+            (1, 0, 0, 0)
+        );
+        assert_eq!(game.rules().len(), 1);
+        assert!(!game.name().is_empty() && !game.species().is_empty());
+        assert!(!game.weekday().is_empty() && !game.doodle().is_empty());
+        assert!((1..=20).contains(&game.number()));
+        let _ = game.hat();
+        let right = game.right_stamp();
+        let stamp = game.stamp(right).unwrap();
+        assert!(stamp.right && stamp.approve == right && stamp.rule <= 1);
+        for _ in 1..forms_per_day() {
+            let wrong = !game.right_stamp();
+            if game.fired() {
+                break;
+            }
+            game.stamp(wrong);
+        }
+        assert!(game.fired() && !game.day_over());
+        assert!(game.stamp(true).is_none());
+        game.next_day();
+        assert_eq!(game.day(), 1);
     }
 }
