@@ -44,8 +44,8 @@ field, nothing scares the squares.
 
 ### Requirement 3: Caught [MUST]
 
-A square that is entirely inside the pen MUST be caught: it stops, turns turquoise, and
-no longer flees. The page MUST show how many squares are caught out of how many.
+A square that is entirely inside the pen MUST be caught: it walks to its own place at the
+back of the pen, so the opening stays free, turns turquoise, and no longer flees. The page MUST show how many squares are caught out of how many.
 
 **Implementation:** `game-core/src/shy.rs`
 
