@@ -79,8 +79,9 @@ Keep the spec's `**Implementation:**` and `**Tests:**` lines up to date when cod
 
 ## Rules
 
-- Vue is the only runtime package and `wasm-bindgen` the only Rust dependency; no network
-  requests. Everything else in `package.json` is for development (ADR-0007).
+- The runtime packages are Vue and, only for the Mastermind board, three.js (ADR-0009);
+  `wasm-bindgen` is the only Rust dependency; no network requests. Everything else in
+  `package.json` is for development (ADR-0007).
 - Components show state and send actions; game decisions stay in Rust.
 - Values cross the bridge as numbers, strings and typed arrays. Notes are a bitmask per
   cell (bit n = note n). Free returned objects with `.free()` once read.
