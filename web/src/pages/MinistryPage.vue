@@ -5,10 +5,10 @@ import { computed, onMounted, onUnmounted } from "vue";
 import BackLink from "../components/BackLink.vue";
 import SiteFooter from "../components/SiteFooter.vue";
 import SlashMark from "../components/SlashMark.vue";
-import { useMinistry } from "../ministry/useMinistry";
+import { HURRY, useMinistry } from "../ministry/useMinistry";
 
 const game = useMinistry();
-const { form, rules, day, today, stamped, strikes, stampMark, message, memo, fired, best, FORMS_PER_DAY } = game;
+const { form, rules, day, today, stamped, strikes, stampMark, message, tooSlow, memo, fired, best, FORMS_PER_DAY, timeLimit, timeLeft } = game;
 
 const EMOJI: Record<string, string> = {
   penguin: "🐧", goose: "🪿", cat: "🐈", badger: "🦡", octopus: "🐙", llama: "🦙", snail: "🐌", owl: "🦉",
@@ -79,6 +79,10 @@ defineExpose({ game });
             </dd>
           </dl>
           <div v-if="stampMark" class="stamp" :class="stampMark">{{ stampMark }}</div>
+          <div class="time" :class="{ hurry: timeLeft <= HURRY }" role="timer"
+            :aria-label="`${Math.ceil(timeLeft / 1000)} seconds left`">
+            <span :style="{ width: `${(timeLeft / timeLimit) * 100}%` }"></span>
+          </div>
         </article>
 
         <div v-if="memo" class="overlay memo">
@@ -98,7 +102,7 @@ defineExpose({ game });
           <button class="btn primary approve" @click="game.stamp(true)">approve</button>
           <button class="btn reject" @click="game.stamp(false)">reject</button>
         </div>
-        <div v-if="message" class="message"><span class="eyebrow">tea spilled</span>{{ message }}</div>
+        <div v-if="message" class="message"><span class="eyebrow">{{ tooSlow ? "too slow" : "tea spilled" }}</span>{{ message }}</div>
         <div class="rulebook">
           <span class="eyebrow">rulebook \ newest first</span>
           <ol>
@@ -175,6 +179,11 @@ h1 { margin-bottom: 24px; }
 }
 .stamp.approved { color: #0b8f94; }
 .stamp.rejected { color: #d6006f; }
+.stamp.expired { color: #6b645a; }
+/* The time left for this form: a bar along the bottom of the form */
+.time { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(0, 0, 0, 0.08); }
+.time span { display: block; height: 100%; background: #0b8f94; transition: width 0.1s linear; }
+.time.hurry span { background: #d6006f; }
 @keyframes thump { from { transform: translate(-50%, -50%) rotate(-14deg) scale(1.6); opacity: 0; } }
 
 .overlay {

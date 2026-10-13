@@ -4,6 +4,8 @@ import { ref } from "vue";
 import { Ministry, formsPerDay, randomSeed } from "../wasm";
 
 export const STAMP_TIME = 700; // ms the stamped form stays on the desk before the next one
+export const TICK = 100; // ms between two ticks of the clock
+export const HURRY = 3000; // ms left when the time bar turns red
 
 export interface Form {
   name: string;
@@ -32,12 +34,18 @@ export function useMinistry(store: Store = localStorage) {
   const today = ref(0);
   const stamped = ref(0);
   const strikes = ref(0);
-  const stampMark = ref<"approved" | "rejected" | null>(null); // the stamp on the form on the desk
+  const stampMark = ref<"approved" | "rejected" | "expired" | null>(null); // the stamp on the form on the desk
   const message = ref("");
+  /** The last strike came from the clock, not from a wrong stamp */
+  const tooSlow = ref(false);
+  /** The time for this form and how much is left, in ms */
+  const timeLimit = ref(0);
+  const timeLeft = ref(0);
   const memo = ref<string | null>(null); // the new rule, while the minister's memo is shown
   const fired = ref(false);
   const best = ref<Best | null>(JSON.parse(store.getItem("ministryBest") || "null"));
   let stampTimer: ReturnType<typeof setTimeout> | undefined;
+  let clock: ReturnType<typeof setInterval> | undefined;
 
   function readForm(): Form {
     return {
@@ -54,6 +62,21 @@ export function useMinistry(store: Store = localStorage) {
     stamped.value = game.stamped;
     strikes.value = game.strikes;
     fired.value = game.fired;
+    timeLimit.value = timeLeft.value = game.secondsPerForm * 1000;
+  }
+
+  /** One tick: the clock stands still during a stamp, the memo, after being fired, and in a hidden tab */
+  function tick() {
+    const hidden = typeof document !== "undefined" && document.visibilityState === "hidden";
+    if (stampMark.value || memo.value || fired.value || hidden) return;
+    timeLeft.value = Math.max(0, timeLeft.value - TICK);
+    if (timeLeft.value === 0 && game.expire()) {
+      tooSlow.value = true;
+      message.value = "Too slow! The applicant left.";
+      stampMark.value = "expired";
+      strikes.value = game.strikes;
+      afterStamp();
+    }
   }
 
   function stamp(approve: boolean) {
@@ -63,12 +86,17 @@ export function useMinistry(store: Store = localStorage) {
     const { right, rule } = result;
     result.free();
     const book = game.rules();
+    tooSlow.value = false;
     message.value = right ? ""
       : rule ? `Rule ${rule} says: ${book[rule - 1]}`
       : "No rule applies, so the form is approved.";
     stampMark.value = approve ? "approved" : "rejected";
     strikes.value = game.strikes;
-    // The stamped form stays a moment; then the next form, the memo or the end
+    afterStamp();
+  }
+
+  /** The stamped form stays a moment; then the next form, the memo or the end */
+  function afterStamp() {
     stampTimer = setTimeout(() => {
       stampMark.value = null;
       if (game.fired) return fire();
@@ -99,21 +127,25 @@ export function useMinistry(store: Store = localStorage) {
     game.free();
     game = new Ministry(randomSeed());
     message.value = "";
+    tooSlow.value = false;
     sync();
   }
 
   function start() {
     sync();
+    clock = setInterval(tick, TICK);
   }
 
   function stop() {
     clearTimeout(stampTimer);
+    clearInterval(clock);
     game.free();
   }
 
   return {
     // state
-    form, rules, day, today, stamped, strikes, stampMark, message, memo, fired, best, FORMS_PER_DAY,
+    form, rules, day, today, stamped, strikes, stampMark, message, tooSlow, memo, fired, best, FORMS_PER_DAY,
+    timeLimit, timeLeft,
     // actions
     start, stop, stamp, nextDay, reapply,
     /** The stamp the rulebook asks for (for tests) */

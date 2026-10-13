@@ -412,6 +412,18 @@ impl JsMinistry {
         self.0.next_day();
     }
 
+    /// The time for a form today, in seconds
+    #[wasm_bindgen(getter, js_name = secondsPerForm)]
+    pub fn seconds_per_form(&self) -> u32 {
+        self.0.seconds_per_form()
+    }
+
+    /// The form on the desk ran out of time: a strike and the next form; false when no
+    /// form can run out now
+    pub fn expire(&mut self) -> bool {
+        self.0.expire()
+    }
+
     /// The stamp the rulebook asks for on the form on the desk: true = approve
     #[wasm_bindgen(js_name = rightStamp)]
     pub fn right_stamp(&self) -> bool {
@@ -721,6 +733,7 @@ mod tests {
         assert!(!game.weekday().is_empty() && !game.doodle().is_empty());
         assert!((1..=20).contains(&game.number()));
         let _ = game.hat();
+        assert_eq!(game.seconds_per_form(), 12);
         let right = game.right_stamp();
         let stamp = game.stamp(right).unwrap();
         assert!(stamp.right && stamp.approve == right && stamp.rule <= 1);
@@ -733,6 +746,7 @@ mod tests {
         }
         assert!(game.fired() && !game.day_over());
         assert!(game.stamp(true).is_none());
+        assert!(!game.expire());
         game.next_day();
         assert_eq!(game.day(), 1);
     }
