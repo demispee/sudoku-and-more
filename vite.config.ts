@@ -20,6 +20,7 @@ export default defineConfig({
         spot: page("spot-the-difference"),
         balls: page("balls"),
         ministry: page("ministry"),
+        shy: page("shy-squares"),
       },
     },
   },

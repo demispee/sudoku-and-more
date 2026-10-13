@@ -1,6 +1,7 @@
 # Claude Code instructions — sudoku-and-more
 
-Browser games (sudoku, spot the difference, bouncing balls, the Ministry of Odd Forms).
+Browser games (sudoku, spot the difference, bouncing balls, the Ministry of Odd Forms,
+shy squares).
 The game rules are in Rust, compiled to WebAssembly (ADR-0006); the interface is Vue 3
 with TypeScript (ADR-0007). The site is built with Vite and published to GitHub Pages by
 CI from `main`.
@@ -32,8 +33,9 @@ CI fails on formatting or clippy warnings.
     only mounts `web/src/main-<page>.ts`.
   - `web/src/pages/`: one component per page; `web/src/components/`: shared pieces
     (`BackLink`, `SlashMark`, `SiteFooter`).
-  - `web/src/sudoku/`, `web/src/spot/` and `web/src/ministry/`: each game's state and
-    actions (`useSudoku.ts`, `useSpot.ts`, `useMinistry.ts`, composables that the tests can drive without a browser) and its
+  - `web/src/sudoku/`, `web/src/spot/`, `web/src/ministry/` and `web/src/shy/`: each
+    game's state and actions (`useSudoku.ts`, `useSpot.ts`, `useMinistry.ts`, `useShy.ts`,
+    composables that the tests can drive without a browser) and its
     components. The bouncing balls are small enough to live in `BallsPage.vue`.
   - `web/src/scenes/`: the spot-the-difference drawings as SVG strings, one file per scene,
     with shared drawing helpers in `helpers.ts` and the list in `index.ts`. Every scene must
@@ -41,7 +43,8 @@ CI fails on formatting or clippy warnings.
   - `web/src/styles/lab271.css`: the Lab271 design system, shared by all Vue pages.
   - `web/src/wasm.ts`: loads the WebAssembly (`loadWasm()`) and re-exports its functions.
   - `web/public/fonts/`: the licensed fonts, ignored by git.
-- `game-core/`: the game rules in Rust (`src/sudoku.rs`, `spot.rs`, `balls.rs`, `ministry.rs`) and the
+- `game-core/`: the game rules in Rust (`src/sudoku.rs`, `spot.rs`, `balls.rs`, `ministry.rs`,
+  `shy.rs`) and the
   bridge to JavaScript (`src/lib.rs`, with `#[wasm_bindgen]`). No DOM access. Unit tests at
   the bottom of each file, named after the spec requirement (`requirement_6_…`).
   Randomness goes through the seeded `random::Rng`, so tests are repeatable.

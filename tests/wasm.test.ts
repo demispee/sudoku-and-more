@@ -3,7 +3,7 @@
 // compiled module loads and that values cross the bridge correctly.
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  Ministry, SceneOrder, World, ballColors, formsPerDay, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
+  Ministry, SceneOrder, ShyField, World, ballColors, formsPerDay, shyShapes, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
   missPenalty, pickDifferences, recordKey, solverStep, totalTime,
 } from "../web/src/wasm";
 import { loadWasmForTests } from "./wasm-setup";
@@ -98,5 +98,19 @@ describe("the Ministry of Odd Forms through WebAssembly", () => {
     stamp.free();
     expect(formsPerDay()).toBe(10);
     game.free();
+  });
+});
+
+describe("shy squares through WebAssembly", () => {
+  test("gives the squares as x, y and caught, and the pen's shape", () => {
+    const field = new ShyField(2, 5);
+    expect([field.count, field.caught, field.done]).toEqual([8, 0, false]);
+    const squares = field.squares();
+    expect(squares).toBeInstanceOf(Float64Array);
+    expect(squares).toHaveLength(24);
+    field.step(squares[0]! - 30, squares[1]!, true);
+    expect(field.squares()[0]).toBeGreaterThan(squares[0]!);
+    expect(Array.from(shyShapes())).toEqual([620, 200, 780, 400, 6, 12]);
+    field.free();
   });
 });
