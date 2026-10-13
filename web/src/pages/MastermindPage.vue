@@ -27,6 +27,7 @@ function onKey(event: KeyboardEvent) {
     event.preventDefault();
     game.back();
   } else if (event.key === "Enter") {
+    event.preventDefault(); // or the browser also clicks a button that still has the focus
     if (result.value) game.again();
     else game.check();
   }
@@ -48,6 +49,7 @@ function mountBoard() {
       rows: rows.value.map(r => ({ pegs: [...r.pegs], answer: r.answer })),
       current: current.value,
       code: code.value,
+      won: result.value?.won ?? false,
       colours: colours.value,
       studio: palette(paletteName.value).studio,
       hop: lastColour.value,
@@ -87,6 +89,7 @@ defineExpose({ game });
           @click="game.setLevel(l)">{{ name }}</button>
       </div>
       <button class="btn palette" @click="game.nextPalette">colours \ {{ paletteName }}</button>
+      <button class="btn new-game" @click="game.again">new game</button>
       <button class="btn primary check" :disabled="!full" @click="game.check">check</button>
     </div>
 
@@ -178,5 +181,6 @@ h1 { margin-bottom: 24px; }
   .dot { width: 20px; height: 20px; }
   .thumb { display: inline-flex; flex: none; align-items: center; justify-content: center; height: 38px; padding: 0 14px; }
   .help { display: none; } /* the keys don't help on a phone */
+  .overlay { top: auto; bottom: 12px; left: 12px; right: 12px; padding: 12px 16px; } /* not over the code */
 }
 </style>

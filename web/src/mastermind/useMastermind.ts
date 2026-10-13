@@ -116,6 +116,7 @@ export function useMastermind(store: Store = localStorage, seed: () => number = 
     current.value = 0;
     code.value = null;
     result.value = null;
+    lastColour.value = null;
     placed = [];
   }
 

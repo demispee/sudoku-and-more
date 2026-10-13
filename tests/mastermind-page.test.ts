@@ -154,3 +154,32 @@ describe("Requirement 5: a realistic board", () => {
     page = mount(MastermindPage, { attachTo: document.body });
   });
 });
+
+describe("Requirement 4 and 7: the end on every level", () => {
+  test("regression: the board hears from the game whether the code was broken, also on hard", async () => {
+    await page.findAll(".level")[1]!.trigger("click");
+    game.result.value = { won: true, rows: 3, isRecord: false };
+    game.code.value = [1, 2, 3, 4, 5];
+    await page.vm.$nextTick();
+    expect(board.last).toMatchObject({ won: true, code: [1, 2, 3, 4, 5] });
+    game.result.value = { won: false, rows: 10, isRecord: false };
+    await page.vm.$nextTick();
+    expect(board.last!.won).toBe(false);
+  });
+
+  test("regression: Enter on a focused button doesn't click it too", async () => {
+    (page.findAll(".colour")[2]!.element as HTMLButtonElement).focus();
+    const event = new KeyboardEvent("keydown", { key: "Enter", cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  test("new game starts over in the middle of a game, without a result", async () => {
+    for (const k of "1234") await press(k);
+    await press("Enter");
+    await page.find(".new-game").trigger("click");
+    expect([game.current.value, game.result.value, game.lastColour.value]).toEqual([0, null, null]);
+    expect(board.last!.rows[0]!.pegs).toEqual([null, null, null, null]);
+    expect(page.find(".best").text()).toBe("–");
+  });
+});
