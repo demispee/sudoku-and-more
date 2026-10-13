@@ -1,6 +1,6 @@
 ---
 domain: ministry-of-odd-forms
-version: 1.1.0
+version: 1.2.0
 status: accepted
 date: 2026-10-13
 ---
@@ -45,7 +45,8 @@ fields and a verdict: approve, reject, or "do the opposite". Examples:
 - "If the favourite number is 7, do the opposite."
 
 The game MUST start with one rule, "Reject anyone wearing a hat."; each new day MUST add
-one rule from the pool that is not in the book yet. The rulebook MUST always be visible, newest rule on top, numbered.
+one rule from the pool that is not in the book yet. Once every rule is in the book, a new
+day adds none, and the memo MUST say "No new rules today." The rulebook MUST always be visible, newest rule on top, numbered.
 
 The right stamp for a form MUST be decided like this:
 1. Go through the rules from newest to oldest; the first rule whose condition matches
@@ -75,8 +76,12 @@ The right stamp for a form MUST be decided like this:
 
 The player MUST stamp with the `approve` and `reject` buttons or the keys `A` and `R`.
 - A right stamp MUST show the stamp on the form and count one stamped form.
-- A wrong stamp MUST leave a tea stain on the desk, count a strike, and say which rule
-  decided, for example "Rule 2 says: Penguins are always approved."
+- A wrong stamp MUST leave a tea stain on the desk, count a strike, and say what the
+  right stamp was and which rule decided, for example "Should have been APPROVED. Rule 2
+  says: Penguins are always approved." When no rule applies: "Should have been APPROVED:
+  no rule applies."
+- Only `A`, `R` and the two buttons stamp. Enter MUST NOT stamp a form, also not when a
+  stamp button still has the keyboard focus after a click.
 
 Then the next form MUST appear.
 
@@ -86,7 +91,14 @@ Then the next form MUST appear.
 
 - GIVEN rule 1 "Penguins are always approved"
 - WHEN the player rejects a penguin
-- THEN a tea stain appears, the strikes go to 1, and the message names rule 1
+- THEN a tea stain appears, the strikes go to 1, and the message says "Should have been
+  APPROVED. Rule 1 says: Penguins are always approved."
+
+#### Scenario: Enter after clicking a stamp
+
+- GIVEN the player clicked `approve` on the last form of a day
+- WHEN they press Enter to close the memo
+- THEN the next day starts, and its first form is not stamped
 
 ---
 
@@ -126,7 +138,8 @@ starts a new game with a new seed.
 ### Requirement 6: Remembered between visits [SHOULD]
 
 The best result (most days, then most forms) SHOULD be kept in the browser
-(`localStorage` key `ministryBest`) and shown on the page.
+(`localStorage` key `ministryBest`) and shown on the page. A saved value that can't be
+read MUST be ignored, not break the page.
 
 **Implementation:** `web/src/ministry/useMinistry.ts`
 
@@ -135,7 +148,8 @@ The best result (most days, then most forms) SHOULD be kept in the browser
 ### Requirement 7: Time per form [MUST]
 
 Every form MUST have a time limit: 12 seconds on day 1, 1 second less every day, and never
-less than 5 seconds. A bar along the form MUST show the time left; in the last 3 seconds it
+less than 7 seconds. The clock MUST count the time that really passed, also when the
+browser runs it late. A bar along the form MUST show the time left; in the last 3 seconds it
 MUST turn red. When the time runs out, the form MUST get an EXPIRED stamp, count as a
 strike, and the page MUST say "Too slow! The applicant left."; then the next form appears.
 The clock MUST stand still while the minister's memo is shown, after being fired, and
@@ -153,4 +167,4 @@ while the page is hidden (another tab).
 #### Scenario: Less time every day
 
 - GIVEN day 4
-- THEN every form has 9 seconds; on day 8 and later, 5 seconds
+- THEN every form has 9 seconds; on day 6 and later, 7 seconds
