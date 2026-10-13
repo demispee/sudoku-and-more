@@ -3,7 +3,7 @@
 // compiled module loads and that values cross the bridge correctly.
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  Ministry, ReverseSnake, SceneOrder, ShyField, World, ballColors, formsPerDay, shyShapes, snakeGridSize, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
+  Mastermind, Ministry, ReverseSnake, SceneOrder, ShyField, World, ballColors, formsPerDay, mastermindShape, shyShapes, snakeGridSize, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
   missPenalty, pickDifferences, recordKey, solverStep, totalTime,
 } from "../web/src/wasm";
 import { loadWasmForTests } from "./wasm-setup";
@@ -123,6 +123,18 @@ describe("reverse snake through WebAssembly", () => {
     game.steer(2);
     game.update(200);
     expect([game.appleY, game.elapsed]).toEqual([11, 200]);
+    game.free();
+  });
+});
+
+describe("mastermind through WebAssembly", () => {
+  test("checks a row of colours, and shows the code only at the end", () => {
+    const game = new Mastermind(5);
+    expect(Array.from(mastermindShape())).toEqual([4, 6, 10]);
+    expect([game.status, game.code().length, game.check(Uint8Array.from([0, 1])).length]).toEqual(["playing", 0, 0]);
+    const answer = Array.from(game.check(Uint8Array.from([0, 1, 2, 3])));
+    expect(answer).toHaveLength(2);
+    expect(answer[0]! + answer[1]!).toBeLessThanOrEqual(4);
     game.free();
   });
 });

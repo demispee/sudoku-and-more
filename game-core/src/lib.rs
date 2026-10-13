@@ -5,6 +5,7 @@
 //! and arrays, and are what the pages import from `game-core/pkg/game_core.js`.
 
 pub mod balls;
+pub mod mastermind;
 pub mod ministry;
 pub mod random;
 pub mod shy;
@@ -550,6 +551,60 @@ pub fn snake_grid_size() -> u8 {
     snake::SIZE as u8
 }
 
+// ---------- Mastermind ----------
+
+#[wasm_bindgen(js_name = Mastermind)]
+pub struct JsMastermind(mastermind::Game);
+
+#[wasm_bindgen(js_class = Mastermind)]
+impl JsMastermind {
+    #[wasm_bindgen(constructor)]
+    pub fn new(seed: u32) -> JsMastermind {
+        JsMastermind(mastermind::Game::new(seed))
+    }
+
+    /// Checks a row of 4 colours (0–5); gives [black, white], or nothing when the row
+    /// can't be checked
+    pub fn check(&mut self, guess: &[u8]) -> Vec<u8> {
+        let Ok(guess) = guess.try_into() else {
+            return Vec::new();
+        };
+        self.0
+            .check(guess)
+            .map_or(Vec::new(), |(black, white)| vec![black, white])
+    }
+
+    /// "playing", "won" or "lost"
+    #[wasm_bindgen(getter)]
+    pub fn status(&self) -> String {
+        match self.0.status {
+            mastermind::Status::Playing => "playing",
+            mastermind::Status::Won => "won",
+            mastermind::Status::Lost => "lost",
+        }
+        .into()
+    }
+
+    /// The secret code, only once the game is over
+    pub fn code(&self) -> Vec<u8> {
+        if self.0.status == mastermind::Status::Playing {
+            Vec::new()
+        } else {
+            self.0.code.to_vec()
+        }
+    }
+}
+
+/// Holes per row, colours and rows
+#[wasm_bindgen(js_name = mastermindShape)]
+pub fn mastermind_shape() -> Vec<u8> {
+    vec![
+        mastermind::HOLES as u8,
+        mastermind::COLOURS,
+        mastermind::ROWS as u8,
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -690,6 +745,25 @@ mod tests {
         assert_ne!(field.squares()[0], before[0]);
         field.step(0.0, 0.0, false);
         assert_eq!(shy_shapes(), vec![620.0, 200.0, 780.0, 400.0, 6.0, 12.0]);
+    }
+
+    #[test]
+    fn mastermind_bridge() {
+        assert_eq!(mastermind_shape(), vec![4, 6, 10]);
+        let mut game = JsMastermind::new(5);
+        let code = game.0.code;
+        assert!(game.code().is_empty());
+        assert!(game.check(&[0, 1, 2]).is_empty());
+        let wrong = code.map(|p| (p + 1) % 6);
+        assert_eq!(game.check(&wrong)[0], 0);
+        assert_eq!(game.status(), "playing");
+        assert_eq!(game.check(&code), vec![4, 0]);
+        assert_eq!((game.status(), game.code()), ("won".into(), code.to_vec()));
+        let mut lost = JsMastermind::new(5);
+        for _ in 0..10 {
+            lost.check(&wrong);
+        }
+        assert_eq!(lost.status(), "lost");
     }
 
     #[test]

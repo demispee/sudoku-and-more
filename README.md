@@ -13,6 +13,7 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 | [`ministry.html`](web/ministry.html) | The Ministry of Odd Forms: stamp absurd forms by a rulebook that grows every day |
 | [`shy-squares.html`](web/shy-squares.html) | Shy squares: herd squares that flee from your cursor into a pen |
 | [`reverse-snake.html`](web/reverse-snake.html) | Reverse snake: you are the apple, and the snake is hungry |
+| [`mastermind.html`](web/mastermind.html) | Mastermind: break a secret code on a realistic 3D board |
 | [`index.html`](web/index.html) | Start page with links to the games |
 
 ## Running it
@@ -118,6 +119,16 @@ All artwork is drawn in code as SVG.
   and gets a little faster every 10 seconds.
 - If it traps itself, you win. `Space` pauses; your longest survival is kept in your
   browser.
+
+## Mastermind
+
+- Break a secret code of 4 pegs in 6 colours (a colour can be in it more than once) in at
+  most 10 rows.
+- Click a dish and then a hole, or press `1`–`6`; `Backspace` takes the last peg out and
+  `Enter` checks the row. A black answer peg is a right colour in the right hole, a white
+  one a right colour in another hole.
+- The board is drawn in 3D with three.js; drag to turn it. Everything on it is made in
+  code, without image or model files (ADR-0009).
 
 ## Specs
 
