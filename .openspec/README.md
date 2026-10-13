@@ -24,6 +24,9 @@ on purpose. See ADR-0004 and ADR-0005.
 | [001](specs/001-sudoku/spec.md) | Sudoku | Generator, difficulty 1–10, input, notes, step solver, auto-solve |
 | [002](specs/002-spot-the-difference/spec.md) | Spot the difference | Scenes, rounds, clicks, penalties, records |
 | [003](specs/003-bouncing-balls/spec.md) | Bouncing balls | Physics, colors, controls |
+| [004](specs/004-ministry-of-odd-forms/spec.md) | The Ministry of Odd Forms | Forms, a rulebook that grows every day, stamping, strikes |
+| [005](specs/005-shy-squares/spec.md) | Shy squares | Squares that flee the cursor, a pen, levels |
+| [006](specs/006-reverse-snake/spec.md) | Reverse snake | You are the apple; a snake that hunts and grows |
 
 ## ADRs
 
