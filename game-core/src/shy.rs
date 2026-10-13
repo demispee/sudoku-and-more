@@ -753,10 +753,19 @@ mod tests {
             after(vec![square(100.0, 100.0), square(124.0, 110.0)]),
             vec![(100.0, 100.0), (124.0, 110.0)]
         );
+        assert_eq!(
+            after(vec![square(100.0, 100.0), square(110.0, 130.0)]),
+            vec![(100.0, 100.0), (110.0, 130.0)]
+        );
     }
 
     #[test]
     fn requirement_2_close_free_squares_drift_apart_but_not_from_caught_ones() {
+        // Diagonally 15 and 20 apart (25): the drift is 0.6 sideways and 0.8 down
+        let mut f = field(vec![square(100.0, 100.0), square(115.0, 120.0)]);
+        f.step(None);
+        let s = f.squares[1];
+        assert!(close(s.vx, 0.15 * 0.6 * FRICTION) && close(s.vy, 0.15 * 0.8 * FRICTION));
         // 26 apart: not overlapping, but closer than KEEP_APART
         let mut f = field(vec![square(100.0, 100.0), square(126.0, 100.0)]);
         f.step(None);
