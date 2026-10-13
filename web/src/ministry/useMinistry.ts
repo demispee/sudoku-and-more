@@ -43,9 +43,20 @@ export function useMinistry(store: Store = localStorage) {
   const timeLeft = ref(0);
   const memo = ref<string | null>(null); // the new rule, while the minister's memo is shown
   const fired = ref(false);
-  const best = ref<Best | null>(JSON.parse(store.getItem("ministryBest") || "null"));
+  const best = ref<Best | null>(readBest());
   let stampTimer: ReturnType<typeof setTimeout> | undefined;
   let clock: ReturnType<typeof setInterval> | undefined;
+  let lastTick = 0;
+
+  /** The saved best result; one that can't be read is ignored */
+  function readBest(): Best | null {
+    try {
+      const saved = JSON.parse(store.getItem("ministryBest") || "null");
+      return typeof saved?.days === "number" && typeof saved?.forms === "number" ? saved : null;
+    } catch {
+      return null;
+    }
+  }
 
   function readForm(): Form {
     return {
@@ -65,11 +76,18 @@ export function useMinistry(store: Store = localStorage) {
     timeLimit.value = timeLeft.value = game.secondsPerForm * 1000;
   }
 
-  /** One tick: the clock stands still during a stamp, the memo, after being fired, and in a hidden tab */
+  /**
+   * One tick: the time that really passed since the last tick comes off the clock (a
+   * browser can run ticks late). The clock stands still during a stamp, the memo, after
+   * being fired, and in a hidden tab.
+   */
   function tick() {
+    const now = Date.now();
+    const passed = now - lastTick;
+    lastTick = now;
     const hidden = typeof document !== "undefined" && document.visibilityState === "hidden";
     if (stampMark.value || memo.value || fired.value || hidden) return;
-    timeLeft.value = Math.max(0, timeLeft.value - TICK);
+    timeLeft.value = Math.max(0, timeLeft.value - passed);
     if (timeLeft.value === 0 && game.expire()) {
       tooSlow.value = true;
       message.value = "Too slow! The applicant left.";
@@ -83,13 +101,14 @@ export function useMinistry(store: Store = localStorage) {
     if (stampMark.value || memo.value || fired.value) return;
     const result = game.stamp(approve);
     if (!result) return;
-    const { right, rule } = result;
+    const { right, rule, approve: shouldApprove } = result;
     result.free();
     const book = game.rules();
     tooSlow.value = false;
+    const should = `Should have been ${shouldApprove ? "APPROVED" : "REJECTED"}`;
     message.value = right ? ""
-      : rule ? `Rule ${rule} says: ${book[rule - 1]}`
-      : "No rule applies, so the form is approved.";
+      : rule ? `${should}. Rule ${rule} says: ${book[rule - 1]}`
+      : `${should}: no rule applies.`;
     stampMark.value = approve ? "approved" : "rejected";
     strikes.value = game.strikes;
     afterStamp();
@@ -101,8 +120,10 @@ export function useMinistry(store: Store = localStorage) {
       stampMark.value = null;
       if (game.fired) return fire();
       if (game.dayOver) {
+        const before = game.rules().length;
         game.nextDay();
-        memo.value = game.rules().at(-1)!;
+        const book = game.rules();
+        memo.value = book.length > before ? book.at(-1)! : "No new rules today.";
       }
       sync();
     }, STAMP_TIME);
@@ -133,6 +154,7 @@ export function useMinistry(store: Store = localStorage) {
 
   function start() {
     sync();
+    lastTick = Date.now();
     clock = setInterval(tick, TICK);
   }
 

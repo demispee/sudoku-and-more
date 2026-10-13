@@ -7,7 +7,7 @@ pub const FORMS_PER_DAY: u32 = 10;
 pub const STRIKES_TO_BE_FIRED: u32 = 3;
 /// Seconds per form on day 1; one less every day, down to `FEWEST_SECONDS`
 pub const FIRST_DAY_SECONDS: u32 = 12;
-pub const FEWEST_SECONDS: u32 = 5;
+pub const FEWEST_SECONDS: u32 = 7;
 
 pub const NAMES: [&str; 32] = [
     "Bartholomew Puddle",
@@ -210,9 +210,9 @@ pub const RULES: [Rule; 19] = [
         applies: |f| f.doodle == GREEN,
     },
     Rule {
-        text: "Names longer than 18 letters are approved, out of respect.",
+        text: "Names longer than 15 letters are approved, out of respect.",
         verdict: Verdict::Approve,
-        applies: |f| NAMES[f.name].chars().filter(|c| c.is_alphabetic()).count() > 18,
+        applies: |f| NAMES[f.name].chars().filter(|c| c.is_alphabetic()).count() > 15,
     },
 ];
 
@@ -551,9 +551,9 @@ mod tests {
             "Even favourite numbers are approved.",
             Form { number: 20, ..f }
         ));
-        let long = "Names longer than 18 letters are approved, out of respect.";
+        let long = "Names longer than 15 letters are approved, out of respect.";
         assert!(applies(long, Form { name: 11, ..f })); // Leopold Pennywhistle: 19 letters
-        assert!(!applies(long, Form { name: 0, ..f })); // Bartholomew Puddle: 17
+        assert!(!applies(long, Form { name: 6, ..f })); // Sebastian Toffee: 15
     }
 
     #[test]
@@ -698,7 +698,7 @@ mod tests {
     // ----- Requirement 7: time per form -----
 
     #[test]
-    fn requirement_7_twelve_seconds_on_day_1_one_less_every_day_at_least_5() {
+    fn requirement_7_twelve_seconds_on_day_1_one_less_every_day_at_least_7() {
         let mut game = Ministry::new(2);
         let mut seconds = Vec::new();
         for _ in 0..9 {
@@ -709,7 +709,7 @@ mod tests {
             }
             game.next_day();
         }
-        assert_eq!(seconds, vec![12, 11, 10, 9, 8, 7, 6, 5, 5]);
+        assert_eq!(seconds, vec![12, 11, 10, 9, 8, 7, 7, 7, 7]);
     }
 
     #[test]
@@ -735,5 +735,202 @@ mod tests {
         }
         assert!(!game.expire());
         assert_eq!(game.strikes, 0);
+    }
+
+    #[test]
+    fn requirement_2_every_rule_matches_what_it_says_and_nothing_else() {
+        let f = form(); // Gertrude Wobble, a cat without a hat, 3, Tuesday, yellow
+        // For every rule: a form it applies to, and forms it doesn't apply to
+        let cases: [(&str, Form, &[Form]); 19] = [
+            (
+                "Reject anyone wearing a hat.",
+                Form { hat: true, ..f },
+                &[f],
+            ),
+            (
+                "Penguins are always approved.",
+                Form {
+                    species: PENGUIN,
+                    ..f
+                },
+                &[f],
+            ),
+            (
+                "Names with a double letter are rejected.",
+                Form { name: 0, ..f },
+                &[Form { name: 12, ..f }],
+            ),
+            (
+                "If the favourite number is 7, do the opposite.",
+                Form { number: 7, ..f },
+                &[f],
+            ),
+            (
+                "Geese are rejected at weekends.",
+                Form {
+                    species: GOOSE,
+                    weekday: 5,
+                    ..f
+                },
+                &[
+                    Form {
+                        species: GOOSE,
+                        weekday: 4,
+                        ..f
+                    },
+                    Form { weekday: 5, ..f },
+                ],
+            ),
+            ("Red doodles are rejected.", Form { doodle: RED, ..f }, &[f]),
+            (
+                "Octopuses are rejected, except on Wednesdays.",
+                Form {
+                    species: OCTOPUS,
+                    ..f
+                },
+                &[
+                    Form {
+                        species: OCTOPUS,
+                        weekday: WEDNESDAY,
+                        ..f
+                    },
+                    f,
+                ],
+            ),
+            (
+                "Cats in hats are approved.",
+                Form { hat: true, ..f },
+                &[
+                    f,
+                    Form {
+                        species: BADGER,
+                        hat: true,
+                        ..f
+                    },
+                ],
+            ),
+            (
+                "Reject anyone whose name starts with the same letter as their species.",
+                Form { name: 3, ..f }, // Cornelius, a cat
+                &[f],
+            ),
+            (
+                "Snails are approved. They have waited long enough.",
+                Form {
+                    species: SNAIL,
+                    ..f
+                },
+                &[f],
+            ),
+            (
+                "Favourite numbers above 13 are rejected.",
+                Form { number: 14, ..f },
+                &[Form { number: 13, ..f }],
+            ),
+            (
+                "Llamas with a blue doodle are rejected.",
+                Form {
+                    species: LLAMA,
+                    doodle: BLUE,
+                    ..f
+                },
+                &[
+                    Form {
+                        species: LLAMA,
+                        ..f
+                    },
+                    Form { doodle: BLUE, ..f },
+                ],
+            ),
+            (
+                "On Fridays, do the opposite.",
+                Form {
+                    weekday: FRIDAY,
+                    ..f
+                },
+                &[f],
+            ),
+            (
+                "Badgers are always rejected.",
+                Form {
+                    species: BADGER,
+                    ..f
+                },
+                &[f],
+            ),
+            (
+                "Owls without a hat are rejected. It is undignified.",
+                Form { species: OWL, ..f },
+                &[
+                    Form {
+                        species: OWL,
+                        hat: true,
+                        ..f
+                    },
+                    f,
+                ],
+            ),
+            (
+                "Even favourite numbers are approved.",
+                Form { number: 4, ..f },
+                &[f],
+            ),
+            (
+                "On Mondays, reject everyone.",
+                Form {
+                    weekday: MONDAY,
+                    ..f
+                },
+                &[f],
+            ),
+            (
+                "Green doodles are approved. They are calming.",
+                Form { doodle: GREEN, ..f },
+                &[f],
+            ),
+            (
+                "Names longer than 15 letters are approved, out of respect.",
+                Form { name: 9, ..f },    // Clementine Marrow: 16 letters
+                &[Form { name: 3, ..f }], // Cornelius Bobbin: 15
+            ),
+        ];
+        for (text, yes, nos) in cases {
+            let r = &RULES[rule(text)];
+            assert!((r.applies)(&yes), "{text} applies to {yes:?}");
+            for no in nos {
+                assert!(!(r.applies)(no), "{text} doesn't apply to {no:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn requirement_1_every_other_form_of_a_day_matches_a_rule() {
+        let mut game = Ministry::new(8);
+        while !game.day_over() {
+            if game.today.is_multiple_of(2) {
+                assert!(
+                    game.form.hat,
+                    "form {} comes under the hat rule",
+                    game.today
+                );
+            }
+            let right = decide(&game.form, &game.book).approve;
+            game.stamp(right);
+        }
+    }
+
+    #[test]
+    fn requirement_4_after_the_last_form_of_a_day_no_new_form_comes() {
+        let mut game = Ministry::new(8);
+        for _ in 0..FORMS_PER_DAY - 1 {
+            let right = decide(&game.form, &game.book).approve;
+            game.stamp(right);
+        }
+        let last = game.form;
+        let right = decide(&game.form, &game.book).approve;
+        game.stamp(right);
+        assert_eq!(game.form, last);
+        game.next_day();
+        assert_ne!(game.form, last);
     }
 }

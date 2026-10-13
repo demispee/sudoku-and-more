@@ -23,6 +23,8 @@ const STAINS = [{ left: "6%", top: "68%" }, { left: "74%", top: "66%" }, { left:
 function onKey(event: KeyboardEvent) {
   if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
   const key = event.key.toLowerCase();
+  // Enter and space would also click a stamp button that still has the focus
+  if (key === "enter" || key === " ") event.preventDefault();
   if (key === "a") game.stamp(true);
   else if (key === "r") game.stamp(false);
   else if (key === "enter") {

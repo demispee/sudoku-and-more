@@ -55,11 +55,15 @@ describe("Requirement 3: stamping", () => {
     expect(game.message.value).toBe("");
   });
 
-  test("a wrong stamp is a strike, and the message names the rule or says none applies", () => {
+  test("a wrong stamp is a strike, and the message says the right stamp and the rule", () => {
     started();
+    expect(game.form.value.hat).toBe(true); // the first form of a day comes under the newest rule
     stamp(false);
     expect(game.strikes.value).toBe(1);
-    expect(game.message.value).toMatch(/^(Rule 1 says: .+|No rule applies, so the form is approved\.)$/);
+    expect(game.message.value).toBe("Should have been REJECTED. Rule 1 says: Reject anyone wearing a hat.");
+    while (game.form.value.hat) stamp(); // a form without a hat: no rule applies
+    stamp(false);
+    expect(game.message.value).toBe("Should have been APPROVED: no rule applies.");
   });
 });
 
@@ -107,7 +111,39 @@ describe("Requirement 5 and 6: fired, and the best result", () => {
   });
 });
 
+describe("Requirement 2 and 6: the end of the pool, and saved results", () => {
+  test("once every rule is in the book, the memo says there are no new rules", () => {
+    started();
+    let days = 0;
+    while (game.rules.value.length < 19) {
+      for (let k = 0; k < game.FORMS_PER_DAY; k++) stamp();
+      game.nextDay();
+      days++;
+    }
+    expect(days).toBe(18);
+    for (let k = 0; k < game.FORMS_PER_DAY; k++) stamp();
+    expect([game.memo.value, game.rules.value.length]).toEqual(["No new rules today.", 19]);
+  });
+
+  test("a saved best that can't be read is ignored", () => {
+    started({ ministryBest: "{not json" });
+    expect(game.best.value).toBeNull();
+    for (const saved of ["42", JSON.stringify({ days: "many" })]) {
+      const other = useMinistry(memoryStore({ ministryBest: saved }));
+      expect(other.best.value).toBeNull();
+      other.stop();
+    }
+  });
+});
+
 describe("Requirement 7: time per form", () => {
+  test("the clock counts the time that really passed, also when a tick comes late", () => {
+    started();
+    vi.setSystemTime(Date.now() + 2_000); // the browser was busy for 2 seconds
+    vi.advanceTimersByTime(TICK);
+    expect(game.timeLeft.value).toBe(12_000 - 2_000 - TICK);
+  });
+
   test("12 seconds on day 1; running out is a strike with an EXPIRED stamp, then the next form", () => {
     started();
     expect([game.timeLimit.value, game.timeLeft.value]).toEqual([12_000, 12_000]);

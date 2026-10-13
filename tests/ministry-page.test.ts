@@ -150,3 +150,18 @@ describe("Requirement 7: time per form", () => {
     expect(game.timeLeft.value).toBe(11_000);
   });
 });
+
+describe("Requirement 3: stamping", () => {
+  test("regression: Enter after clicking a stamp button doesn't click it again", async () => {
+    const approve = page.find(".approve").element as HTMLButtonElement;
+    approve.focus();
+    for (const key of ["Enter", " "]) {
+      const event = new KeyboardEvent("keydown", { key, cancelable: true });
+      window.dispatchEvent(event);
+      expect(event.defaultPrevented, key).toBe(true); // so the browser doesn't click the button
+    }
+    const a = new KeyboardEvent("keydown", { key: "a", cancelable: true });
+    window.dispatchEvent(a);
+    expect(a.defaultPrevented).toBe(false);
+  });
+});
