@@ -85,6 +85,59 @@ pub fn inside_pen(s: &Square) -> bool {
         && s.y + HALF <= PEN.bottom
 }
 
+/// Keeps a square on the field and out of the walls of the pen: it bounces off them
+fn keep_in(s: &mut Square) {
+    if s.x - HALF < 0.0 || s.x + HALF > WIDTH {
+        s.vx = -s.vx * BOUNCE;
+        s.x = s.x.clamp(HALF, WIDTH - HALF);
+    }
+    if s.y - HALF < 0.0 || s.y + HALF > HEIGHT {
+        s.vy = -s.vy * BOUNCE;
+        s.y = s.y.clamp(HALF, HEIGHT - HALF);
+    }
+    for wall in &WALLS {
+        push_out(s, wall);
+    }
+}
+
+/// Moves overlapping squares apart along the shortest way: two free squares half each,
+/// a free square all the way from a caught one
+fn separate(squares: &mut [Square]) {
+    for _ in 0..3 {
+        for i in 0..squares.len() {
+            for j in i + 1..squares.len() {
+                let (a, b) = (squares[i], squares[j]);
+                if a.caught && b.caught {
+                    continue;
+                }
+                let (dx, dy) = (b.x - a.x, b.y - a.y);
+                let (over_x, over_y) = (2.0 * HALF - dx.abs(), 2.0 * HALF - dy.abs());
+                if over_x <= 0.0 || over_y <= 0.0 {
+                    continue;
+                }
+                let share_a = if a.caught {
+                    0.0
+                } else if b.caught {
+                    1.0
+                } else {
+                    0.5
+                };
+                let (mx, my) = if over_x < over_y {
+                    (over_x * if dx < 0.0 { -1.0 } else { 1.0 }, 0.0)
+                } else {
+                    (0.0, over_y * if dy < 0.0 { -1.0 } else { 1.0 })
+                };
+                squares[i].x -= mx * share_a;
+                squares[i].y -= my * share_a;
+                squares[j].x += mx * (1.0 - share_a);
+                squares[j].y += my * (1.0 - share_a);
+                keep_in(&mut squares[i]);
+                keep_in(&mut squares[j]);
+            }
+        }
+    }
+}
+
 /// Pushes a square out of a wall it overlaps, along the shortest way, and bounces it
 fn push_out(s: &mut Square, wall: &Rect) {
     let (left, right) = (s.x + HALF - wall.left, wall.right - (s.x - HALF));
@@ -159,10 +212,16 @@ impl Field {
             if let Some((cx, cy)) = cursor {
                 let (dx, dy) = (s.x - cx, s.y - cy);
                 let distance = dx.hypot(dy);
-                if distance < SCARE_RADIUS && distance > 0.0 {
+                if distance < SCARE_RADIUS {
                     let push = SCARE_FORCE * (1.0 - distance / SCARE_RADIUS);
-                    s.vx += push * dx / distance;
-                    s.vy += push * dy / distance;
+                    // Right under the cursor there is no "away": the square jumps up
+                    let (ux, uy) = if distance > 0.0 {
+                        (dx / distance, dy / distance)
+                    } else {
+                        (0.0, -1.0)
+                    };
+                    s.vx += push * ux;
+                    s.vy += push * uy;
                 }
             }
             for (j, o) in others.iter().enumerate() {
@@ -183,18 +242,10 @@ impl Field {
             s.x += s.vx;
             s.y += s.vy;
 
-            // The edges of the field, then the walls of the pen
-            if s.x - HALF < 0.0 || s.x + HALF > WIDTH {
-                s.vx = -s.vx * BOUNCE;
-                s.x = s.x.clamp(HALF, WIDTH - HALF);
-            }
-            if s.y - HALF < 0.0 || s.y + HALF > HEIGHT {
-                s.vy = -s.vy * BOUNCE;
-                s.y = s.y.clamp(HALF, HEIGHT - HALF);
-            }
-            for wall in &WALLS {
-                push_out(s, wall);
-            }
+            keep_in(s);
+        }
+        separate(&mut self.squares);
+        for s in self.squares.iter_mut().filter(|s| !s.caught) {
             if inside_pen(s) {
                 s.caught = true;
                 s.home = Some(home(caught));
@@ -432,5 +483,313 @@ mod tests {
             f.step(Some((s.x - 40.0, 300.0)));
         }
         assert!(f.done());
+    }
+
+    // ----- Physics, exactly -----
+
+    fn close(a: f64, b: f64) -> bool {
+        (a - b).abs() < 1e-9
+    }
+
+    #[test]
+    fn requirement_1_the_pen_has_three_walls_and_is_open_on_the_left() {
+        assert_eq!(
+            WALLS.map(|w| (w.left, w.top, w.right, w.bottom)),
+            [
+                (620.0, 194.0, 786.0, 200.0),
+                (620.0, 400.0, 786.0, 406.0),
+                (780.0, 200.0, 786.0, 400.0),
+            ]
+        );
+    }
+
+    #[test]
+    fn requirement_3_inside_the_pen_means_every_edge_inside() {
+        let at = |x, y| inside_pen(&square(x, y));
+        assert!(at(PEN.left + HALF, PEN.top + HALF));
+        assert!(at(PEN.right - HALF, PEN.bottom - HALF));
+        assert!(!at(PEN.left + HALF - 0.1, 300.0));
+        assert!(!at(PEN.right - HALF + 0.1, 300.0));
+        assert!(!at(700.0, PEN.top + HALF - 0.1));
+        assert!(!at(700.0, PEN.bottom - HALF + 0.1));
+    }
+
+    #[test]
+    fn requirement_4_squares_get_faster_up_to_level_11() {
+        let speeds: Vec<f64> = [1, 2, 11, 15].iter().map(|&l| top_speed(l)).collect();
+        assert!(close(speeds[0], 4.0) && close(speeds[1], 4.3));
+        assert!(close(speeds[2], 7.0) && close(speeds[3], 7.0));
+    }
+
+    #[test]
+    fn requirement_2_the_cursor_pushes_by_how_close_it_is() {
+        // 60 pixels away, half the radius: half the force, then friction
+        let mut f = field(vec![square(300.0, 300.0)]);
+        f.step(Some((240.0, 300.0)));
+        let s = f.squares[0];
+        assert!(close(s.vx, 0.8 * FRICTION) && close(s.vy, 0.0));
+        assert!(close(s.x, 300.0 + 0.8 * FRICTION));
+        // Exactly at the radius: nothing
+        let mut f = field(vec![square(300.0, 300.0)]);
+        f.step(Some((300.0, 300.0 - SCARE_RADIUS)));
+        assert_eq!(f.squares[0].vy, 0.0);
+    }
+
+    #[test]
+    fn regression_a_cursor_right_on_a_square_still_scares_it() {
+        let mut f = field(vec![square(300.0, 300.0)]);
+        f.step(Some((300.0, 300.0)));
+        let s = f.squares[0];
+        assert!(close(s.vy, -SCARE_FORCE * FRICTION) && close(s.vx, 0.0));
+    }
+
+    #[test]
+    fn requirement_2_friction_and_the_top_speed_exactly() {
+        let mut f = field(vec![Square {
+            vx: 2.0,
+            ..square(300.0, 300.0)
+        }]);
+        f.step(None);
+        assert!(close(f.squares[0].vx, 2.0 * FRICTION));
+        let mut f = field(vec![Square {
+            vx: 30.0,
+            vy: 40.0,
+            ..square(300.0, 300.0)
+        }]);
+        f.step(None);
+        let s = f.squares[0];
+        assert!(close(s.vx.hypot(s.vy), top_speed(1)) && close(s.vx / s.vy, 0.75));
+    }
+
+    #[test]
+    fn requirement_2_bouncing_off_each_edge_exactly() {
+        // x, y, vx, vy → where it ends and how fast it goes back
+        let cases = [
+            (HALF + 0.5, 300.0, -3.0, 0.0, HALF, 300.0),
+            (WIDTH - HALF - 0.5, 100.0, 3.0, 0.0, WIDTH - HALF, 100.0), // above the pen
+            (300.0, HALF + 0.5, 0.0, -3.0, 300.0, HALF),
+            (300.0, HEIGHT - HALF - 0.5, 0.0, 3.0, 300.0, HEIGHT - HALF),
+        ];
+        for (x, y, vx, vy, ex, ey) in cases {
+            let mut f = field(vec![Square {
+                vx,
+                vy,
+                ..square(x, y)
+            }]);
+            f.step(None);
+            let s = f.squares[0];
+            assert!(
+                close(s.x, ex) && close(s.y, ey),
+                "{x},{y} ends at {},{}",
+                s.x,
+                s.y
+            );
+            assert!(close(s.vx, -vx * FRICTION * BOUNCE) && close(s.vy, -vy * FRICTION * BOUNCE));
+        }
+    }
+
+    #[test]
+    fn requirement_2_the_walls_push_a_square_out_the_shortest_way() {
+        let wall = Rect {
+            left: 100.0,
+            top: 100.0,
+            right: 200.0,
+            bottom: 110.0,
+        };
+        // From above, below, the left and the right of a flat wall
+        let cases = [
+            (
+                150.0,
+                100.0 - HALF + 2.0,
+                0.0,
+                1.0,
+                (150.0, 100.0 - HALF),
+                (0.0, -BOUNCE),
+            ),
+            (
+                150.0,
+                110.0 + HALF - 2.0,
+                0.0,
+                -1.0,
+                (150.0, 110.0 + HALF),
+                (0.0, BOUNCE),
+            ),
+            (
+                100.0 - HALF + 2.0,
+                105.0,
+                1.0,
+                0.0,
+                (100.0 - HALF, 105.0),
+                (-BOUNCE, 0.0),
+            ),
+            (
+                200.0 + HALF - 2.0,
+                105.0,
+                -1.0,
+                0.0,
+                (200.0 + HALF, 105.0),
+                (BOUNCE, 0.0),
+            ),
+        ];
+        for (x, y, vx, vy, at, v) in cases {
+            let mut s = Square {
+                vx,
+                vy,
+                ..square(x, y)
+            };
+            push_out(&mut s, &wall);
+            assert!(
+                close(s.x, at.0) && close(s.y, at.1),
+                "{x},{y} pushed to {},{}",
+                s.x,
+                s.y
+            );
+            assert!(close(s.vx, v.0) && close(s.vy, v.1));
+        }
+        let mut free = square(150.0, 200.0);
+        push_out(&mut free, &wall);
+        assert_eq!(free, square(150.0, 200.0));
+    }
+
+    #[test]
+    fn requirement_2_squares_never_overlap() {
+        // Two free squares on top of each other, and one against a caught square
+        let caught = Square {
+            caught: true,
+            home: Some((300.0, 300.0)),
+            ..square(300.0, 300.0)
+        };
+        let mut f = field(vec![
+            square(100.0, 100.0),
+            square(110.0, 104.0),
+            caught,
+            square(310.0, 300.0),
+        ]);
+        f.step(None);
+        let s = &f.squares;
+        let apart = |a: &Square, b: &Square| {
+            (a.x - b.x).abs() >= 2.0 * HALF - 1e-9 || (a.y - b.y).abs() >= 2.0 * HALF - 1e-9
+        };
+        assert!(apart(&s[0], &s[1]));
+        assert!(
+            close(s[0].x + s[1].x, 210.0),
+            "both moved half: {} {}",
+            s[0].x,
+            s[1].x
+        );
+        assert!(
+            apart(&s[2], &s[3]) && close(s[2].x, 300.0),
+            "the caught one stays put"
+        );
+    }
+
+    #[test]
+    fn requirement_2_herding_never_leaves_the_field_or_enters_a_wall() {
+        let mut f = Field::new(11, 4);
+        let mut rng = Rng::new(9);
+        for t in 0..5000 {
+            let cursor = (rng.next_f64() * WIDTH, rng.next_f64() * HEIGHT);
+            f.step(if t % 7 == 0 { None } else { Some(cursor) });
+            for s in f.squares.iter().filter(|s| !s.caught) {
+                assert!(s.x >= HALF && s.x <= WIDTH - HALF && s.y >= HALF && s.y <= HEIGHT - HALF);
+                for w in &WALLS {
+                    let inside = s.x + HALF > w.left + 1e-6
+                        && s.x - HALF < w.right - 1e-6
+                        && s.y + HALF > w.top + 1e-6
+                        && s.y - HALF < w.bottom - 1e-6;
+                    assert!(!inside, "a square at {},{} is in a wall", s.x, s.y);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn requirement_2_overlapping_squares_move_apart_the_shortest_way() {
+        let caught = |x, y| Square {
+            caught: true,
+            ..square(x, y)
+        };
+        let after = |mut squares: Vec<Square>| {
+            separate(&mut squares);
+            squares.iter().map(|s| (s.x, s.y)).collect::<Vec<_>>()
+        };
+        // Side by side: 14 too close in x, 20 in y, so apart along x, half each
+        assert_eq!(
+            after(vec![square(100.0, 100.0), square(110.0, 104.0)]),
+            vec![(93.0, 100.0), (117.0, 104.0)]
+        );
+        // The other way round, and above each other
+        assert_eq!(
+            after(vec![square(110.0, 104.0), square(100.0, 100.0)]),
+            vec![(117.0, 104.0), (93.0, 100.0)]
+        );
+        assert_eq!(
+            after(vec![square(104.0, 100.0), square(100.0, 110.0)]),
+            vec![(104.0, 93.0), (100.0, 117.0)]
+        );
+        assert_eq!(
+            after(vec![square(100.0, 110.0), square(104.0, 100.0)]),
+            vec![(100.0, 117.0), (104.0, 93.0)]
+        );
+        // A free square moves all the way from a caught one, whichever comes first
+        assert_eq!(
+            after(vec![caught(300.0, 300.0), square(310.0, 300.0)]),
+            vec![(300.0, 300.0), (324.0, 300.0)]
+        );
+        assert_eq!(
+            after(vec![square(310.0, 300.0), caught(300.0, 300.0)]),
+            vec![(324.0, 300.0), (300.0, 300.0)]
+        );
+        // Two caught squares, or squares apart on one axis, stay where they are
+        assert_eq!(
+            after(vec![caught(300.0, 300.0), caught(310.0, 300.0)]),
+            vec![(300.0, 300.0), (310.0, 300.0)]
+        );
+        assert_eq!(
+            after(vec![square(100.0, 100.0), square(110.0, 124.0)]),
+            vec![(100.0, 100.0), (110.0, 124.0)]
+        );
+        assert_eq!(
+            after(vec![square(100.0, 100.0), square(124.0, 110.0)]),
+            vec![(100.0, 100.0), (124.0, 110.0)]
+        );
+        assert_eq!(
+            after(vec![square(100.0, 100.0), square(110.0, 130.0)]),
+            vec![(100.0, 100.0), (110.0, 130.0)]
+        );
+    }
+
+    #[test]
+    fn requirement_2_close_free_squares_drift_apart_but_not_from_caught_ones() {
+        // Diagonally 15 and 20 apart (25): the drift is 0.6 sideways and 0.8 down
+        let mut f = field(vec![square(100.0, 100.0), square(115.0, 120.0)]);
+        f.step(None);
+        let s = f.squares[1];
+        assert!(close(s.vx, 0.15 * 0.6 * FRICTION) && close(s.vy, 0.15 * 0.8 * FRICTION));
+        // 26 apart: not overlapping, but closer than KEEP_APART
+        let mut f = field(vec![square(100.0, 100.0), square(126.0, 100.0)]);
+        f.step(None);
+        let s = &f.squares;
+        assert!(close(s[0].vx, -0.15 * FRICTION) && close(s[1].vx, 0.15 * FRICTION));
+        assert!(close(s[0].vy, 0.0) && close(s[1].vy, 0.0));
+        let mut f = field(vec![
+            square(100.0, 100.0),
+            Square {
+                caught: true,
+                home: Some((126.0, 100.0)),
+                ..square(126.0, 100.0)
+            },
+        ]);
+        f.step(None);
+        assert_eq!(f.squares[0].vx, 0.0);
+    }
+
+    #[test]
+    fn requirement_2_the_cursor_pushes_straight_away_from_itself() {
+        // The cursor 60 away on the upper left (36, 48): the push is 0.6 right, 0.8 down
+        let mut f = field(vec![square(300.0, 300.0)]);
+        f.step(Some((264.0, 252.0)));
+        let s = f.squares[0];
+        assert!(close(s.vx, 0.8 * 0.6 * FRICTION) && close(s.vy, 0.8 * 0.8 * FRICTION));
     }
 }

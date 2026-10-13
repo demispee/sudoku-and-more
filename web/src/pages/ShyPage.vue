@@ -14,10 +14,18 @@ const { level, squares, caught, time, result } = game;
 const [penLeft, penTop, penRight, penBottom, wall, half] = shyShapes() as unknown as number[];
 let pointer: { x: number; y: number } | null = null;
 
-/** The pointer in field units (800 × 600), whatever size the field has on screen */
+/**
+ * The pointer in field units (800 × 600), whatever size the field has on screen, without
+ * its border. Outside the field (a finger dragged past the edge) it scares nothing.
+ */
 function onPointer(event: PointerEvent) {
-  const rect = (event.currentTarget as Element).getBoundingClientRect();
-  pointer = { x: ((event.clientX - rect.left) / rect.width) * 800, y: ((event.clientY - rect.top) / rect.height) * 600 };
+  const el = event.currentTarget as Element;
+  const rect = el.getBoundingClientRect();
+  const width = el.clientWidth || rect.width;
+  const height = el.clientHeight || rect.height;
+  const x = ((event.clientX - rect.left - el.clientLeft) / width) * 800;
+  const y = ((event.clientY - rect.top - el.clientTop) / height) * 600;
+  pointer = x >= 0 && x <= 800 && y >= 0 && y <= 600 ? { x, y } : null;
   game.setCursor(pointer);
 }
 
@@ -71,7 +79,7 @@ defineExpose({ game });
     </div>
 
     <div class="field-wrap">
-      <svg class="field" viewBox="0 0 800 600" @pointermove="onPointer" @pointerdown="onPointer" @pointerleave="onLeave">
+      <svg class="field" viewBox="0 0 800 600" @pointermove="onPointer" @pointerdown="onPointer" @pointerleave="onLeave" @pointercancel="onLeave">
         <rect class="pen-floor" :x="penLeft" :y="penTop" :width="penRight! - penLeft!" :height="penBottom! - penTop!" />
         <rect class="wall" :x="penLeft" :y="penTop! - wall!" :width="penRight! - penLeft! + wall!" :height="wall" />
         <rect class="wall" :x="penLeft" :y="penBottom" :width="penRight! - penLeft! + wall!" :height="wall" />
