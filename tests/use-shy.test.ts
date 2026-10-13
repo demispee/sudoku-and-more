@@ -133,6 +133,13 @@ describe("Requirement 2 and 4: 60 steps a second, and only visible time", () => 
     expect(LONGEST_FRAME).toBe(250);
   });
 
+  test("regression: a saved level without a real time is left out", () => {
+    const other = useShy(memoryStore({ shyBest: JSON.stringify({ 1: "x", 2: null, 3: 4200, 4: -5 }) }));
+    expect(other.best.value).toEqual({ 3: 4200 });
+    expect([other.bestTime(1), other.bestTime(3)]).toEqual(["–", "0:04"]);
+    other.stop();
+  });
+
   test("saved best times that can't be read are ignored", () => {
     for (const saved of ["{not json", "[1, 2]", "null"]) {
       const other = useShy(memoryStore({ shyBest: saved }));

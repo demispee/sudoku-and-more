@@ -87,14 +87,19 @@ pub fn inside_pen(s: &Square) -> bool {
 
 /// Keeps a square on the field and out of the walls of the pen: it bounces off them
 fn keep_in(s: &mut Square) {
-    if s.x - HALF < 0.0 || s.x + HALF > WIDTH {
-        s.vx = -s.vx * BOUNCE;
-        s.x = s.x.clamp(HALF, WIDTH - HALF);
+    // Away from the edge it touches, also when it was already moving away
+    if s.x - HALF < 0.0 {
+        s.vx = s.vx.abs() * BOUNCE;
+    } else if s.x + HALF > WIDTH {
+        s.vx = -s.vx.abs() * BOUNCE;
     }
-    if s.y - HALF < 0.0 || s.y + HALF > HEIGHT {
-        s.vy = -s.vy * BOUNCE;
-        s.y = s.y.clamp(HALF, HEIGHT - HALF);
+    if s.y - HALF < 0.0 {
+        s.vy = s.vy.abs() * BOUNCE;
+    } else if s.y + HALF > HEIGHT {
+        s.vy = -s.vy.abs() * BOUNCE;
     }
+    s.x = s.x.clamp(HALF, WIDTH - HALF);
+    s.y = s.y.clamp(HALF, HEIGHT - HALF);
     for wall in &WALLS {
         push_out(s, wall);
     }
@@ -103,7 +108,9 @@ fn keep_in(s: &mut Square) {
 /// Moves overlapping squares apart along the shortest way: two free squares half each,
 /// a free square all the way from a caught one
 fn separate(squares: &mut [Square]) {
-    for _ in 0..3 {
+    // Against an edge or a wall a square can't give way, so a few passes may be needed
+    for _ in 0..12 {
+        let mut moved = false;
         for i in 0..squares.len() {
             for j in i + 1..squares.len() {
                 let (a, b) = (squares[i], squares[j]);
@@ -127,13 +134,33 @@ fn separate(squares: &mut [Square]) {
                 } else {
                     (0.0, over_y * if dy < 0.0 { -1.0 } else { 1.0 })
                 };
+                // Each moves its share; what one can't move (an edge, a wall), the other takes
                 squares[i].x -= mx * share_a;
                 squares[i].y -= my * share_a;
-                squares[j].x += mx * (1.0 - share_a);
-                squares[j].y += my * (1.0 - share_a);
                 keep_in(&mut squares[i]);
-                keep_in(&mut squares[j]);
+                let (left_x, left_y) = (
+                    squares[i].x - (a.x - mx * share_a),
+                    squares[i].y - (a.y - my * share_a),
+                );
+                if !b.caught {
+                    squares[j].x += mx * (1.0 - share_a) + left_x;
+                    squares[j].y += my * (1.0 - share_a) + left_y;
+                    keep_in(&mut squares[j]);
+                }
+                let back = (
+                    b.x + mx * (1.0 - share_a) + left_x - squares[j].x,
+                    b.y + my * (1.0 - share_a) + left_y - squares[j].y,
+                );
+                if !a.caught && (back.0 != 0.0 || back.1 != 0.0) {
+                    squares[i].x -= back.0;
+                    squares[i].y -= back.1;
+                    keep_in(&mut squares[i]);
+                }
+                moved = true;
             }
+        }
+        if !moved {
+            break;
         }
     }
 }
@@ -791,5 +818,72 @@ mod tests {
         f.step(Some((264.0, 252.0)));
         let s = f.squares[0];
         assert!(close(s.vx, 0.8 * 0.6 * FRICTION) && close(s.vy, 0.8 * 0.8 * FRICTION));
+    }
+
+    #[test]
+    fn regression_a_square_pushed_against_an_edge_keeps_moving_away_from_it() {
+        // A moves away from the left edge, B pushes it back against the edge
+        let mut squares = vec![
+            Square {
+                vx: 2.0,
+                ..square(13.0, 300.0)
+            },
+            square(20.0, 300.0),
+        ];
+        separate(&mut squares);
+        assert!(
+            squares[0].vx > 0.0,
+            "still away from the edge: {}",
+            squares[0].vx
+        );
+        let mut right = vec![
+            Square {
+                vx: -2.0,
+                ..square(WIDTH - 13.0, 100.0)
+            },
+            square(WIDTH - 20.0, 100.0),
+        ];
+        separate(&mut right);
+        assert!(right[0].vx < 0.0);
+        let mut top = vec![
+            Square {
+                vy: 2.0,
+                ..square(300.0, 13.0)
+            },
+            square(300.0, 20.0),
+        ];
+        separate(&mut top);
+        assert!(top[0].vy > 0.0);
+        let mut bottom = vec![
+            Square {
+                vy: -2.0,
+                ..square(300.0, HEIGHT - 13.0)
+            },
+            square(300.0, HEIGHT - 20.0),
+        ];
+        separate(&mut bottom);
+        assert!(bottom[0].vy < 0.0);
+    }
+
+    #[test]
+    fn regression_squares_against_an_edge_end_apart() {
+        // Three squares in a row against the left edge
+        let mut squares = vec![
+            square(12.0, 300.0),
+            square(20.0, 300.0),
+            square(30.0, 300.0),
+        ];
+        separate(&mut squares);
+        for (i, a) in squares.iter().enumerate() {
+            for b in &squares[i + 1..] {
+                let overlap = (2.0 * HALF - (a.x - b.x).abs()).min(2.0 * HALF - (a.y - b.y).abs());
+                assert!(
+                    overlap < 0.01,
+                    "{} and {} still overlap by {overlap}",
+                    a.x,
+                    b.x
+                );
+            }
+        }
     }
 }

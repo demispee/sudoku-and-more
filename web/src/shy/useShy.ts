@@ -42,8 +42,10 @@ export function useShy(store: Store = localStorage) {
   /** The saved best times; ones that can't be read are ignored */
   function readBest(): Record<string, number> {
     try {
-      const saved = JSON.parse(store.getItem("shyBest") || "{}");
-      return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+      const saved: unknown = JSON.parse(store.getItem("shyBest") || "{}");
+      if (!saved || typeof saved !== "object" || Array.isArray(saved)) return {};
+      // Keep only the levels with a real time
+      return Object.fromEntries(Object.entries(saved).filter(([, ms]) => Number.isFinite(ms) && ms > 0));
     } catch {
       return {};
     }
