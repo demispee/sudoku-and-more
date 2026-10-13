@@ -125,3 +125,28 @@ describe("Requirement 5 and 6: fired, and the best result", () => {
     expect(page.find(".strikes").text()).toBe("0");
   });
 });
+
+describe("Requirement 7: time per form", () => {
+  test("the time bar shrinks, turns red in the last 3 seconds, and running out says so", async () => {
+    const bar = () => page.find(".time");
+    expect(bar().attributes("aria-label")).toBe("12 seconds left");
+    expect(bar().find("span").attributes("style")).toContain("width: 100%");
+    vi.advanceTimersByTime(9_000);
+    await page.vm.$nextTick();
+    expect(bar().classes()).toContain("hurry");
+    vi.advanceTimersByTime(3_000);
+    await page.vm.$nextTick();
+    expect(page.find(".stamp.expired").text()).toBe("expired");
+    expect(page.find(".message").text()).toBe("too slowToo slow! The applicant left.");
+    expect(page.findAll(".stain")).toHaveLength(1);
+  });
+
+  test("a hidden tab stops the clock", async () => {
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    vi.advanceTimersByTime(30_000);
+    expect(game.timeLeft.value).toBe(12_000);
+    visibility.mockReturnValue("visible");
+    vi.advanceTimersByTime(1_000);
+    expect(game.timeLeft.value).toBe(11_000);
+  });
+});

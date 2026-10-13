@@ -101,8 +101,10 @@ All artwork is drawn in code as SVG.
   weekday and a doodle. Stamp it with `A` (approve) or `R` (reject).
 - You start with one rule and get a new one every day of 10 forms. The newest rule that
   fits decides; "do the opposite" rules turn the older ones around; no rule means approve.
-- A wrong stamp spills tea and tells you which rule you missed. Three times and you're
-  fired.
+- Every form has a time limit: 12 seconds on day 1, a second less every day, down to 5.
+  Run out and the applicant leaves.
+- A wrong stamp spills tea and tells you which rule you missed; so does running out of
+  time. Three times and you're fired.
 
 ## Shy squares
 

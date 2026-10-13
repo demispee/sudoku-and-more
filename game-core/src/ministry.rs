@@ -5,6 +5,9 @@ use crate::random::Rng;
 
 pub const FORMS_PER_DAY: u32 = 10;
 pub const STRIKES_TO_BE_FIRED: u32 = 3;
+/// Seconds per form on day 1; one less every day, down to `FEWEST_SECONDS`
+pub const FIRST_DAY_SECONDS: u32 = 12;
+pub const FEWEST_SECONDS: u32 = 5;
 
 pub const NAMES: [&str; 32] = [
     "Bartholomew Puddle",
@@ -325,11 +328,33 @@ impl Ministry {
         } else {
             self.strikes += 1;
         }
+        self.done_with_form();
+        Some(Stamp { right, decision })
+    }
+
+    /// The time for a form today, in seconds
+    pub fn seconds_per_form(&self) -> u32 {
+        FIRST_DAY_SECONDS
+            .saturating_sub(self.day - 1)
+            .max(FEWEST_SECONDS)
+    }
+
+    /// The form on the desk ran out of time: a strike, and the next form. Returns false
+    /// when there is no form to run out (the day is over or the clerk is fired).
+    pub fn expire(&mut self) -> bool {
+        if self.fired() || self.day_over() {
+            return false;
+        }
+        self.strikes += 1;
+        self.done_with_form();
+        true
+    }
+
+    fn done_with_form(&mut self) {
         self.today += 1;
         if !self.fired() && !self.day_over() {
             self.form = self.next_form();
         }
-        Some(Stamp { right, decision })
     }
 
     /// Starts the next day with one new rule from the pool, once the day is over
@@ -668,5 +693,47 @@ mod tests {
         assert!(game.fired());
         assert_eq!(game.stamp(true), None);
         assert_eq!((game.day, game.stamped, game.strikes), (2, 8, 3));
+    }
+
+    // ----- Requirement 7: time per form -----
+
+    #[test]
+    fn requirement_7_twelve_seconds_on_day_1_one_less_every_day_at_least_5() {
+        let mut game = Ministry::new(2);
+        let mut seconds = Vec::new();
+        for _ in 0..9 {
+            seconds.push(game.seconds_per_form());
+            while !game.day_over() {
+                let right = decide(&game.form, &game.book).approve;
+                game.stamp(right);
+            }
+            game.next_day();
+        }
+        assert_eq!(seconds, vec![12, 11, 10, 9, 8, 7, 6, 5, 5]);
+    }
+
+    #[test]
+    fn requirement_7_a_form_that_runs_out_is_a_strike_and_the_next_form_comes() {
+        let mut game = Ministry::new(6);
+        let first = game.form;
+        assert!(game.expire());
+        assert_eq!((game.strikes, game.today, game.stamped), (1, 1, 0));
+        assert_ne!(game.form, first);
+        assert!(game.expire());
+        assert!(game.expire());
+        assert!(game.fired());
+        assert!(!game.expire());
+        assert_eq!(game.strikes, 3);
+    }
+
+    #[test]
+    fn requirement_7_nothing_runs_out_at_the_end_of_a_day() {
+        let mut game = Ministry::new(6);
+        while !game.day_over() {
+            let right = decide(&game.form, &game.book).approve;
+            game.stamp(right);
+        }
+        assert!(!game.expire());
+        assert_eq!(game.strikes, 0);
     }
 }

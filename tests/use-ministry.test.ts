@@ -1,7 +1,7 @@
 // Tests for .openspec/specs/004-ministry-of-odd-forms/spec.md: the page's state and actions.
 // The rules themselves are tested in Rust (game-core/src/ministry.rs).
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import { STAMP_TIME, useMinistry, type MinistryGame } from "../web/src/ministry/useMinistry";
+import { HURRY, STAMP_TIME, TICK, useMinistry, type MinistryGame } from "../web/src/ministry/useMinistry";
 import { memoryStore, seedRandom } from "./helpers";
 import { loadWasmForTests } from "./wasm-setup";
 
@@ -104,5 +104,53 @@ describe("Requirement 5 and 6: fired, and the best result", () => {
     stamp();
     for (let k = 0; k < 3; k++) stamp(false);
     expect(game.best.value).toEqual({ days: 1, forms: 1 });
+  });
+});
+
+describe("Requirement 7: time per form", () => {
+  test("12 seconds on day 1; running out is a strike with an EXPIRED stamp, then the next form", () => {
+    started();
+    expect([game.timeLimit.value, game.timeLeft.value]).toEqual([12_000, 12_000]);
+    vi.advanceTimersByTime(11_900);
+    expect([game.timeLeft.value, game.strikes.value]).toEqual([100, 0]);
+    const before = game.form.value;
+    vi.advanceTimersByTime(100);
+    expect([game.stampMark.value, game.strikes.value, game.tooSlow.value]).toEqual(["expired", 1, true]);
+    expect(game.message.value).toBe("Too slow! The applicant left.");
+    vi.advanceTimersByTime(STAMP_TIME);
+    expect([game.stampMark.value, game.today.value]).toEqual([null, 1]);
+    expect(game.timeLeft.value).toBeGreaterThanOrEqual(12_000 - TICK); // the clock may have ticked once
+    expect(game.form.value).not.toEqual(before);
+    stamp(false); // a wrong stamp afterwards is tea again
+    expect(game.tooSlow.value).toBe(false);
+  });
+
+  test("a stamp in time stops the clock and the next form gets the full time", () => {
+    started();
+    vi.advanceTimersByTime(HURRY * 3);
+    const answer = game.rightStamp();
+    game.stamp(answer);
+    const left = game.timeLeft.value;
+    vi.advanceTimersByTime(STAMP_TIME - 100);
+    expect(game.timeLeft.value).toBe(left); // stands still while the stamp shows
+    vi.advanceTimersByTime(100);
+    expect(game.timeLeft.value).toBeGreaterThanOrEqual(12_000 - TICK);
+    expect(game.strikes.value).toBe(0);
+  });
+
+  test("the clock stands still during the memo and after being fired; day 2 has 11 seconds", () => {
+    started();
+    for (let k = 0; k < 10; k++) stamp();
+    expect(game.memo.value).not.toBeNull();
+    vi.advanceTimersByTime(60_000);
+    expect([game.strikes.value, game.timeLimit.value, game.timeLeft.value]).toEqual([0, 11_000, 11_000]);
+    game.nextDay();
+    for (let k = 0; k < 3; k++) {
+      vi.advanceTimersByTime(11_000);
+      vi.advanceTimersByTime(STAMP_TIME);
+    }
+    expect(game.fired.value).toBe(true);
+    vi.advanceTimersByTime(60_000);
+    expect(game.strikes.value).toBe(3);
   });
 });
