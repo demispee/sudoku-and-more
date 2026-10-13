@@ -385,7 +385,9 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     const tanV = Math.tan((camera.fov * Math.PI) / 360);
-    const distance = Math.max((W / 2 + 2.4) / (tanV * camera.aspect), 15.5 / tanV);
+    // On a narrow (phone) screen the board may come closer to the edges
+    const narrow = camera.aspect < 1;
+    const distance = Math.max((W / 2 + (narrow ? 0.9 : 2.4)) / (tanV * camera.aspect), (narrow ? 13.4 : 15.5) / tanV);
     camera.position.set(LOOK.x, LOOK.y + distance * Math.cos(TILT), LOOK.z + distance * Math.sin(TILT));
     camera.lookAt(LOOK.x, LOOK.y, LOOK.z);
   }
