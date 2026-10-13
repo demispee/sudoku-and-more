@@ -6,6 +6,7 @@ import BackLink from "../components/BackLink.vue";
 import SiteFooter from "../components/SiteFooter.vue";
 import SlashMark from "../components/SlashMark.vue";
 import { createBoard, type Board } from "../mastermind/scene";
+import { palette } from "../mastermind/palettes";
 import { useMastermind } from "../mastermind/useMastermind";
 
 const game = useMastermind();
@@ -48,6 +49,7 @@ function mountBoard() {
       current: current.value,
       code: code.value,
       colours: colours.value,
+      studio: palette(paletteName.value).studio,
       hop: lastColour.value,
     });
   });
@@ -89,7 +91,7 @@ defineExpose({ game });
     </div>
 
     <div class="board-wrap">
-      <div ref="host" class="board"></div>
+      <div ref="host" class="board" :style="{ background: palette(paletteName).studio.low }"></div>
       <p v-if="noWebgl" class="no-webgl">This browser can't draw the 3D board (it has no WebGL).</p>
       <div v-if="result" class="overlay">
         <strong v-if="result.won">Code broken in {{ result.rows }} {{ result.rows === 1 ? "row" : "rows" }}</strong>
@@ -125,7 +127,7 @@ h1 { margin-bottom: 24px; }
   height: clamp(420px, calc(100vh - 300px), 860px);
   border-radius: 18px 18px 18px 4px;
   overflow: hidden;
-  background: #1b1433;
+  transition: background 0.5s;
 }
 /* On a narrow screen the board fits the width, so a tall frame is only empty table */
 @media (max-width: 700px) { .board { height: auto; aspect-ratio: 4 / 5; } }

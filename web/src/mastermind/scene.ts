@@ -14,6 +14,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import type { Studio } from "./palettes";
 
 export interface BoardState {
   rows: { pegs: (number | null)[]; answer: [number, number] | null }[];
@@ -23,6 +24,8 @@ export interface BoardState {
   code: number[] | null;
   /** The colour of every peg colour, from the palette */
   colours: string[];
+  /** The palette's studio */
+  studio: Studio;
   /** The last colour placed, counted, so the tray ball can hop at every click */
   hop: { colour: number; count: number } | null;
 }
@@ -72,7 +75,10 @@ function roundedRect(cx: number, cy: number, w: number, d: number, r: number) {
   return s;
 }
 
-/** A studio backdrop: a floor that curves up into a wall, with a soft colour gradient */
+/**
+ * A studio backdrop: a floor that curves up into a wall. Returns the shape and, per vertex,
+ * where it is in the colour gradient from floor (0) to wall (1).
+ */
 function backdrop() {
   const profile: [number, number][] = []; // z, y
   for (let z = 70; z > -25; z -= 5) profile.push([z, 0]);
@@ -83,18 +89,15 @@ function backdrop() {
   for (let y = 30; y <= 110; y += 10) profile.push([-47, y]);
   const geometry = new PlaneGeometry(200, 1, 1, profile.length - 1);
   const position = geometry.attributes.position!;
-  const colours = new Float32Array(position.count * 3);
-  const low = new Color("#0f0b1f");
-  const high = new Color("#5a2f9a");
+  const gradient = new Float32Array(position.count);
   for (let i = 0; i < position.count; i++) {
     const [z, y] = profile[Math.floor(i / 2)]!;
     position.setXYZ(i, -position.getX(i), y, z); // mirrored, so the surface faces up
-    const c = low.clone().lerp(high, Math.min(1, Math.max(0, (y + 4 - Math.max(0, z) * 0.1) / 50)));
-    colours.set([c.r, c.g, c.b], i * 3);
+    gradient[i] = Math.min(1, Math.max(0, (y + 4 - Math.max(0, z) * 0.1) / 50));
   }
-  geometry.setAttribute("color", new BufferAttribute(colours, 3));
+  geometry.setAttribute("color", new BufferAttribute(new Float32Array(position.count * 3), 3));
   geometry.computeVertexNormals();
-  return geometry;
+  return { geometry, gradient };
 }
 
 /** A soft-touch graphite surface with the row numbers printed on it */
@@ -180,7 +183,12 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new Scene();
-  scene.background = new Color("#5a2f9a");
+  // The studio's colours now, and the palette's colours they fade to
+  const look = { low: new Color(), high: new Color(), left: new Color(), right: new Color() };
+  const studioGoal = { low: new Color(), high: new Color(), left: new Color(), right: new Color() };
+  let fading = 0; // seconds of fading left
+  const background = new Color();
+  scene.background = background;
   const pmrem = new PMREMGenerator(renderer);
   const room = new RoomEnvironment();
   scene.environment = pmrem.fromScene(room, 0.04).texture;
@@ -198,7 +206,21 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
 
   // ---------- The studio ----------
 
-  const studio = new Mesh(backdrop(), new MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+  const { geometry: studioShape, gradient } = backdrop();
+  const studio = new Mesh(studioShape, new MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+  const paintColour = new Color();
+  /** Colours the backdrop, the background and the side lights with the studio's colours now */
+  function paint() {
+    const colours = studioShape.attributes.color!;
+    for (let i = 0; i < gradient.length; i++) {
+      paintColour.copy(look.low).lerp(look.high, gradient[i]!);
+      colours.setXYZ(i, paintColour.r, paintColour.g, paintColour.b);
+    }
+    colours.needsUpdate = true;
+    background.copy(look.high);
+    magenta.color.copy(look.left);
+    cyan.color.copy(look.right);
+  }
   studio.receiveShadow = true;
   scene.add(studio);
 
@@ -427,6 +449,15 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
 
   function update(next: BoardState) {
     const ended = !!next.code && !state?.code;
+    const keys = ["low", "high", "left", "right"] as const;
+    if (keys.some(k => studioGoal[k].getHexString() !== new Color(next.studio[k]).getHexString())) {
+      keys.forEach(k => studioGoal[k].set(next.studio[k]));
+      if (state) fading = 0.8; // a new palette fades in
+      else {
+        keys.forEach(k => look[k].copy(studioGoal[k]));
+        paint();
+      }
+    }
     state = next;
     next.rows.forEach((row, r) => {
       row.pegs.forEach((colour, h) => {
@@ -552,6 +583,14 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
       turn.x + sway * 0.03 * Math.sin(clock * 0.45),
       leanZ.x + sway * 0.014 * Math.sin(clock * 0.55 + 1),
     );
+
+    // A new palette's studio fades in
+    if (fading > 0) {
+      fading -= dt;
+      const t = fading > 0 ? Math.min(1, dt * 7) : 1;
+      for (const k of ["low", "high", "left", "right"] as const) look[k].lerp(studioGoal[k], t);
+      paint();
+    }
 
     // The key light follows the pointer a little
     key.position.x += (keyHome.x + pointer.x * 10 - key.position.x) * Math.min(1, dt * 3);
