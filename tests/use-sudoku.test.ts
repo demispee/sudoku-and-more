@@ -172,6 +172,17 @@ describe("Requirement 7: step solver", () => {
     expect(game.selected.value).toBeNull();
   });
 
+  test("corrects the selected wrong number before another one", () => {
+    started(1);
+    const [i, j] = emptyCells();
+    game.select(i!);
+    game.enter(wrongDigit(i!));
+    game.select(j!);
+    game.enter(wrongDigit(j!));
+    game.step();
+    expect([game.values.value[j!], game.values.value[i!]]).toEqual([game.solution.value[j!], wrongDigit(i!)]);
+  });
+
   test("corrects a wrong number first", () => {
     started(1);
     const i = emptyCells()[0]!;

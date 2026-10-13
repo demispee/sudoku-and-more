@@ -129,11 +129,13 @@ impl Step {
     }
 }
 
-/// One step of the solver (see `sudoku::solver_step`). Notes are a bitmask per cell.
+/// One step of the solver (see `sudoku::solver_step`). Notes are a bitmask per cell;
+/// `selected` is -1 when no cell is selected.
 #[wasm_bindgen(js_name = solverStep)]
-pub fn solver_step(values: &[u8], notes: &[u16], solution: &[u8]) -> Step {
+pub fn solver_step(values: &[u8], notes: &[u16], solution: &[u8], selected: i32) -> Step {
     let (mut values, mut notes) = (grid(values), masks(notes));
-    let step = sudoku::solver_step(&mut values, &mut notes, &grid(solution));
+    let selected = usize::try_from(selected).ok();
+    let step = sudoku::solver_step(&mut values, &mut notes, &grid(solution), selected);
     Step {
         label: step.label,
         text: step.text,
@@ -334,7 +336,7 @@ mod tests {
     #[test]
     fn solver_step_returns_the_new_board_and_notes() {
         let notes = sudoku::candidate_masks(&grid(&hard()));
-        let step = solver_step(&hard(), &notes, &solution());
+        let step = solver_step(&hard(), &notes, &solution(), -1);
         assert!(step.counts() && !step.label().is_empty() && !step.text().is_empty());
         let [i] = step.filled()[..] else { panic!() };
         assert_eq!(step.targets(), [i]);
@@ -361,7 +363,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "81 cells")]
     fn a_short_grid_is_rejected() {
-        solver_step(&[0; 10], &[0; 81], &solution());
+        solver_step(&[0; 10], &[0; 81], &solution(), -1);
     }
     #[test]
     fn spot_bridge() {

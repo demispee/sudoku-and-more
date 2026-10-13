@@ -71,8 +71,9 @@ Coverage must stay at 80% or more, in Rust and in `web/src/`, and the type check
   | 7 to 10 | Those techniques run out; chains or trial and error are needed. The earlier they run out, the higher the level |
 
 - **Step** fills in one number and explains which techniques lead to it, highlighting
-  their cells; your notes lose what those techniques rule out. **Solve** keeps stepping
-  until the puzzle is done.
+  their cells; your notes lose what those techniques rule out. When the techniques run
+  out, it tries a cell with two options and shows why one of them leads to a
+  contradiction. **Solve** keeps stepping until the puzzle is done.
 - The next puzzle is generated in the background while you play.
 
 Keyboard: `1` to `9` fill in, `Backspace` erases, arrow keys move, `N` toggles notes,
