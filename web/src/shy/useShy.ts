@@ -5,6 +5,8 @@ import { formatTime } from "../format";
 import { ShyField, randomSeed } from "../wasm";
 
 export const NEXT_LEVEL_DELAY = 3000; // ms between finishing a level and the next one
+export const STEP = 1000 / 60; // ms per step of the squares: 60 a second, on any screen
+export const LONGEST_FRAME = 250; // ms; a longer gap (a hidden tab) counts as this
 
 export interface ShySquare {
   x: number;
@@ -27,13 +29,25 @@ export function useShy(store: Store = localStorage) {
   const caught = ref(0);
   const time = ref("0:00");
   const result = ref<LevelResult | null>(null);
-  const best = ref<Record<string, number>>(JSON.parse(store.getItem("shyBest") || "{}"));
+  const best = ref<Record<string, number>>(readBest());
 
   let field: ShyField | null = null;
   let cursor: { x: number; y: number } | null = null;
-  let startTime = 0;
+  let played = 0; // ms of this level, only while the page is visible
+  let pending = 0; // ms not yet turned into steps
+  let last: number | null = null; // the time of the last frame
   let frameId = 0;
   let nextLevelTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /** The saved best times; ones that can't be read are ignored */
+  function readBest(): Record<string, number> {
+    try {
+      const saved = JSON.parse(store.getItem("shyBest") || "{}");
+      return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+    } catch {
+      return {};
+    }
+  }
 
   function read() {
     const values = field!.squares(); // x, y and caught for every square
@@ -49,13 +63,14 @@ export function useShy(store: Store = localStorage) {
     field = new ShyField(n, randomSeed());
     level.value = n;
     result.value = null;
-    startTime = Date.now();
+    played = 0;
+    pending = 0;
     time.value = "0:00";
     read();
   }
 
   function finish() {
-    const ms = Date.now() - startTime;
+    const ms = Math.round(played);
     const key = String(level.value);
     const previous = best.value[key];
     const isRecord = previous === undefined || ms < previous;
@@ -67,14 +82,26 @@ export function useShy(store: Store = localStorage) {
     nextLevelTimer = setTimeout(() => startLevel(level.value + 1), NEXT_LEVEL_DELAY);
   }
 
-  /** One frame: the squares move, and the level ends when all are caught */
-  function frame() {
+  /**
+   * One animation frame: the time since the last frame becomes steps of 1/60 s, so the
+   * squares move as fast on a 120 Hz screen as on a 60 Hz one. The level ends when all
+   * are caught.
+   */
+  function frame(now: number) {
     if (field && !result.value) {
-      field.step(cursor?.x ?? 0, cursor?.y ?? 0, cursor !== null);
+      // The first frame counts as one step, so the game starts moving at once
+      const passed = last === null ? STEP : Math.min(Math.max(now - last, 0), LONGEST_FRAME);
+      played += passed;
+      pending += passed;
+      while (pending >= STEP - 1e-6 && !field.done) { // 1000 / 60 isn't exact
+        field.step(cursor?.x ?? 0, cursor?.y ?? 0, cursor !== null);
+        pending -= STEP;
+      }
       read();
-      time.value = formatTime(Date.now() - startTime);
+      time.value = formatTime(Math.round(played));
       if (field.done) finish();
     }
+    last = now;
     frameId = requestAnimationFrame(frame);
   }
 
@@ -94,7 +121,7 @@ export function useShy(store: Store = localStorage) {
 
   function start() {
     startLevel(1);
-    frame();
+    frameId = requestAnimationFrame(frame);
   }
 
   function stop() {

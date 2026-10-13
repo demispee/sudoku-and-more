@@ -1,7 +1,7 @@
 // Tests for .openspec/specs/005-shy-squares/spec.md: the page's state and actions.
 // How the squares move is tested in Rust (game-core/src/shy.rs).
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import { NEXT_LEVEL_DELAY, useShy, type ShyGame } from "../web/src/shy/useShy";
+import { LONGEST_FRAME, NEXT_LEVEL_DELAY, STEP, useShy, type ShyGame } from "../web/src/shy/useShy";
 import { memoryStore, seedRandom } from "./helpers";
 import { loadWasmForTests } from "./wasm-setup";
 
@@ -14,6 +14,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   seedRandom(2);
   frames = [];
+  now = 0;
   vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => frames.push(cb));
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
 });
@@ -32,7 +33,9 @@ function started(initial: Record<string, string> = {}) {
   return store;
 }
 
-const nextFrame = () => frames.shift()!(0);
+let now = 0;
+/** One animation frame of 1/60 s */
+const nextFrame = (ms = STEP) => frames.shift()!((now += ms));
 
 /** Plays sheepdog: drives the first free square to the front of the pen, then inside */
 function herd(g: ShyGame, maxFrames = 40_000) {
@@ -82,8 +85,7 @@ describe("Requirement 1 and 4: levels", () => {
 
   test("restart gives the same level new squares and resets the clock", () => {
     started();
-    vi.advanceTimersByTime(5000);
-    nextFrame();
+    for (let k = 0; k < 300; k++) nextFrame(); // 5 seconds
     expect(game.time.value).toBe("0:05");
     const before = JSON.stringify(game.squares.value);
     game.restart();
@@ -104,5 +106,38 @@ describe("Requirement 2: shy squares", () => {
     const still = game.squares.value[0]!;
     nextFrame();
     expect(game.squares.value[0]!.x).toBeCloseTo(still.x, 2);
+  });
+});
+
+describe("Requirement 2 and 4: 60 steps a second, and only visible time", () => {
+  test("a 120 Hz screen takes as many steps per second as a 60 Hz one", async () => {
+    const { ShyField } = await import("../web/src/wasm");
+    const steps = vi.spyOn(ShyField.prototype, "step");
+    started();
+    nextFrame(); // the first frame
+    steps.mockClear();
+    for (let k = 0; k < 60; k++) nextFrame(STEP); // 1 second at 60 Hz
+    const at60 = steps.mock.calls.length;
+    steps.mockClear();
+    for (let k = 0; k < 120; k++) nextFrame(STEP / 2); // 1 second at 120 Hz
+    expect([at60, steps.mock.calls.length]).toEqual([60, 60]);
+  });
+
+  test("a long gap between frames (a hidden tab) counts as at most 250 ms", () => {
+    started();
+    nextFrame();
+    nextFrame(60_000);
+    expect(game.time.value).toBe("0:00");
+    for (let k = 0; k < 4; k++) nextFrame(60_000);
+    expect(game.time.value).toBe("0:01"); // 4 × 250 ms
+    expect(LONGEST_FRAME).toBe(250);
+  });
+
+  test("saved best times that can't be read are ignored", () => {
+    for (const saved of ["{not json", "[1, 2]", "null"]) {
+      const other = useShy(memoryStore({ shyBest: saved }));
+      expect(other.best.value).toEqual({});
+      other.stop();
+    }
   });
 });

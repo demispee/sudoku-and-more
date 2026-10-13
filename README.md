@@ -109,7 +109,7 @@ All artwork is drawn in code as SVG.
 
 - Squares within 120 pixels of your mouse or finger run away from it; the closer you get,
   the harder they run. Use that to drive them into the pen on the right.
-- Every level has 2 more squares (up to 20), and they get a little faster. `R` restarts
+- Every level has 2 more squares (up to 20), and they get a little faster (up to level 11). `R` restarts
   the level; the best time per level is kept in your browser.
 
 ## Mastermind
