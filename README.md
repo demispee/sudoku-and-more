@@ -122,11 +122,13 @@ All artwork is drawn in code as SVG.
 
 ## Mastermind
 
-- Break a secret code of 4 pegs in 6 colours (a colour can be in it more than once) in at
-  most 10 rows.
-- Click a dish and then a hole, or press `1`–`6`; `Backspace` takes the last peg out and
-  `Enter` checks the row. A black answer peg is a right colour in the right hole, a white
-  one a right colour in another hole.
+- Break a secret code in at most 10 rows: **classic** is 4 pegs from 6 colours, **hard**
+  5 pegs from 8. A colour can be in the code more than once.
+- Click a colour (or press its number) and it goes in the first empty hole; click a peg
+  to take it out again. `Backspace` takes the last peg out and `Enter` checks the row. A
+  black answer peg is a right colour in the right hole, a white one a right colour in
+  another hole.
+- `colours` switches the palette: vivid, warm, cool or tropical.
 - The board is a modern 3D object in a studio, drawn with three.js. It floats, the pegs
   bounce in, and the light follows your mouse; drag it and it springs back. Everything on
   it is made in code, without image or model files (ADR-0009).

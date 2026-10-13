@@ -3,7 +3,7 @@
 // compiled module loads and that values cross the bridge correctly.
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  Mastermind, Ministry, ReverseSnake, SceneOrder, ShyField, World, ballColors, formsPerDay, mastermindShape, shyShapes, snakeGridSize, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
+  Mastermind, Ministry, ReverseSnake, SceneOrder, ShyField, World, ballColors, formsPerDay, mastermindLevels, mastermindRows, shyShapes, snakeGridSize, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
   missPenalty, pickDifferences, recordKey, solverStep, totalTime,
 } from "../web/src/wasm";
 import { loadWasmForTests } from "./wasm-setup";
@@ -129,8 +129,8 @@ describe("reverse snake through WebAssembly", () => {
 
 describe("mastermind through WebAssembly", () => {
   test("checks a row of colours, and shows the code only at the end", () => {
-    const game = new Mastermind(5);
-    expect(Array.from(mastermindShape())).toEqual([4, 6, 10]);
+    const game = new Mastermind(5, 0);
+    expect([Array.from(mastermindLevels()), mastermindRows()]).toEqual([[4, 6, 5, 8], 10]);
     expect([game.status, game.code().length, game.check(Uint8Array.from([0, 1])).length]).toEqual(["playing", 0, 0]);
     const answer = Array.from(game.check(Uint8Array.from([0, 1, 2, 3])));
     expect(answer).toHaveLength(2);
