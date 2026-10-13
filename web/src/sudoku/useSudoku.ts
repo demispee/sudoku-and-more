@@ -1,9 +1,9 @@
 // The state of the sudoku page and what the player can do (.openspec/specs/001-sudoku).
 // The rules are in Rust (game-core/src/sudoku.rs): this file keeps track of what is on
-// the screen and asks the WebAssembly module what a move, hint or step does.
+// the screen and asks the WebAssembly module what a move or step does.
 import { computed, ref } from "vue";
 import { formatTime } from "../format";
-import { clearNotesAround as clearNotesIn, generate, hint as findHint, randomSeed, solverStep } from "../wasm";
+import { clearNotesAround as clearNotesIn, generate, randomSeed, solverStep } from "../wasm";
 
 export const NEXT_PUZZLE_DELAY = 3000; // ms between solving a puzzle and the next one
 export const GENERATE_BUDGET = 8000; // ms; after this, take the closest puzzle found
@@ -60,7 +60,7 @@ export function useSudoku(store: Store = localStorage) {
   const solution = ref<number[]>(new Array(81).fill(0));
   const values = ref<number[]>(new Array(81).fill(0));
   const notes = ref<number[]>(new Array(81).fill(0)); // a bitmask per cell
-  const hinted = ref(new Set<number>()); // filled in by a hint or the solver
+  const hinted = ref(new Set<number>()); // filled in by the solver
   const selected = ref<number | null>(null);
   const notesMode = ref(false);
   const locked = ref(true);
@@ -73,7 +73,7 @@ export function useSudoku(store: Store = localStorage) {
   const message = ref<Message | null>(null);
   const overlay = ref<Overlay>(null);
   const autoSolving = ref(false);
-  const flash = ref({ cell: -1, count: 0 }); // the cell a hint just filled in
+  const flash = ref({ cell: -1, count: 0 }); // the cell a step just filled in
 
   let startTime = 0;
   let nextJob: Job | null = null; // next puzzle, prepared in the background while you play
@@ -211,31 +211,6 @@ export function useSudoku(store: Store = localStorage) {
     notesMode.value = !notesMode.value;
   }
 
-  function hint() {
-    if (locked.value) return;
-    stopAutoSolve();
-    clearMarks();
-    const found = findHint(Uint8Array.from(values.value), Uint8Array.from(solution.value), selected.value ?? -1);
-    if (!found) return;
-    const { cell, reason } = found;
-    found.free();
-    const n = solution.value[cell]!;
-    message.value = {
-      label: "hint",
-      text: reason === "wrong" ? `This cell was wrong. It's a ${n}.`
-        : reason === "only" ? `Only a ${n} fits in this cell.`
-        : `This cell is a ${n}.`,
-    };
-    values.value[cell] = n;
-    notes.value[cell] = 0;
-    clearNotesAround(cell, n);
-    hinted.value.add(cell);
-    hints.value++;
-    selected.value = cell;
-    flash.value = { cell, count: flash.value.count + 1 };
-    checkSolved();
-  }
-
   // ---------- Step & solve ----------
 
   function clearMarks() {
@@ -264,7 +239,7 @@ export function useSudoku(store: Store = localStorage) {
     takeStep();
   }
 
-  // One logical step, explained (see solver_step in game-core/src/sudoku.rs)
+  // One number filled in, explained (see solver_step in game-core/src/sudoku.rs)
   function takeStep() {
     if (locked.value) return stopAutoSolve();
     clearMarks();
@@ -272,6 +247,8 @@ export function useSudoku(store: Store = localStorage) {
     values.value = Array.from(result.values);
     notes.value = Array.from(result.notes);
     result.filled.forEach(i => hinted.value.add(i));
+    const [cell] = result.filled;
+    if (cell !== undefined) flash.value = { cell, count: flash.value.count + 1 };
     pattern.value = new Set(result.pattern);
     targets.value = new Set(result.targets);
     removed.value = Array.from(result.removed);
@@ -320,7 +297,7 @@ export function useSudoku(store: Store = localStorage) {
     chosenLevel, level, puzzle, solution, values, notes, hinted, selected, notesMode, locked, hints,
     time, solvedCount, pattern, targets, removed, message, overlay, autoSolving, flash, done,
     // actions
-    start, stop, newGame, setLevel, select, move, enter, erase, toggleNotes, hint, step, toggleAutoSolve,
+    start, stop, newGame, setLevel, select, move, enter, erase, toggleNotes, step, toggleAutoSolve,
   };
 }
 

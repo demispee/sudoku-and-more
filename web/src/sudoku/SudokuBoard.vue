@@ -34,7 +34,7 @@ function classes(i: number) {
 
 const has = (mask: number, n: number) => (mask & (1 << n)) !== 0;
 
-// A new key restarts the flash animation when a hint fills in the same cell again
+// A new key restarts the flash animation when a step fills in the same cell again
 const cellKey = (i: number) => (game.value.flash.value.cell === i ? `${i}-${game.value.flash.value.count}` : `${i}`);
 </script>
 

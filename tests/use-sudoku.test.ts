@@ -157,55 +157,40 @@ describe("Requirement 5: notes", () => {
   });
 });
 
-describe("Requirement 6: hint", () => {
-  beforeEach(() => void started(1));
-
-  test("fills in the selected cell and counts as a hint", () => {
-    const i = emptyCells()[0]!;
-    game.select(i);
-    game.hint();
-    expect(game.values.value[i]).toBe(game.solution.value[i]);
-    expect(game.message.value?.label).toBe("hint");
+describe("Requirement 7: step solver", () => {
+  test("fills in one correct number with an explanation, without adding notes", () => {
+    started(1);
+    game.step();
+    const [i] = game.targets.value;
+    expect(game.values.value[i!]).toBe(game.solution.value[i!]);
+    expect(game.message.value?.label).toMatch(/^step \\ /);
+    expect(game.message.value?.text).not.toBe("");
     expect(game.hints.value).toBe(1);
-    expect(game.hinted.value.has(i)).toBe(true);
+    expect(game.hinted.value.has(i!)).toBe(true);
     expect(game.flash.value.cell).toBe(i);
+    expect(game.notes.value.every(m => m === 0)).toBe(true);
+    expect(game.selected.value).toBeNull();
   });
 
   test("corrects a wrong number first", () => {
+    started(1);
     const i = emptyCells()[0]!;
     game.select(i);
     game.enter(wrongDigit(i));
-    game.select(emptyCells()[0]!);
-    game.hint();
+    game.step();
     expect(game.values.value[i]).toBe(game.solution.value[i]);
     expect(game.message.value?.text).toMatch(/^This cell was wrong/);
   });
 
-  test("without a selection, explains when only one number fits", () => {
-    game.hint();
-    expect(game.message.value?.text).toMatch(/^(Only a \d fits in this cell|This cell is a \d)\.$/);
-  });
-});
-
-describe("Requirement 7: step solver", () => {
-  test("fills in notes first, then applies a technique and highlights it", () => {
-    started(1);
-    game.step();
-    expect(game.message.value?.label).toBe("step \\ notes");
-    expect(game.hints.value).toBe(0);
-    game.step();
-    expect(game.message.value?.label).toMatch(/^step \\ /);
-    expect(game.hints.value).toBe(1);
-    expect(game.targets.value.size).toBeGreaterThan(0);
-    expect(game.selected.value).toBeNull();
-  });
-
-  test("shows which notes a step crossed out", () => {
-    started(6); // needs more than singles, so some steps only remove notes
+  test("crosses out the notes the techniques ruled out, and never adds any", () => {
+    started(6); // needs more than singles
+    for (const i of emptyCells()) game.notes.value[i] = 0b11_1111_1110; // every number noted
     let crossedOut = false;
-    for (let k = 0; k < 200 && !crossedOut && !game.locked.value; k++) {
+    for (let k = 0; k < 81 && !game.locked.value; k++) {
+      const before = [...game.notes.value];
       game.step();
-      crossedOut = game.removed.value.some(m => m !== 0);
+      expect(game.notes.value.every((m, j) => (m & ~before[j]!) === 0)).toBe(true);
+      crossedOut ||= game.removed.value.some(m => m !== 0);
     }
     expect(crossedOut).toBe(true);
   });
@@ -259,7 +244,6 @@ describe("Requirement 9: solving a puzzle", () => {
     expect(game.time.value).toBe("0:02");
     solveByHand();
     const before = [...game.values.value];
-    game.hint();
     game.step();
     game.toggleAutoSolve();
     game.select(0);

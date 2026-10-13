@@ -96,22 +96,20 @@ describe("Requirement 5: notes", () => {
   });
 });
 
-describe("Requirement 6 and 7: hint and step", () => {
-  test("hint (button and T) fills in a cell with an explanation", async () => {
-    await click(".btn.hint");
-    expect(page.find(".message .eyebrow").text()).toBe("hint");
+describe("Requirement 7: step", () => {
+  test("step (button and S) fills in a number with an explanation, and there is no hint button", async () => {
+    const empty = game.values.value.filter(v => !v).length;
+    await click(".btn.step");
+    expect(page.find(".message .eyebrow").text()).toMatch(/^step \\ /);
     expect(page.find(".hints").text()).toBe("1");
     expect(page.findAll(".cell.flash")).toHaveLength(1);
+    expect(page.findAll(".cell.target")).toHaveLength(1);
+    expect(page.findAll(".cell .notes")).toHaveLength(0);
+    await press("s");
+    expect(game.values.value.filter(v => !v).length).toBe(empty - 2);
+    expect(page.find(".btn.hint").exists()).toBe(false);
     await press("t");
     expect(page.find(".hints").text()).toBe("2");
-  });
-
-  test("step (button and S) fills in notes, then crosses out or fills in", async () => {
-    await click(".btn.step");
-    expect(page.find(".message").text()).toContain("Every possible number is now a note");
-    expect(page.findAll(".cell .notes").length).toBe(game.values.value.filter(v => !v).length);
-    for (let k = 0; k < 100 && !game.removed.value.some(Boolean); k++) await press("s");
-    expect(page.findAll(".cell .notes .gone").length + page.findAll(".cell.target").length).toBeGreaterThan(0);
   });
 });
 
@@ -146,14 +144,14 @@ describe("Requirement 9: solving a puzzle", () => {
   });
 
   test("says how many hints were used", async () => {
-    await click(".btn.hint");
+    await click(".btn.step");
     await solveByHand();
     expect(page.find(".overlay .meta").text()).toContain("\\ 1 hint \\");
   });
 
   test("counts more hints in the plural, and skip starts a new puzzle", async () => {
-    await click(".btn.hint");
-    await click(".btn.hint");
+    await click(".btn.step");
+    await click(".btn.step");
     await solveByHand();
     expect(page.find(".overlay .meta").text()).toContain("\\ 2 hints \\");
     await click(".btn.skip");

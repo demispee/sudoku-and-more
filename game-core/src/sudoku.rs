@@ -650,46 +650,6 @@ pub fn clear_notes_around(notes: &mut Masks, i: usize, n: u8) {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum HintReason {
-    Wrong,
-    Selected,
-    Only,
-    Easiest,
-}
-
-/// Picks the cell a hint fills in: a wrong number first (otherwise the rest can't be
-/// solved), then the selected empty cell, then the empty cell with the fewest options.
-pub fn choose_hint(
-    values: &Grid,
-    solution: &Grid,
-    selected: Option<usize>,
-) -> Option<(usize, HintReason)> {
-    let wrong: Vec<usize> = (0..81)
-        .filter(|&i| values[i] != 0 && values[i] != solution[i])
-        .collect();
-    if let Some(&first) = wrong.first() {
-        let cell = selected.filter(|s| wrong.contains(s)).unwrap_or(first);
-        return Some((cell, HintReason::Wrong));
-    }
-    if let Some(s) = selected.filter(|&s| values[s] == 0) {
-        return Some((s, HintReason::Selected));
-    }
-    let cell = (0..81).filter(|&i| values[i] == 0).reduce(|a, b| {
-        if candidates(values, b).len() < candidates(values, a).len() {
-            b
-        } else {
-            a
-        }
-    })?;
-    let reason = if candidates(values, cell).len() == 1 {
-        HintReason::Only
-    } else {
-        HintReason::Easiest
-    };
-    Some((cell, reason))
-}
-
 /// What one step of the solver did
 pub struct StepResult {
     pub label: String,
@@ -706,130 +666,149 @@ pub struct StepResult {
     pub filled: Vec<usize>,
 }
 
-/// One logical step, explained. Works on the player's notes, so they can follow which
-/// numbers are removed. Changes `values` and `notes` in place.
+/// One number filled in, explained. The solver works out the options itself and applies
+/// the easiest techniques until a cell has one number left, then keeps only the
+/// techniques that number needed. The player's notes only lose what those ruled out.
+/// Changes `values` and `notes` in place.
 pub fn solver_step(values: &mut Grid, notes: &mut Masks, solution: &Grid) -> StepResult {
-    let empty: Vec<usize> = (0..81).filter(|&i| values[i] == 0).collect();
-    let result =
-        |label: &str, text: String, targets: Vec<usize>, counts: bool, filled: Vec<usize>| {
-            StepResult {
-                label: label.into(),
-                text,
-                targets,
-                counts,
-                pattern: Vec::new(),
-                removed: [0; 81],
-                filled,
-            }
-        };
+    let result = |label: &str, text: String, filled: Vec<usize>, counts: bool| StepResult {
+        label: label.into(),
+        text,
+        targets: filled.clone(),
+        counts,
+        pattern: Vec::new(),
+        removed: [0; 81],
+        filled,
+    };
 
     // A wrong number would make every deduction after it wrong, so fix that first
     if let Some(w) = (0..81).find(|&i| values[i] != 0 && values[i] != solution[i]) {
         values[w] = solution[w];
         notes[w] = 0;
         clear_notes_around(notes, w, solution[w]);
-        return result(
-            "fix",
-            format!("This cell was wrong. It's a {}.", solution[w]),
-            vec![w],
-            true,
-            vec![w],
-        );
+        let text = format!("This cell was wrong. It's a {}.", solution[w]);
+        return result("fix", text, vec![w], true);
+    }
+    if !values.contains(&0) {
+        return result("done", "The puzzle is solved.".into(), vec![], false);
     }
 
-    // The techniques work with notes, so every empty cell needs them
-    if empty.iter().any(|&i| notes[i] == 0) {
-        for &i in &empty {
-            if notes[i] == 0 {
-                notes[i] = mask_of(&candidates(values, i));
-            }
-        }
-        return result(
-            "notes",
-            "Every possible number is now a note. Press step again.".into(),
-            vec![],
-            false,
-            vec![],
-        );
-    }
-
-    if let Some(&c) = empty.iter().find(|&&i| notes[i] & (1 << solution[i]) == 0) {
-        notes[c] |= 1 << solution[c];
-        let text = format!(
-            "The {} was crossed out here, but it fits. It's back.",
-            solution[c]
-        );
-        return result("fix", text, vec![c], true, vec![]);
-    }
-
-    if empty.is_empty() {
-        return result(
-            "done",
-            "The puzzle is solved.".into(),
-            vec![],
-            false,
-            vec![],
-        );
-    }
-
-    // Your notes, minus numbers that already appear in the same row, column or box
-    let possible = candidate_masks(values);
+    // Eliminate until a technique places a number, remembering what each one crossed out
+    let options = candidate_masks(values);
     let mut s = State {
         grid: *values,
-        cand: [0; 81],
+        cand: options,
     };
-    for i in 0..81 {
-        s.cand[i] = notes[i] & possible[i];
-    }
-    let before = s.cand;
-    let (label, text, pattern) = match next_step(&mut s) {
-        Some((found, _)) => (found.name.to_lowercase(), found.text, found.pattern),
+    let mut used: Vec<(Found, Masks)> = Vec::new();
+    let single = loop {
+        let before = s.cand;
+        let Some((found, _)) = next_step(&mut s) else {
+            break None;
+        };
+        if s.grid != *values {
+            break Some(found);
+        }
+        used.push((found, std::array::from_fn(|i| before[i] & !s.cand[i])));
+    };
+
+    let (cell, n, last) = match single {
+        Some(found) => {
+            let cell = (0..81)
+                .find(|&i| s.grid[i] != values[i])
+                .expect("one was placed");
+            let n = s.grid[cell];
+            // Leave out every technique the number doesn't need, latest first
+            let holds = |kept: &[(Found, Masks)]| {
+                let mut cand = options;
+                for (_, gone) in kept {
+                    for i in 0..81 {
+                        cand[i] &= !gone[i];
+                    }
+                }
+                let bit = 1 << n;
+                if found.name == "Naked single" {
+                    cand[cell] == bit
+                } else {
+                    found
+                        .pattern
+                        .iter()
+                        .all(|&i| i == cell || cand[i] & bit == 0)
+                }
+            };
+            for k in (0..used.len()).rev() {
+                let step = used.remove(k);
+                if !holds(&used) {
+                    used.insert(k, step);
+                }
+            }
+            (cell, n, found)
+        }
         None => {
-            let i = empty
-                .iter()
-                .copied()
+            used.clear();
+            let cell = (0..81)
+                .filter(|&i| values[i] == 0)
                 .reduce(|a, b| {
-                    if bit_count(s.cand[b]) < bit_count(s.cand[a]) {
+                    if bit_count(options[b]) < bit_count(options[a]) {
                         b
                     } else {
                         a
                     }
                 })
-                .expect("empty is not empty here");
-            place(&mut s, i, solution[i]);
-            let text = format!(
-                "No technique applies here; it takes chains or trial and error. This cell is a {}.",
-                solution[i]
-            );
-            ("no technique".into(), text, Vec::new())
+                .expect("a cell is still empty here");
+            let n = solution[cell];
+            let found = Found {
+                name: "No technique".into(),
+                text: format!(
+                    "No technique applies here; it takes chains or trial and error. This cell is a {n}."
+                ),
+                pattern: Vec::new(),
+            };
+            (cell, n, found)
         }
     };
 
-    // Copy the result back to the board
-    let filled: Vec<usize> = empty.iter().copied().filter(|&i| s.grid[i] != 0).collect();
-    let mut removed = [0; 81];
-    for &i in &empty {
-        if s.grid[i] != 0 {
-            values[i] = s.grid[i];
-        }
-        notes[i] = s.cand[i];
-        if filled.is_empty() {
-            removed[i] = before[i] & !s.cand[i];
+    // Copy the result back to the board; notes only lose numbers
+    let before = *notes;
+    for (_, gone) in &used {
+        for i in 0..81 {
+            notes[i] &= !gone[i];
         }
     }
-    let targets = if filled.is_empty() {
-        (0..81).filter(|&i| removed[i] != 0).collect()
-    } else {
-        filled.clone()
-    };
+    values[cell] = n;
+    notes[cell] = 0;
+    clear_notes_around(notes, cell, n);
+    let mut removed: Masks = std::array::from_fn(|i| before[i] & !notes[i]);
+    removed[cell] = 0;
+
+    let mut pattern: Vec<usize> = used
+        .iter()
+        .flat_map(|(found, _)| found.pattern.iter().copied())
+        .chain(last.pattern.iter().copied())
+        .collect();
+    pattern.sort();
+    pattern.dedup();
+    let steps: Vec<&Found> = used.iter().map(|(found, _)| found).chain([&last]).collect();
     StepResult {
-        label,
-        text,
-        targets,
+        label: steps
+            .iter()
+            .map(|f| f.name.to_lowercase())
+            .collect::<Vec<_>>()
+            .join(", then "),
+        text: steps
+            .iter()
+            .enumerate()
+            .map(|(k, f)| match k {
+                0 => f.text.clone(),
+                // "Then only a 3 fits", not "Then Only a 3 fits"
+                _ => format!("Then {}{}", f.text[..1].to_lowercase(), &f.text[1..]),
+            })
+            .collect::<Vec<_>>()
+            .join(" "),
+        targets: vec![cell],
         counts: true,
         pattern,
         removed,
-        filled,
+        filled: vec![cell],
     }
 }
 
@@ -1205,70 +1184,6 @@ mod tests {
         assert_eq!(notes[0], bits(&[3, 4])); // the cell itself
     }
 
-    // ----- Requirement 6: hint -----
-
-    #[test]
-    fn requirement_6_corrects_a_wrong_number_first() {
-        let solution = solved(&hard());
-        let mut values = solution;
-        values[5] = solution[5] % 9 + 1;
-        values[60] = 0;
-        assert_eq!(
-            choose_hint(&values, &solution, Some(60)),
-            Some((5, HintReason::Wrong))
-        );
-    }
-
-    #[test]
-    fn requirement_6_prefers_the_selected_wrong_number() {
-        let solution = solved(&hard());
-        let mut values = solution;
-        values[5] = solution[5] % 9 + 1;
-        values[6] = solution[6] % 9 + 1;
-        assert_eq!(
-            choose_hint(&values, &solution, Some(6)),
-            Some((6, HintReason::Wrong))
-        );
-    }
-
-    #[test]
-    fn requirement_6_fills_the_selected_empty_cell() {
-        let solution = solved(&hard());
-        assert_eq!(
-            choose_hint(&hard(), &solution, Some(1)),
-            Some((1, HintReason::Selected))
-        );
-    }
-
-    #[test]
-    fn requirement_6_prefers_a_later_cell_with_fewer_options() {
-        let solution = solved(&hard());
-        let mut values = [0; 81];
-        // Row 9 has one open cell left, so its last cell has one option and every other
-        // empty cell has many
-        values[72..80].copy_from_slice(&solution[72..80]);
-        assert_eq!(
-            choose_hint(&values, &solution, None),
-            Some((80, HintReason::Only))
-        );
-    }
-
-    #[test]
-    fn requirement_6_otherwise_picks_the_cell_with_the_fewest_options() {
-        let solution = solved(&hard());
-        let mut values = solution;
-        values[10] = 0;
-        assert_eq!(
-            choose_hint(&values, &solution, None),
-            Some((10, HintReason::Only))
-        );
-        assert_eq!(
-            choose_hint(&[0; 81], &solution, None).unwrap().1,
-            HintReason::Easiest
-        );
-        assert_eq!(choose_hint(&solution, &solution, None), None);
-    }
-
     // ----- Requirement 7: step solver -----
 
     #[test]
@@ -1285,27 +1200,15 @@ mod tests {
     }
 
     #[test]
-    fn requirement_7_fills_in_all_notes_first_without_counting_it_as_a_hint() {
+    fn requirement_7_a_step_without_notes_fills_in_a_number_and_adds_no_notes() {
         let solution = solved(&hard());
         let mut values = hard();
         let mut notes = [0; 81];
         let step = solver_step(&mut values, &mut notes, &solution);
-        assert_eq!((step.label.as_str(), step.counts), ("notes", false));
-        assert_eq!(digits_of(notes[1]), candidates(&values, 1));
-    }
-
-    #[test]
-    fn requirement_7_puts_back_a_correct_number_that_was_crossed_out() {
-        let solution = solved(&hard());
-        let mut values = hard();
-        let mut notes = candidate_masks(&values);
-        notes[1] &= !(1 << solution[1]);
-        let step = solver_step(&mut values, &mut notes, &solution);
-        assert_eq!(
-            (step.label.as_str(), step.targets, step.counts),
-            ("fix", vec![1], true)
-        );
-        assert_ne!(notes[1] & (1 << solution[1]), 0);
+        assert_eq!((step.filled.len(), step.counts), (1, true));
+        let i = step.filled[0];
+        assert_eq!((step.targets, values[i]), (vec![i], solution[i]));
+        assert_eq!(notes, [0; 81]);
     }
 
     #[test]
@@ -1324,44 +1227,51 @@ mod tests {
     }
 
     #[test]
-    fn requirement_7_an_elimination_step_shows_what_it_crossed_out() {
+    fn requirement_7_a_step_names_the_techniques_it_needed_and_crosses_out_their_notes() {
         let solution = solved(&hard());
         let mut values = hard();
         let mut notes = candidate_masks(&values);
         let mut saw_elimination = false;
-        for _ in 0..200 {
+        while values.contains(&0) {
             let before = notes;
             let step = solver_step(&mut values, &mut notes, &solution);
-            if step.filled.is_empty() && step.label != "notes" && step.label != "fix" {
-                assert!(!step.targets.is_empty());
-                assert!(step.targets.iter().all(|&i| step.removed[i] != 0));
-                // Exactly the notes that were there before and are gone now
-                assert!((0..81).all(|i| step.removed[i] == before[i] & !notes[i]));
+            let [i] = step.filled[..] else {
+                panic!("one number per step")
+            };
+            assert_eq!(values[i], solution[i]);
+            // Notes only lose numbers, and `removed` says exactly which
+            assert!((0..81).all(|j| notes[j] & !before[j] == 0));
+            assert!((0..81).all(|j| j == i || step.removed[j] == before[j] & !notes[j]));
+            // Crossed out by a technique, not just because the number went in nearby
+            let by_technique = (0..81).any(|j| {
+                step.removed[j] & !(1 << values[i]) != 0 || (step.removed[j] != 0 && !is_peer(i, j))
+            });
+            if step.label.contains(", then ") && by_technique {
+                assert!(!step.pattern.is_empty());
+                assert!(step.text.contains(". Then "));
                 saw_elimination = true;
-                break;
             }
         }
         assert!(saw_elimination);
     }
 
     #[test]
-    fn requirement_7_without_a_technique_fills_a_cell_with_the_fewest_notes() {
+    fn requirement_7_without_a_technique_fills_a_cell_with_the_fewest_options() {
         let solution = solved(&hard());
         let mut values = hard();
-        let mut notes = [0; 81];
-        for _ in 0..500 {
-            let before = notes;
-            let step = solver_step(&mut values, &mut notes, &solution);
+        for _ in 0..81 {
+            let options = candidate_masks(&values);
+            let step = solver_step(&mut values, &mut [0; 81], &solution);
             if step.label == "no technique" {
                 let fewest = (0..81)
-                    .filter(|&i| before[i] != 0)
-                    .map(|i| bit_count(before[i]))
+                    .filter(|&i| options[i] != 0)
+                    .map(|i| bit_count(options[i]))
                     .min();
-                assert_eq!(Some(bit_count(before[step.filled[0]])), fewest);
+                assert_eq!(Some(bit_count(options[step.filled[0]])), fewest);
                 return;
             }
         }
-        panic!("the techniques never ran out");
+        panic!("the techniques never ran out at the start of a step");
     }
 
     #[test]
@@ -1380,7 +1290,7 @@ mod tests {
         }
         assert_eq!(values, solution);
         // On this puzzle the techniques run out, so it also has to fall back
-        assert!(labels.iter().any(|l| l == "no technique"));
+        assert!(labels.iter().any(|l| l.ends_with("no technique")));
         // Once solved, a step does nothing
         let step = solver_step(&mut values, &mut notes, &solution);
         assert_eq!((step.label.as_str(), step.counts), ("done", false));
