@@ -220,6 +220,22 @@ describe("Requirement 8: auto-solve", () => {
     game.enter(game.solution.value[i]!);
     expect(game.autoSolving.value).toBe(false);
   });
+
+  test("regression: any input stops it, also when nothing is selected", () => {
+    started(1);
+    const inputs = [
+      () => game.enter(5), () => game.erase(), () => game.select(0), () => game.move("ArrowRight"),
+      () => game.toggleNotes(),
+    ];
+    for (const input of inputs) {
+      game.toggleAutoSolve();
+      vi.advanceTimersByTime(AUTO_SOLVE_INTERVAL); // each step clears the selection
+      expect(game.selected.value).toBeNull();
+      input();
+      expect(game.autoSolving.value).toBe(false);
+      game.selected.value = null;
+    }
+  });
 });
 
 describe("Requirement 9: solving a puzzle", () => {

@@ -59,6 +59,26 @@ describe("the board", () => {
 });
 
 describe("Requirement 4: entering numbers", () => {
+  test("regression: shortcuts, a held S and keys in the level list don't play", async () => {
+    const send = async (init: KeyboardEventInit, target: EventTarget = window) => {
+      target.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, ...init }));
+      await page.vm.$nextTick();
+    };
+    await send({ key: "s", metaKey: true }); // Cmd+S saves the page
+    await send({ key: "s", ctrlKey: true });
+    await send({ key: "n", altKey: true });
+    await send({ key: "s", repeat: true });
+    expect([page.find(".hints").text(), game.notesMode.value]).toEqual(["0", false]);
+
+    const i = firstEmpty();
+    await cells()[i]!.trigger("click");
+    await send({ key: "5" }, page.find("select").element);
+    expect(game.values.value[i]).toBe(0);
+
+    await press("s");
+    expect(page.find(".hints").text()).toBe("1");
+  });
+
   test("with the keyboard: a wrong number turns magenta, backspace erases", async () => {
     const i = firstEmpty();
     await cells()[i]!.trigger("click");

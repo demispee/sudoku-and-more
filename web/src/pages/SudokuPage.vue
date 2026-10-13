@@ -14,10 +14,13 @@ const { chosenLevel, level, time, hints, solvedCount, notesMode, autoSolving, me
 
 function onKey(event: KeyboardEvent) {
   const key = event.key;
+  // Shortcuts like Cmd+S belong to the browser, and keys in the level list to that list
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  if (event.target instanceof HTMLSelectElement) return;
   if (key >= "1" && key <= "9") game.enter(Number(key));
   else if (key === "Backspace" || key === "Delete" || key === "0") game.erase();
   else if (key.toLowerCase() === "n") game.toggleNotes();
-  else if (key.toLowerCase() === "s") game.step();
+  else if (key.toLowerCase() === "s" && !event.repeat) game.step(); // holding S takes one step
   else if (key.startsWith("Arrow")) {
     event.preventDefault();
     game.move(key);
