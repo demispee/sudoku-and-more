@@ -1,6 +1,6 @@
 ---
 domain: mastermind
-version: 3.2.0
+version: 3.3.0
 status: accepted
 date: 2026-10-13
 ---
@@ -88,6 +88,8 @@ shown in a block next to the row, black ones first, so they don't tell which peg
 With a black answer peg for every hole the player MUST win; after 10 rows without that, the player MUST
 lose. Either way the shield MUST open and show the code, an overlay MUST say how many
 rows it took (or that the code wasn't broken), and `again` (or Enter) starts a new game.
+A `new game` button SHOULD also start a new game of the same level in the middle of a
+game, without counting it as a result.
 
 **Implementation:** `game-core/src/mastermind.rs`; `web/src/mastermind/useMastermind.ts`
 
@@ -121,7 +123,8 @@ object in a studio, not like a drawing:
   ends up upside down.
 - on a phone (a screen up to 700 px wide) the board SHOULD fill most of its frame, the
   buttons above it SHOULD be small, and the colours and `check` SHOULD sit in one row under
-  the board, within reach of the thumb.
+  the board, within reach of the thumb. The overlay at the end SHOULD sit at the bottom of
+  the board there, so it doesn't cover the code at the far end.
 
 All shapes and textures MUST be made in code: no model, image or texture files. When the
 browser has no WebGL, the page MUST say so instead of showing an empty board.
