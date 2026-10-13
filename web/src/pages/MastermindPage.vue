@@ -104,8 +104,9 @@ defineExpose({ game });
     <div class="colours">
       <button v-for="(colour, c) in colours" :key="c" class="colour" :aria-label="`colour ${c + 1}`"
         @click="game.place(c)">
-        <span class="dot" :style="{ background: colour }"></span>{{ c + 1 }}
+        <span class="dot" :style="{ background: colour }"></span><span class="n">{{ c + 1 }}</span>
       </button>
+      <button class="btn primary check thumb" :disabled="!full" @click="game.check">check</button>
     </div>
 
     <div class="help">
@@ -163,4 +164,19 @@ h1 { margin-bottom: 24px; }
 .colour:hover { border-color: var(--c-orange); }
 .dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset -2px -2px 3px rgba(0, 0, 0, 0.35); }
 .help { margin-top: 16px; }
+.thumb { display: none; }
+/* On a phone: small buttons above the board, and the colours with check in one row
+   under it, within reach of the thumb */
+@media (max-width: 700px) {
+  .bar { gap: 6px; }
+  .bar .btn { height: 34px; padding: 0 12px; font-size: 12px; }
+  .bar .check { display: none; }
+  .levels { margin-left: 0; }
+  .colours { position: sticky; bottom: 0; flex-wrap: nowrap; gap: 4px; margin-top: 10px; padding: 8px 0; background: var(--c-canvas); }
+  .colour { flex: 1; justify-content: center; min-width: 0; padding: 8px 0; }
+  .colour .n { display: none; }
+  .dot { width: 20px; height: 20px; }
+  .thumb { display: inline-flex; flex: none; align-items: center; justify-content: center; height: 38px; padding: 0 14px; }
+  .help { display: none; } /* the keys don't help on a phone */
+}
 </style>

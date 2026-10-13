@@ -1,6 +1,6 @@
 ---
 domain: mastermind
-version: 3.1.0
+version: 3.2.0
 status: accepted
 date: 2026-10-13
 ---
@@ -119,6 +119,9 @@ object in a studio, not like a drawing:
   with a key light that casts real shadows and coloured light from the sides;
 - the player MAY drag to tilt and turn the board a little, within limits, so it never
   ends up upside down.
+- on a phone (a screen up to 700 px wide) the board SHOULD fill most of its frame, the
+  buttons above it SHOULD be small, and the colours and `check` SHOULD sit in one row under
+  the board, within reach of the thumb.
 
 All shapes and textures MUST be made in code: no model, image or texture files. When the
 browser has no WebGL, the page MUST say so instead of showing an empty board.
