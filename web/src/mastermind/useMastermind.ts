@@ -41,6 +41,7 @@ export function useMastermind(store: Store = localStorage, seed: () => number = 
   const ROWS = mastermindRows();
   const level = ref(Number(store.getItem("mastermindLevel")) === 1 ? 1 : 0);
   const paletteName = ref(palette(store.getItem("mastermindPalette")).name);
+  const symbols = ref(store.getItem("mastermindSymbols") === "on");
   let game = new Mastermind(seed(), level.value);
 
   const shape = computed(() => LEVELS[level.value]!);
@@ -136,15 +137,21 @@ export function useMastermind(store: Store = localStorage, seed: () => number = 
     store.setItem("mastermindPalette", paletteName.value);
   }
 
+  /** Shapes on the colours, or not */
+  function toggleSymbols() {
+    symbols.value = !symbols.value;
+    store.setItem("mastermindSymbols", symbols.value ? "on" : "off");
+  }
+
   function stop() {
     game.free();
   }
 
   return {
     // state
-    level, shape, paletteName, colours, rows, current, code, result, best, full, lastColour,
+    level, shape, paletteName, colours, symbols, rows, current, code, result, best, full, lastColour,
     // actions
-    place, takeOut, back, check, again, setLevel, nextPalette, stop,
+    place, takeOut, back, check, again, setLevel, nextPalette, toggleSymbols, stop,
   };
 }
 

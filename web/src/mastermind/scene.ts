@@ -6,7 +6,7 @@ import {
   BufferAttribute, CanvasTexture, Color, CylinderGeometry, ExtrudeGeometry, Group, Mesh,
   MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, NeutralToneMapping,
   Object3D, PCFSoftShadowMap, PerspectiveCamera, PlaneGeometry, PMREMGenerator, Raycaster,
-  RingGeometry, Scene, Shape, SphereGeometry, SpotLight, SRGBColorSpace,
+  RingGeometry, Scene, Shape, SphereGeometry, SpotLight, Sprite, SpriteMaterial, SRGBColorSpace,
   Texture, Vector2, WebGLRenderer, type Material,
 } from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
@@ -15,6 +15,7 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import type { Studio } from "./palettes";
+import { SYMBOLS } from "./symbols";
 
 export interface BoardState {
   rows: { pegs: (number | null)[]; answer: [number, number] | null }[];
@@ -30,6 +31,8 @@ export interface BoardState {
   studio: Studio;
   /** The last colour placed, counted, so the tray ball can hop at every click */
   hop: { colour: number; count: number } | null;
+  /** Whether every colour shows its shape (Requirement 10) */
+  symbols: boolean;
 }
 
 export interface Level {
@@ -339,9 +342,36 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
     }),
     new MeshPhysicalMaterial({ color: "#e4dff0", roughness: 0.22, clearcoat: 1, iridescence: 0.7, iridescenceIOR: 1.4 }),
   ];
+  // Shapes for colour-blind players: a white shape with a dark edge, readable on every
+  // colour, that always faces the camera from the side of the ball the player sees
+  const symbolMaterials = Array.from({ length: level.colours }, (_, c) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 128;
+    const ctx = canvas.getContext("2d")!;
+    ctx.scale(128 / 24, 128 / 24);
+    const path = new Path2D(SYMBOLS[c]!.path);
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 2.6;
+    ctx.strokeStyle = "rgba(10, 10, 15, 0.85)";
+    ctx.stroke(path);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill(path, "evenodd");
+    return new SpriteMaterial({ map: texture(canvas, true), transparent: true });
+  });
+  const symbolSprites = new Set<Sprite>();
+  let symbolsOn = false;
   const peg = (material: Material, size = ball) => {
     const m = new Mesh(size, material);
     m.castShadow = m.receiveShadow = true;
+    const c = pegMaterials.indexOf(material as MeshPhysicalMaterial);
+    if (c >= 0 && size === ball) {
+      const sprite = new Sprite(symbolMaterials[c]);
+      sprite.position.set(0, PEG_R * 0.8, PEG_R * 0.65); // on the side that faces the camera
+      sprite.scale.setScalar(PEG_R * 1.25);
+      sprite.visible = symbolsOn;
+      symbolSprites.add(sprite);
+      m.add(sprite);
+    }
     return m;
   };
 
@@ -431,6 +461,7 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
     const old = placed.get(key);
     if (!old) return;
     rig.remove(old);
+    old.children.forEach(child => symbolSprites.delete(child as Sprite));
     falls.delete(old);
     pops.delete(old);
     jumps.delete(old);
@@ -493,6 +524,8 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
       });
     }
     next.colours.forEach((colour, c) => pegMaterials[c]?.color.set(colour));
+    symbolsOn = next.symbols;
+    for (const sprite of symbolSprites) sprite.visible = symbolsOn;
     if (next.hop && next.hop.count !== hopCount) {
       hopCount = next.hop.count;
       const b = wellBalls[next.hop.colour];
@@ -664,7 +697,7 @@ export function createBoard(container: HTMLElement, events: BoardEvents, level: 
     canvas.removeEventListener("pointerup", up);
     canvas.removeEventListener("pointercancel", up);
     const geometries = new Set<{ dispose(): void }>([ball, small, ringShape, disc]);
-    const materials = new Set<Material>([...pegMaterials, ...answerMaterials, glow, hidden]);
+    const materials = new Set<Material>([...pegMaterials, ...answerMaterials, ...symbolMaterials, glow, hidden]);
     scene.traverse(o => {
       if (o instanceof Mesh) {
         geometries.add(o.geometry);

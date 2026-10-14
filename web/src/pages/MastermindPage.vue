@@ -7,10 +7,11 @@ import SiteFooter from "../components/SiteFooter.vue";
 import SlashMark from "../components/SlashMark.vue";
 import { createBoard, type Board } from "../mastermind/scene";
 import { palette } from "../mastermind/palettes";
+import { SYMBOLS } from "../mastermind/symbols";
 import { useMastermind } from "../mastermind/useMastermind";
 
 const game = useMastermind();
-const { level, shape, paletteName, colours, rows, current, code, result, best, full, lastColour } = game;
+const { level, shape, paletteName, colours, symbols, rows, current, code, result, best, full, lastColour } = game;
 
 const LEVEL_NAMES = ["classic", "hard"];
 const host = ref<HTMLElement>();
@@ -53,6 +54,7 @@ function mountBoard() {
       colours: colours.value,
       studio: palette(paletteName.value).studio,
       hop: lastColour.value,
+      symbols: symbols.value,
     });
   });
 }
@@ -89,6 +91,7 @@ defineExpose({ game });
           @click="game.setLevel(l)">{{ name }}</button>
       </div>
       <button class="btn palette" @click="game.nextPalette">colours \ {{ paletteName }}</button>
+      <button class="btn symbols" :class="{ on: symbols }" :aria-pressed="symbols" @click="game.toggleSymbols">symbols</button>
       <button class="btn new-game" @click="game.again">new game</button>
       <button class="btn primary check" :disabled="!full" @click="game.check">check</button>
     </div>
@@ -112,7 +115,9 @@ defineExpose({ game });
     <div class="colours">
       <button v-for="(colour, c) in colours" :key="c" class="colour" :aria-label="`colour ${c + 1}`"
         @click="game.place(c)">
-        <span class="dot" :style="{ background: colour }"></span><span class="n">{{ c + 1 }}</span>
+        <span class="dot" :style="{ background: colour }">
+          <svg v-if="symbols" class="shape" viewBox="0 0 24 24" aria-hidden="true"><path :d="SYMBOLS[c]!.path" fill-rule="evenodd" /></svg>
+        </span><span class="n">{{ c + 1 }}</span>
       </button>
       <button class="btn primary check thumb" :disabled="!full" @click="game.check">check</button>
     </div>
@@ -170,7 +175,9 @@ h1 { margin-bottom: 24px; }
   cursor: pointer;
 }
 .colour:hover { border-color: var(--c-orange); }
-.dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset -2px -2px 3px rgba(0, 0, 0, 0.35); }
+.dot { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset -2px -2px 3px rgba(0, 0, 0, 0.35); }
+.shape { width: 80%; height: 80%; }
+.shape path { fill: #fff; stroke: rgba(10, 10, 15, 0.85); stroke-width: 2.6; paint-order: stroke; stroke-linejoin: round; }
 .help { margin-top: 16px; }
 /* What the answer pegs mean, with pegs that look like the ones on the board */
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; color: var(--c-muted); font-size: 14px; }
@@ -189,7 +196,7 @@ h1 { margin-bottom: 24px; }
   .colours { position: sticky; bottom: 0; flex-wrap: nowrap; gap: 4px; margin-top: 10px; padding: 8px 0; background: var(--c-canvas); }
   .colour { flex: 1; justify-content: center; min-width: 0; padding: 8px 0; }
   .colour .n { display: none; }
-  .dot { width: 20px; height: 20px; }
+  .dot { width: 22px; height: 22px; }
   .thumb { display: inline-flex; flex: none; align-items: center; justify-content: center; height: 38px; padding: 0 14px; }
   .help { display: none; } /* the keys don't help on a phone */
   .legend { font-size: 13px; }

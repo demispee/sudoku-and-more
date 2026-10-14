@@ -163,3 +163,17 @@ describe("Requirement 9: colour palettes", () => {
     expect(game.paletteName.value).toBe("warm");
   });
 });
+
+describe("Requirement 10: symbols", () => {
+  test("symbols start off, go on and off, and are remembered", () => {
+    const store = started();
+    expect(game.symbols.value).toBe(false);
+    game.toggleSymbols();
+    expect([game.symbols.value, store.getItem("mastermindSymbols")]).toEqual([true, "on"]);
+    game.stop();
+    game = useMastermind(store, () => SEED);
+    expect(game.symbols.value).toBe(true);
+    game.toggleSymbols();
+    expect(store.getItem("mastermindSymbols")).toBe("off");
+  });
+});

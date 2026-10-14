@@ -128,7 +128,8 @@ Keyboard: `H` hint, `S` show solution, `N` next scene. All artwork is drawn in c
   to take it out again. `Backspace` takes the last peg out and `Enter` checks the row. A
   black answer peg is a right colour in the right hole, a white one a right colour in
   another hole; the page explains this under the board. `new game` starts over.
-- `colours` switches the palette (vivid, warm, cool or tropical) and the studio with it.
+- `colours` switches the palette (vivid, warm, cool or tropical) and the studio with it;
+  `symbols` puts a shape on every colour, for players who can't tell colours apart.
 - The board is a modern 3D object in a studio, drawn with three.js. It floats, the pegs
   bounce in, and the light follows your mouse; drag it and it springs back. Everything on
   it is made in code, without image or model files (ADR-0009).

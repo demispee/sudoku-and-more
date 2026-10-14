@@ -191,3 +191,17 @@ describe("Requirement 3: the answer pegs", () => {
     expect(legend.findAll(":scope > span").map(s => s.text())).toEqual(["right colour, right hole", "right colour, other hole"]);
   });
 });
+
+describe("Requirement 10: symbols", () => {
+  test("the symbols button puts a shape on every colour button and tells the board", async () => {
+    expect([board.last!.symbols, page.findAll(".colour .shape")]).toEqual([false, []]);
+    await page.find(".symbols").trigger("click");
+    expect(board.last!.symbols).toBe(true);
+    expect(page.find(".symbols").attributes("aria-pressed")).toBe("true");
+    const shapes = page.findAll(".colour .shape path").map(p => p.attributes("d"));
+    expect(shapes).toHaveLength(6);
+    expect(new Set(shapes).size).toBe(6); // every colour its own shape
+    await page.findAll(".level")[1]!.trigger("click");
+    expect(page.findAll(".colour .shape")).toHaveLength(8);
+  });
+});
