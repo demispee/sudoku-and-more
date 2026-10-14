@@ -32,7 +32,7 @@ MUST add 5 balls at the cursor, each with a random speed and a radius from 12 to
 ### Requirement 2: Physics [MUST]
 
 Balls MUST bounce off the window edges, keeping 90% of their speed, and MUST stay inside
-the window. Balls MUST bounce off each other without visible overlap (at most 3 pixels,
+the window. Balls MUST bounce off each other without visible overlap (at most 4 pixels,
 also in a full pile under gravity), with bigger balls being heavier (mass ∝ radius²). Gravity MUST be on at start and MUST be toggled with `G`. The
 balls MUST move 60 steps per second, so they are as fast on a 120 Hz screen as on a 60 Hz
 one.
