@@ -12,7 +12,7 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 | [`balls.html`](web/balls.html) | Bouncing balls: click to add balls, toggle gravity |
 | [`ministry.html`](web/ministry.html) | The Ministry of Odd Forms: stamp absurd forms by a rulebook that grows every day |
 | [`shy-squares.html`](web/shy-squares.html) | Shy squares: herd squares that flee from your cursor into a pen |
-| [`mastermind.html`](web/mastermind.html) | Mastermind: break a secret code on a realistic 3D board |
+| [`mastermind.html`](web/mastermind.html) | Mastermind: break a secret code on a modern 3D board |
 | [`index.html`](web/index.html) | Start page with links to the games |
 
 ## Running it
@@ -38,6 +38,9 @@ npm install        # once: installs the dev server and test tools
 npm run dev        # builds the WebAssembly, then a dev server at http://localhost:5173
 npm test           # Rust tests, type check and component tests, all with coverage
 npm run build      # the complete site in dist/
+npm run mutants    # by hand, after a larger change to the rules: mutation testing (~15 min,
+                   # needs `brew install cargo-mutants`)
+npm run bench      # by hand, after changing the sudoku generator: how long each level takes
 ```
 
 `npm run dev:phone` also makes the dev server reachable from a phone on the same wifi; it
@@ -84,15 +87,20 @@ Keyboard: `1` to `9` fill in, `Backspace` erases, arrow keys move, `N` toggles n
 
 ## Spot the difference
 
-Scenes in all kinds of themes, from champagne and diamonds or a coral reef to a city at
-night or a winter village, each with 10 to 12 possible differences. Every round picks 5, 7, or 10 of them at random, and the changed
-picture is randomly on the left or the right.
+30 scenes in all kinds of themes, from champagne and diamonds or a coral reef to a city at
+night or a winter village, each with 10 to 12 possible differences. Every round picks 5, 7,
+or 10 of them at random, and the changed picture is randomly on the left or the right.
 
 - **Misses and hints cost time** (5 and 10 seconds), so clicking around at random doesn't pay.
 - **Show solution** marks the differences you didn't find.
 - **Records** are kept per scene and number of differences, in your browser.
 
-All artwork is drawn in code as SVG.
+Keyboard: `H` hint, `S` show solution, `N` next scene. All artwork is drawn in code as SVG.
+
+## Bouncing balls
+
+- 20 balls to start with; every click adds 5 more, up to 150. Bigger balls are heavier.
+- `G` turns gravity on and off, `C` clears the balls, `H` hides the panel.
 
 ## The Ministry of Odd Forms
 
@@ -109,8 +117,8 @@ All artwork is drawn in code as SVG.
 
 - Squares within 120 pixels of your mouse or finger run away from it; the closer you get,
   the harder they run. Use that to drive them into the pen on the right.
-- Every level has 2 more squares (up to 20), and they get a little faster (up to level 11). `R` restarts
-  the level; the best time per level is kept in your browser.
+- Every level has 2 more squares (up to 20), and they get a little faster (up to level
+  11). `R` restarts the level; the best time per level is kept in your browser.
 
 ## Mastermind
 
@@ -119,8 +127,8 @@ All artwork is drawn in code as SVG.
 - Click a colour (or press its number) and it goes in the first empty hole; click a peg
   to take it out again. `Backspace` takes the last peg out and `Enter` checks the row. A
   black answer peg is a right colour in the right hole, a white one a right colour in
-  another hole.
-- `colours` switches the palette: vivid, warm, cool or tropical.
+  another hole; the page explains this under the board. `new game` starts over.
+- `colours` switches the palette (vivid, warm, cool or tropical) and the studio with it.
 - The board is a modern 3D object in a studio, drawn with three.js. It floats, the pegs
   bounce in, and the light follows your mouse; drag it and it springs back. Everything on
   it is made in code, without image or model files (ADR-0009).

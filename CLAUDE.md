@@ -15,7 +15,7 @@ npm test           # Rust tests + coverage, WASM build, vue-tsc, then Vitest + c
 npm run typecheck  # only the type check
 npm run lint:rust  # cargo fmt --check and cargo clippy -D warnings (CI runs it too)
 npm run build      # the complete site in dist/
-npm run mutants    # by hand: mutation testing of game-core/ (cargo-mutants, ~8 min)
+npm run mutants    # by hand: mutation testing of game-core/ (cargo-mutants, ~15 min)
 npm run bench      # by hand: how long the sudoku generator takes per level
 ```
 

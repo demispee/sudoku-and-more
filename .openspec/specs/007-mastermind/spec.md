@@ -1,6 +1,6 @@
 ---
 domain: mastermind
-version: 3.4.0
+version: 3.5.0
 status: accepted
 date: 2026-10-13
 ---
@@ -239,3 +239,29 @@ be kept in the browser (`localStorage` key `mastermindPalette`).
 
 **Tests:** `tests/mastermind-palettes.test.ts` (every palette has 8 colours that differ
 enough in hue or lightness)
+
+---
+
+### Requirement 10: Symbols for colour blindness [SHOULD]
+
+A `symbols` button SHOULD put a shape on every colour, so players who can't tell some
+colours apart can still play: a circle, triangle, square, diamond, star, cross, ring and
+hexagon for colours 1 to 8. The shapes SHOULD show on the pegs on the board, on the balls
+in the tray and on the colour buttons, in every palette, and stay readable when the board
+turns. The answer pegs keep black and white. Symbols start off; the choice SHOULD be kept
+in the browser (`localStorage` key `mastermindSymbols`).
+
+**Implementation:** `web/src/mastermind/useMastermind.ts`; `web/src/mastermind/scene.ts`;
+`web/src/pages/MastermindPage.vue`
+
+#### Scenario: Red and green look the same
+
+- GIVEN a player who can't tell red from green
+- WHEN they turn on `symbols`
+- THEN red pegs show a circle and green pegs a diamond, on the board, in the tray and on
+  the buttons
+
+**Tests:** `tests/use-mastermind.test.ts`, `tests/mastermind-page.test.ts`
+
+**Check:** by hand with `npm run dev`: the shapes are readable on every colour and when
+the board is turned.

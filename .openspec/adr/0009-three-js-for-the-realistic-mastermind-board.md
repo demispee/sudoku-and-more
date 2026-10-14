@@ -39,3 +39,21 @@ shadows and reflections would be far more code than the game, and look worse.
 - One more package to keep up to date.
 - The drawing code is the one part of `web/src/` without automatic tests; a mistake in
   how the board looks is only seen in the browser.
+
+## Update (2026-10-14)
+
+The decision stands; how the board looks changed. Since spec 007 v2.0.0 the board is
+modern graphite in a studio instead of wood on a table, so where this ADR says "wood" and
+"wood grain", read "graphite": its fine surface grain and the row numbers are still drawn
+in code onto a canvas, and still nothing is loaded from the internet. The pegs are glossy
+balls, and the board floats and moves a little (spec 007, Requirement 7).
+
+Two things learned while building it:
+
+- The page bundle stays at about 155 kB gzipped. Rectangular "softbox" lights
+  (`RectAreaLight`) looked a little nicer but added about 100 kB of lookup tables, so the
+  coloured side lights are spotlights.
+- jsdom still can't run `scene.ts`; mistakes in it were found by the critical reviews and
+  in the browser (for example the end of a hard game, fixed in pull request #43). The
+  scene therefore gets as little game logic as possible: whether a game is won comes
+  from Rust through the page.

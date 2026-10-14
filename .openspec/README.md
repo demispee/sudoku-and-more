@@ -41,7 +41,7 @@ on purpose. See ADR-0004 and ADR-0005.
 | [0006](adr/0006-game-rules-in-rust-and-webassembly.md) | Game rules in Rust, compiled to WebAssembly; build step and deploy from CI | Accepted; pages part superseded by 0007 |
 | [0007](adr/0007-vue-and-typescript-for-the-pages.md) | Vue 3 and TypeScript for the pages, built with Vite | Accepted |
 | [0008](adr/0008-testing-strategy.md) | Regression tests; mutation testing and benchmark by hand; no browser tests or fuzzing yet | Accepted |
-| [0009](adr/0009-three-js-for-the-realistic-mastermind-board.md) | three.js for the realistic Mastermind board, with shapes and textures made in code | Accepted |
+| [0009](adr/0009-three-js-for-the-realistic-mastermind-board.md) | three.js for the realistic Mastermind board, with shapes and textures made in code | Accepted; updated 2026-10-14 (graphite instead of wood) |
 
 ## Format
 
