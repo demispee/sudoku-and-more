@@ -7,6 +7,8 @@ import { World, ballColors, randomSeed } from "../wasm";
 
 const START_BALLS = 20;
 const BALLS_PER_CLICK = 5;
+const STEP = 1000 / 60; // ms per step: 60 a second, on any screen
+const LONGEST_FRAME = 250; // ms; a longer gap (a hidden tab) counts as this
 
 const canvas = ref<HTMLCanvasElement>();
 const count = ref(0);
@@ -17,6 +19,8 @@ const colors = ballColors(); // highlight, base, highlight, base, …
 const world = new World(randomSeed());
 let ctx: CanvasRenderingContext2D | null = null;
 let frameId = 0;
+let last: number | null = null;
+let pending = 0; // ms not yet turned into steps
 
 function resize() {
   const el = canvas.value!;
@@ -36,9 +40,15 @@ function drawBall(c: CanvasRenderingContext2D, x: number, y: number, radius: num
   c.fill();
 }
 
-function frame() {
+/** One animation frame: the time since the last one becomes steps of 1/60 s */
+function frame(now: number) {
   const el = canvas.value!;
-  world.step(el.width, el.height, gravityOn.value);
+  pending += last === null ? STEP : Math.min(Math.max(now - last, 0), LONGEST_FRAME);
+  last = now;
+  while (pending >= STEP - 1e-6) {
+    world.step(el.width, el.height, gravityOn.value);
+    pending -= STEP;
+  }
   if (ctx) {
     // A see-through background leaves short trails behind the balls
     ctx.shadowBlur = 0;
@@ -57,6 +67,8 @@ function addBalls(event: MouseEvent) {
 }
 
 function onKey(event: KeyboardEvent) {
+  // Cmd+C still copies, and a held key does it once
+  if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
   const key = event.key.toLowerCase();
   if (key === "g") gravityOn.value = !gravityOn.value;
   else if (key === "c") world.clear();
@@ -70,7 +82,8 @@ onMounted(() => {
   window.addEventListener("resize", resize);
   window.addEventListener("keydown", onKey);
   for (let i = 0; i < START_BALLS; i++) world.addRandom(canvas.value!.width, canvas.value!.height);
-  frame();
+  count.value = world.count;
+  frameId = requestAnimationFrame(frame);
 });
 
 onUnmounted(() => {

@@ -45,7 +45,9 @@ describe("Requirement 1: adding balls", () => {
 
 describe("Requirement 3: look", () => {
   test("draws every ball with a highlight and a glow, over a see-through background", () => {
+    ctx.arc.mockClear();
     const page = mount(BallsPage, { attachTo: document.body });
+    nextFrame();
     expect(ctx.fillRect).toHaveBeenCalled();
     expect(ctx.arc).toHaveBeenCalledTimes(20);
     expect(ctx.shadowBlur).toBe(20);
@@ -92,5 +94,45 @@ describe("Requirement 2 and 4: controls", () => {
     window.dispatchEvent(new Event("resize"));
     page.unmount();
     expect(cancelAnimationFrame).toHaveBeenCalled();
+  });
+});
+
+describe("Requirement 2: 60 steps a second", () => {
+  test("a 120 Hz screen takes as many steps per second as a 60 Hz one", async () => {
+    const { World } = await import("../web/src/wasm");
+    const steps = vi.spyOn(World.prototype, "step");
+    const page = mount(BallsPage, { attachTo: document.body });
+    let now = 1000;
+    frames.shift()!(now); // the first frame: one step
+    steps.mockClear();
+    for (let k = 0; k < 60; k++) frames.shift()!((now += 1000 / 60));
+    const at60 = steps.mock.calls.length;
+    steps.mockClear();
+    for (let k = 0; k < 120; k++) frames.shift()!((now += 1000 / 120));
+    frames.shift()!((now += 60_000)); // back from a hidden tab: at most 250 ms
+    expect([at60, steps.mock.calls.length]).toEqual([60, 60 + 15]);
+    page.unmount();
+  });
+});
+
+describe("Requirement 4: controls", () => {
+  test("regression: browser shortcuts and held keys do nothing", async () => {
+    const page = mount(BallsPage, { attachTo: document.body });
+    await page.vm.$nextTick();
+    for (const init of [{ metaKey: true }, { ctrlKey: true }, { altKey: true }, { repeat: true }]) {
+      for (const key of ["c", "g", "h"]) window.dispatchEvent(new KeyboardEvent("keydown", { key, ...init }));
+    }
+    await page.vm.$nextTick();
+    expect(page.find(".count").text()).toBe("20 balls");
+    expect(page.text()).toContain("gravity on");
+    page.unmount();
+  });
+
+  test("leaving the page frees the balls", async () => {
+    const { World } = await import("../web/src/wasm");
+    const free = vi.spyOn(World.prototype, "free");
+    const page = mount(BallsPage, { attachTo: document.body });
+    page.unmount();
+    expect(free).toHaveBeenCalledTimes(1);
   });
 });
