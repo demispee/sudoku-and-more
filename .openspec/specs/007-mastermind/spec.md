@@ -1,6 +1,6 @@
 ---
 domain: mastermind
-version: 3.3.0
+version: 3.4.0
 status: accepted
 date: 2026-10-13
 ---
@@ -64,6 +64,8 @@ After a row is checked, it MUST get a black answer peg for every peg of the righ
 in the right hole, and a white one for every other peg whose colour is in the code but in
 another hole. A peg in the code MUST be counted at most once. The answer pegs MUST be
 shown in a block next to the row, black ones first, so they don't tell which peg is which.
+The page MUST explain them next to the board, also on a phone: a black peg is a right
+colour in the right hole, a white one a right colour in another hole.
 
 **Implementation:** `game-core/src/mastermind.rs` (`score`)
 
