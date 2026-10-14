@@ -104,6 +104,11 @@ defineExpose({ game });
       </div>
     </div>
 
+    <p class="legend">
+      <span><span class="peg black"></span>right colour, right hole</span>
+      <span><span class="peg white"></span>right colour, other hole</span>
+    </p>
+
     <div class="colours">
       <button v-for="(colour, c) in colours" :key="c" class="colour" :aria-label="`colour ${c + 1}`"
         @click="game.place(c)">
@@ -167,6 +172,12 @@ h1 { margin-bottom: 24px; }
 .colour:hover { border-color: var(--c-orange); }
 .dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset -2px -2px 3px rgba(0, 0, 0, 0.35); }
 .help { margin-top: 16px; }
+/* What the answer pegs mean, with pegs that look like the ones on the board */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; color: var(--c-muted); font-size: 14px; }
+.legend > span { display: inline-flex; align-items: center; gap: 8px; }
+.peg { width: 12px; height: 12px; border-radius: 50%; }
+.peg.black { background: radial-gradient(circle at 35% 30%, #4a4e5a, #0a0a0f 60%); box-shadow: 0 0 0 1px #9aa3b8; }
+.peg.white { background: radial-gradient(circle at 35% 30%, #ffffff, #d9d3ea 70%); }
 .thumb { display: none; }
 /* On a phone: small buttons above the board, and the colours with check in one row
    under it, within reach of the thumb */
@@ -181,6 +192,7 @@ h1 { margin-bottom: 24px; }
   .dot { width: 20px; height: 20px; }
   .thumb { display: inline-flex; flex: none; align-items: center; justify-content: center; height: 38px; padding: 0 14px; }
   .help { display: none; } /* the keys don't help on a phone */
+  .legend { font-size: 13px; }
   .overlay { top: auto; bottom: 12px; left: 12px; right: 12px; padding: 12px 16px; } /* not over the code */
 }
 </style>

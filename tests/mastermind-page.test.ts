@@ -183,3 +183,11 @@ describe("Requirement 4 and 7: the end on every level", () => {
     expect(page.find(".best").text()).toBe("–");
   });
 });
+
+describe("Requirement 3: the answer pegs", () => {
+  test("the page explains what a black and a white answer peg mean", () => {
+    const legend = page.find(".legend");
+    expect(legend.find(".peg.black").exists() && legend.find(".peg.white").exists()).toBe(true);
+    expect(legend.findAll(":scope > span").map(s => s.text())).toEqual(["right colour, right hole", "right colour, other hole"]);
+  });
+});
