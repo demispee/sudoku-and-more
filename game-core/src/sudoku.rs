@@ -1073,6 +1073,26 @@ mod tests {
     }
 
     #[test]
+    fn requirement_1_counting_solutions_stops_exactly_at_the_limit() {
+        // Many solutions; the second option of a cell opens a subtree with several of them
+        let grid = parse(
+            "000700009000602100670091083000200000000040720080100530020970300030000000090000452",
+        );
+        for limit in 1..=3 {
+            assert_eq!(solve(&mut grid.clone(), limit, None), limit);
+        }
+    }
+
+    #[test]
+    fn requirement_1_the_easiest_level_keeps_all_42_givens() {
+        // Rating starts at 42 givens, and with only singles that is already level 1
+        for seed in 1..=3 {
+            let easy = attempt(1, &mut Rng::new(seed)).unwrap();
+            assert_eq!((easy.level, givens(&easy.puzzle)), (1, MAX_RATED_GIVENS));
+        }
+    }
+
+    #[test]
     fn requirement_1_the_same_seed_gives_the_same_puzzle() {
         let a = attempt(5, &mut Rng::new(42)).unwrap();
         let b = attempt(5, &mut Rng::new(42)).unwrap();
@@ -1146,6 +1166,14 @@ mod tests {
             result.level,
             level_of(rate(&result.puzzle), givens(&result.puzzle))
         );
+    }
+
+    #[test]
+    fn requirement_2_out_of_reach_it_keeps_the_first_closest_version() {
+        // This attempt never gets past level 3 on its way to 5. It keeps the first level 3
+        // it found, with 30 givens: the most a level 3 can have.
+        let result = attempt(5, &mut Rng::new(1)).unwrap();
+        assert_eq!((result.level, givens(&result.puzzle)), (3, 30));
     }
 
     // ----- Requirement 2: techniques -----
@@ -1267,6 +1295,24 @@ mod tests {
         assert_eq!(Technique::XWing.apply(&mut s).unwrap().name, "X-Wing on 5");
         assert_eq!(s.cand[2 * 9 + 1] & bits(&[5]), 0);
         assert_ne!(s.cand[1] & bits(&[5]), 0);
+    }
+
+    #[test]
+    fn requirement_2_an_x_wing_names_its_lines_and_shows_its_cells() {
+        let mut s = open_state();
+        for r in [0, 4] {
+            for c in (0..9).filter(|&c| c != 1 && c != 6) {
+                s.cand[r * 9 + c] &= !bits(&[5]);
+            }
+        }
+        let found = Technique::XWing.apply(&mut s).unwrap();
+        assert_eq!(
+            found.text,
+            "In rows 1 and 5, the 5 only fits in columns 2 and 7. Wherever it lands, \
+             those columns get their 5 there. So the 5 can go from the rest of those columns."
+        );
+        // The four corners: rows 1 and 5, columns 2 and 7
+        assert_eq!(found.pattern, vec![1, 6, 37, 42]);
     }
 
     #[test]
@@ -1493,6 +1539,73 @@ mod tests {
             (text.as_str(), cells),
             ("the cell in row 1, column 2 has no number left", vec![1])
         );
+    }
+
+    #[test]
+    fn requirement_7_a_trial_says_when_a_number_no_longer_fits_in_a_row() {
+        let mut s = open_state();
+        assert!(contradiction(&s).is_none());
+        // A 5 placed in row 1 is fine, even though no cell there has a 5 option left
+        place(&mut s, 0, 5);
+        assert!(contradiction(&s).is_none());
+
+        let mut s = open_state();
+        for i in 0..9 {
+            s.cand[i] &= !bits(&[5]);
+        }
+        let (text, cells) = contradiction(&s).unwrap();
+        assert_eq!(text, "the 5 no longer fits anywhere in row 1");
+        assert_eq!(cells, (0..9).collect::<Vec<_>>());
+    }
+
+    /// How many numbers the singles fill in after assuming `wrong`, before they reach a
+    /// contradiction, or None if they don't within the limit
+    fn numbers_until_contradiction(grid: &Grid, cell: usize, wrong: u8) -> Option<usize> {
+        let mut s = State {
+            grid: *grid,
+            cand: candidate_masks(grid),
+        };
+        place(&mut s, cell, wrong);
+        for forced in 0..=TRIAL_STEPS {
+            if contradiction(&s).is_some() {
+                return Some(forced);
+            }
+            naked_single(&mut s).or_else(|| hidden_single(&mut s))?;
+        }
+        None
+    }
+
+    #[test]
+    fn requirement_7_a_trial_follows_the_shortest_contradiction_and_names_each_number() {
+        let solution = solved(&hard());
+        // Step until the techniques run out for the first time
+        let mut values = hard();
+        let values = loop {
+            let before = values;
+            if solver_step(&mut values, &mut [0; 81], &solution, None).label == "trial" {
+                break before;
+            }
+        };
+        let options = candidate_masks(&values);
+        let (cell, found) = trial(&values, &options, &solution).unwrap();
+        assert_eq!(cell, 64);
+        assert_eq!(
+            found.text,
+            "No technique gets further here, so try something. This cell is a 3 or a 6. \
+             Suppose it's a 6: that forces a 8 (row 6, column 2), then a 3 (row 5, column 2), \
+             then a 7 (row 9, column 3), then a 3 (row 9, column 1), then a 8 (row 5, column 4), \
+             then a 2 (row 9, column 4), and then the 2 no longer fits anywhere in row 8. \
+             So it can't be a 6; it's a 3."
+        );
+        // No other cell with two options goes wrong sooner
+        let shortest = (0..81)
+            .filter(|&i| values[i] == 0 && bit_count(options[i]) == 2)
+            .filter_map(|i| {
+                let wrong = digits_of(options[i] & !(1 << solution[i]))[0];
+                numbers_until_contradiction(&values, i, wrong)
+            })
+            .min();
+        assert_eq!(shortest, Some(6));
     }
 
     #[test]
