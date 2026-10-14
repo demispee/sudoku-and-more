@@ -202,7 +202,7 @@ function kitchenDifferences(): Difference[] {
   return [
     { id: "cloud", x: 194, y: 116, r: 24 },
     { id: "curtain", x: 268, y: 170, r: 26 },
-    { id: "ladle", x: 470, y: 142, r: 30 },
+    { id: "ladle", x: 470, y: 114, r: 58 }, // the whole ladle, from its hook to its bowl
     { id: "pan", x: 606, y: 138, r: 26 },
     { id: "clock", x: 728, y: 108, r: 26 },
     { id: "spiceLid", x: 96, y: 268, r: 18 },

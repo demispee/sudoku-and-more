@@ -1,6 +1,6 @@
 // The state of the spot-the-difference page and what the player can do
 // (.openspec/specs/002-spot-the-difference). The rules are in Rust (game-core/src/spot.rs);
-// the drawings are in scenes.ts.
+// the drawings are in web/src/scenes/.
 import { computed, ref } from "vue";
 import { formatTime } from "../format";
 import { SCENES, type Difference, type Scene } from "../scenes";
@@ -45,7 +45,8 @@ export function useSpot(store: Store = localStorage, scenes: Scene[] = SCENES) {
   const MISS_PENALTY = missPenalty();
   const HINT_PENALTY = hintPenalty();
 
-  const count = ref(Number(store.getItem("spotCount")) || 7);
+  const savedCount = Number(store.getItem("spotCount"));
+  const count = ref([5, 7, 10].includes(savedCount) ? savedCount : 7);
   const scene = ref<Scene | null>(null);
   const active = ref<Difference[]>([]); // the differences in this round
   const changedSide = ref(0);
@@ -54,8 +55,19 @@ export function useSpot(store: Store = localStorage, scenes: Scene[] = SCENES) {
   const hints = ref(0);
   const locked = ref(true);
   const time = ref("0:00");
-  const solvedCount = ref(Number(store.getItem("spotSolved")) || 0);
-  const records = ref<Record<string, number>>(JSON.parse(store.getItem("spotRecords") || "{}"));
+  const solvedCount = ref(Math.max(0, Math.floor(Number(store.getItem("spotSolved")))) || 0);
+
+  /** The saved records; ones that can't be read are ignored */
+  function readRecords(): Record<string, number> {
+    try {
+      const saved: unknown = JSON.parse(store.getItem("spotRecords") || "{}");
+      if (!saved || typeof saved !== "object" || Array.isArray(saved)) return {};
+      return Object.fromEntries(Object.entries(saved).filter(([, ms]) => Number.isFinite(ms) && ms > 0));
+    } catch {
+      return {};
+    }
+  }
+  const records = ref<Record<string, number>>(readRecords());
   const marks = ref<Mark[]>([]);
   const message = ref("");
   const result = ref<Result | null>(null);

@@ -24,6 +24,8 @@ const extras = computed(() => {
 });
 
 function onKey(event: KeyboardEvent) {
+  // Cmd+S and other browser shortcuts stay the browser's; a held key does it once
+  if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
   const key = event.key.toLowerCase();
   if (key === "h") game.hint();
   if (key === "s") game.reveal();

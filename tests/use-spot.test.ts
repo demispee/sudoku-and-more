@@ -191,3 +191,41 @@ describe("Requirement 8: finishing a round", () => {
     expect(game.record.value).toBe("–");
   });
 });
+
+describe("Requirement 8: saved values", () => {
+  test("regression: saved values that can't be read are ignored", () => {
+    seedRandom(3);
+    started();
+    const key = `${game.scene.value!.name}|7`;
+    game.stop();
+    for (const [saved, record] of [["{oops", "–"], ["null", "–"], [JSON.stringify({ [key]: "abc" }), "–"], [JSON.stringify({ [key]: 3000 }), "0:03"]]) {
+      seedRandom(3);
+      started({ spotRecords: saved! });
+      expect(game.record.value).toBe(record);
+      game.stop();
+    }
+    started();
+  });
+
+  test("regression: a saved number of differences other than 5, 7 or 10 becomes 7", () => {
+    const cases = [["0.5", 7], ["3", 7], ["10", 10], ["5", 5]] as const;
+    for (const [k, [saved, expected]] of cases.entries()) {
+      if (k > 0) game.stop();
+      started({ spotCount: saved });
+      expect([game.count.value, game.active.value.length]).toEqual([expected, expected]);
+    }
+  });
+
+  test("a faster round replaces the old record", () => {
+    seedRandom(3);
+    started();
+    const key = `${game.scene.value!.name}|7`;
+    game.stop();
+    seedRandom(3);
+    const store = started({ spotRecords: JSON.stringify({ [key]: 60_000 }) });
+    vi.advanceTimersByTime(4000);
+    findAll();
+    expect(game.result.value).toMatchObject({ isRecord: true, time: "0:04" });
+    expect(JSON.parse(store.getItem("spotRecords")!)[key]).toBe(4000);
+  });
+});
