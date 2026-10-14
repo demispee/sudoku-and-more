@@ -1,6 +1,6 @@
 //! Spot-the-difference rules: scene order, rounds, hit detection and time penalties.
 //! See `.openspec/specs/002-spot-the-difference/spec.md`. The scene drawings stay in
-//! JavaScript (`src/spot-scenes.js`, ADR-0006); here a scene is just a number and a
+//! TypeScript (`web/src/scenes/`, ADR-0006); here a scene is just a number and a
 //! difference just a circle.
 
 use crate::random::Rng;
@@ -86,14 +86,16 @@ fn near(d: &Difference, x: f64, y: f64) -> bool {
     distance(d, x, y) <= d.r + CLICK_MARGIN
 }
 
-/// The closest difference not found yet within reach of (x, y), as its index in `active`
+/// The difference not found yet within reach of (x, y) whose circle edge is nearest, as its
+/// index in `active`: a click inside a circle finds that one, even next to a smaller one
 pub fn find_hit(active: &[Difference], found: &[bool], x: f64, y: f64) -> Option<usize> {
     let mut best: Option<usize> = None;
     for (i, d) in active.iter().enumerate() {
         if found[i] || !near(d, x, y) {
             continue;
         }
-        if best.is_none_or(|b| distance(d, x, y) < distance(&active[b], x, y)) {
+        let edge = |d: &Difference| distance(d, x, y) - d.r;
+        if best.is_none_or(|b| edge(d) < edge(&active[b])) {
             best = Some(i);
         }
     }
@@ -265,5 +267,26 @@ mod tests {
     fn requirement_8_records_are_kept_per_scene_and_number_of_differences() {
         assert_eq!(record_key("The Swan", 7), "The Swan|7");
         assert_ne!(record_key("The Swan", 10), record_key("The Swan", 7));
+    }
+
+    #[test]
+    fn regression_a_click_inside_a_big_circle_finds_it_next_to_a_small_one() {
+        // As in Champagne & Diamonds: r 16 and r 12, 29.2 apart
+        let big = Difference {
+            x: 100.0,
+            y: 100.0,
+            r: 16.0,
+        };
+        let small = Difference {
+            x: 129.2,
+            y: 100.0,
+            r: 12.0,
+        };
+        let found = [false, false];
+        // Inside the big circle, 14 from its centre and 15.2 from the small one's
+        assert_eq!(find_hit(&[big, small], &found, 114.0, 100.0), Some(0));
+        assert_eq!(find_hit(&[small, big], &found, 114.0, 100.0), Some(1));
+        // Inside the small circle
+        assert_eq!(find_hit(&[big, small], &found, 125.0, 100.0), Some(1));
     }
 }

@@ -114,7 +114,7 @@ function drawSwan(has: Has): string {
     <circle cx="277" cy="217" r="2.6" fill="#111"/>`;
   if (!has("beakKnob")) s += '<ellipse cx="266" cy="221" rx="5" ry="6" fill="#1a1a1a"/>';
   s += `<path d="M266,207 L268,191 L275,199 L282,186 L289,199 L296,191 L298,207 Z" fill="url(#gold)" stroke="#8c6418" stroke-width="0.8"/>
-    <circle cx="282" cy="199" r="3.2" fill="${has("crownGem") ? "url(#gemSapphire)" : "url(#gemRuby)"}"/>`;
+    <circle cx="282" cy="198" r="5.5" stroke="#8c6418" stroke-width="0.8" fill="${has("crownGem") ? "url(#gemSapphire)" : "url(#gemRuby)"}"/>`;
   NECK_PEARLS.forEach(([x, y], k) => {
     if (k === 3 && has("neckPearls")) return;
     s += pearl(x, y, 3.6);
@@ -126,7 +126,8 @@ function drawSwan(has: Has): string {
     const x = 120 + random() * 560, y = 190 + random() * 170;
     s += `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(1.2 + random() * 1.2).toFixed(1)}" opacity="0.8"/>`;
   }
-  if (!has("firefly")) s += '<circle cx="530" cy="300" r="3.2"/>';
+  // One big firefly with a halo, so its absence is clear among the small ones
+  if (!has("firefly")) s += '<circle cx="530" cy="300" r="13" opacity="0.3"/><circle cx="530" cy="300" r="6"/>';
   s += "</g>";
   if (!has("floatingFeather")) {
     s += `<g transform="rotate(-15,170,575)">
@@ -149,7 +150,7 @@ function swanDifferences(): Difference[] {
     { id: "beakKnob", x: 266, y: 221, r: 10 },
     { id: "crownGem", x: 282, y: 197, r: 12 },
     { id: "neckPearls", x: px, y: py, r: 10 },
-    { id: "firefly", x: 530, y: 300, r: 14 },
+    { id: "firefly", x: 530, y: 300, r: 18 },
     { id: "floatingFeather", x: 170, y: 575, r: 22 },
   ];
 }

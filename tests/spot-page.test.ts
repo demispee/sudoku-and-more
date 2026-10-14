@@ -17,7 +17,7 @@ beforeEach(async () => {
   seedRandom(4);
   localStorage.clear();
   // jsdom doesn't lay out pages, so every picture pretends to be 800 × 600 at the top left
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(
     { left: 0, top: 0, width: 800, height: 600, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) });
   page = mount(SpotPage, { attachTo: document.body });
   game = (page.vm as unknown as { game: Spot }).game;
@@ -126,5 +126,18 @@ describe("Requirement 8: finishing a round", () => {
     await press("n");
     await press("x"); // other keys do nothing
     expect(page.find(".found").text()).toBe("0");
+  });
+});
+
+describe("Requirement 8: keys", () => {
+  test("regression: browser shortcuts and held keys don't hint, reveal or skip", async () => {
+    const scene = game.scene.value;
+    for (const init of [{ metaKey: true }, { ctrlKey: true }, { altKey: true }, { repeat: true }]) {
+      for (const key of ["s", "h", "n"]) {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key, ...init }));
+      }
+    }
+    await page.vm.$nextTick();
+    expect([game.scene.value, game.hints.value, game.locked.value]).toEqual([scene, 0, false]);
   });
 });

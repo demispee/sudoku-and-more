@@ -7,7 +7,9 @@ const props = defineProps<{ art: string; marks: Mark[]; missPenalty: number }>()
 const emit = defineEmits<{ click: [x: number, y: number] }>();
 
 function onClick(event: MouseEvent) {
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  // The drawing itself, not the frame around it with its border
+  const art = (event.currentTarget as HTMLElement).querySelector("svg.art") ?? (event.currentTarget as HTMLElement);
+  const rect = art.getBoundingClientRect();
   emit("click", ((event.clientX - rect.left) / rect.width) * 800, ((event.clientY - rect.top) / rect.height) * 600);
 }
 
