@@ -866,6 +866,94 @@ mod tests {
     }
 
     #[test]
+    fn requirement_2_touching_an_edge_is_not_bouncing_off_it() {
+        // Right against each edge, moving along it and away: the speed stays the same
+        let cases = [
+            (HALF, 300.0, 2.0, 1.0),
+            (WIDTH - HALF, 100.0, -2.0, 1.0),
+            (300.0, HALF, 1.0, 2.0),
+            (300.0, HEIGHT - HALF, 1.0, -2.0),
+        ];
+        for (x, y, vx, vy) in cases {
+            let mut s = Square {
+                vx,
+                vy,
+                ..square(x, y)
+            };
+            keep_in(&mut s);
+            assert_eq!((s.x, s.y, s.vx, s.vy), (x, y, vx, vy));
+        }
+    }
+
+    #[test]
+    fn requirement_2_a_square_against_an_edge_makes_the_other_take_the_whole_move() {
+        let after = |mut squares: Vec<Square>| {
+            separate(&mut squares);
+            squares.iter().map(|s| (s.x, s.y)).collect::<Vec<_>>()
+        };
+        // 16 too close: the one against the edge stays, the other moves all 16
+        assert_eq!(
+            after(vec![square(HALF, 300.0), square(HALF + 8.0, 300.0)]),
+            vec![(HALF, 300.0), (HALF + 24.0, 300.0)]
+        );
+        assert_eq!(
+            after(vec![
+                square(WIDTH - HALF - 8.0, 100.0),
+                square(WIDTH - HALF, 100.0)
+            ]),
+            vec![(WIDTH - HALF - 24.0, 100.0), (WIDTH - HALF, 100.0)]
+        );
+        assert_eq!(
+            after(vec![square(300.0, HALF), square(300.0, HALF + 8.0)]),
+            vec![(300.0, HALF), (300.0, HALF + 24.0)]
+        );
+        assert_eq!(
+            after(vec![
+                square(300.0, HEIGHT - HALF - 8.0),
+                square(300.0, HEIGHT - HALF)
+            ]),
+            vec![(300.0, HEIGHT - HALF - 24.0), (300.0, HEIGHT - HALF)]
+        );
+    }
+
+    #[test]
+    fn requirement_2_moving_one_pair_apart_can_need_another_pass() {
+        // Pushing the middle square away from the right one makes it overlap the left one
+        // again
+        let mut squares = vec![
+            square(100.0, 300.0),
+            square(110.0, 300.0),
+            square(140.0, 300.0),
+        ];
+        separate(&mut squares);
+        for (i, a) in squares.iter().enumerate() {
+            for b in &squares[i + 1..] {
+                let overlap = 2.0 * HALF - (a.x - b.x).abs();
+                assert!(overlap < 0.01, "{} and {} overlap by {overlap}", a.x, b.x);
+            }
+        }
+    }
+
+    #[test]
+    fn requirement_2_two_squares_on_the_same_spot_move_apart() {
+        let mut f = field(vec![square(300.0, 300.0), square(300.0, 300.0)]);
+        f.step(None);
+        let s = &f.squares;
+        assert!(s.iter().all(|s| s.x.is_finite() && s.y.is_finite()));
+        assert!((s[0].y - s[1].y).abs() >= 2.0 * HALF - 1e-9);
+    }
+
+    #[test]
+    fn requirement_2_squares_exactly_keep_apart_distance_away_dont_drift() {
+        let mut f = field(vec![
+            square(100.0, 100.0),
+            square(100.0 + KEEP_APART, 100.0),
+        ]);
+        f.step(None);
+        assert_eq!((f.squares[0].vx, f.squares[1].vx), (0.0, 0.0));
+    }
+
+    #[test]
     fn regression_squares_against_an_edge_end_apart() {
         // Three squares in a row against the left edge
         let mut squares = vec![
