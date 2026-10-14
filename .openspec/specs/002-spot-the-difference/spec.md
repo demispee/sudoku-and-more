@@ -1,6 +1,6 @@
 ---
 domain: spot-the-difference
-version: 2.3.0
+version: 2.4.0
 status: accepted
 date: 2026-10-12
 ---
@@ -51,11 +51,12 @@ There MUST be at least 30 scenes, each drawn in code as SVG, in varied themes, e
 
 Every difference MUST be fair to find:
 
-- it MUST visibly change the picture;
+- it MUST visibly change the picture: the part that changes MUST be big enough to see
+  without hunting, and its click circle MUST cover it;
 - its click area MUST be a circle of at least 10 units (in the 800 × 600 picture) that lies
   wholly inside the picture;
-- the click areas of two differences in a scene MUST NOT overlap, so a click never finds
-  the wrong one.
+- the click circles of two differences in a scene MUST NOT overlap, so a click never finds
+  the wrong one (the extra 12 units of Requirement 4 MAY overlap: see there).
 
 Apart from the chosen differences, both pictures MUST be identical; anything random in a
 drawing MUST use a seeded generator.
@@ -115,7 +116,8 @@ Changing the number MUST restart the round with the same scene.
 ### Requirement 4: Clicking [MUST]
 
 A click within a difference's radius plus 12 units (in the 800 × 600 picture) MUST count
-as found, in either picture. A found difference MUST be circled in turquoise in both
+as found, in either picture. When a click is within reach of two differences, the one whose
+circle edge is nearest MUST count, so a click inside a circle always finds that one. A found difference MUST be circled in turquoise in both
 pictures. Clicking a difference that was already found MUST NOT count as a miss. Any other
 click MUST count as a miss, shown as a magenta cross with `+5s`.
 
@@ -178,7 +180,11 @@ record MUST be announced. The solved counter MUST go up by one. After 3.5 second
 scene MUST start. `next` (key `N`) MUST start the next scene at any time.
 
 Records and the solved count are kept in the browser (`localStorage` keys `spotRecords`,
-`spotSolved` and `spotCount`).
+`spotSolved` and `spotCount`). A saved value that can't be read MUST be ignored, not break
+the page; a number of differences other than 5, 7 or 10 MUST become 7.
+
+The keys `H`, `S` and `N` MUST do nothing together with Ctrl, Cmd or Alt (so the browser's
+own shortcuts such as Cmd+S keep working), or when held down.
 
 **Implementation:** `game-core/src/spot.rs::record_key()`; `web/src/spot/useSpot.ts::finishRound()`; `web/src/pages/SpotPage.vue` (the result)
 
