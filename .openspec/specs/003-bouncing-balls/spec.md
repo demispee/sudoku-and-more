@@ -15,7 +15,7 @@ A full-window canvas of bouncing balls to play with.
 
 The page MUST start with 20 balls at random places in the top half. A click on the canvas
 MUST add 5 balls at the cursor, each with a random speed and a radius from 12 to 34, up to
-300 balls in all, so the page stays smooth. The panel MUST show the number of balls.
+150 balls in all, so the page stays smooth. The panel MUST show the number of balls.
 
 **Implementation:** `game-core/src/balls.rs::create_ball()`, `World`; `web/src/pages/BallsPage.vue::addBalls()`
 
@@ -32,8 +32,8 @@ MUST add 5 balls at the cursor, each with a random speed and a radius from 12 to
 ### Requirement 2: Physics [MUST]
 
 Balls MUST bounce off the window edges, keeping 90% of their speed, and MUST stay inside
-the window. Balls MUST bounce off each other without overlapping, with bigger balls being
-heavier (mass ∝ radius²). Gravity MUST be on at start and MUST be toggled with `G`. The
+the window. Balls MUST bounce off each other without visible overlap (at most 3 pixels,
+also in a full pile under gravity), with bigger balls being heavier (mass ∝ radius²). Gravity MUST be on at start and MUST be toggled with `G`. The
 balls MUST move 60 steps per second, so they are as fast on a 120 Hz screen as on a 60 Hz
 one.
 
