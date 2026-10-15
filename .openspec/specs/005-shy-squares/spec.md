@@ -1,6 +1,6 @@
 ---
 domain: shy-squares
-version: 1.2.0
+version: 1.3.0
 status: accepted
 date: 2026-10-15
 ---
@@ -18,7 +18,9 @@ how they move and collide.
 
 The game MUST be played on an 800 × 600 field, scaled to fit the window, with a pen in
 the middle of the right side: three walls and an opening on the left. A level MUST start
-with its squares at random places outside the pen, from a seed.
+with its squares at random places outside the pen, from a seed. A square MUST be 36 × 36
+field units, big enough to see Schubert on a computer screen, and the inside of the pen
+200 × 220, so 20 caught squares fit at the back with the opening free.
 
 **Implementation:** `game-core/src/shy.rs`; `web/src/pages/ShyPage.vue`
 
@@ -112,7 +114,7 @@ shown on the page. A saved value that can't be read MUST be ignored, not break t
 ### Requirement 6: Shy Schuberts [MUST]
 
 Every square MUST be drawn as Schubert, the Schuberg Philis mascot, always wearing the
-Christmas hat, filling the square (24 × 24 field units). A caught Schubert MUST stand on a
+Christmas hat, filling the square (36 × 36 field units). A caught Schubert MUST stand on a
 turquoise circle. The page title, the heading and the link on the index page MUST say
 "Shy Schuberts"; the address stays `shy-squares.html`.
 

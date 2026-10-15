@@ -6,19 +6,19 @@ use crate::random::Rng;
 pub const WIDTH: f64 = 800.0;
 pub const HEIGHT: f64 = 600.0;
 /// Half the side of a square
-pub const HALF: f64 = 12.0;
+pub const HALF: f64 = 18.0;
 pub const SCARE_RADIUS: f64 = 120.0;
 const SCARE_FORCE: f64 = 1.6;
 const FRICTION: f64 = 0.92;
-const KEEP_APART: f64 = 30.0;
+const KEEP_APART: f64 = 45.0;
 const BOUNCE: f64 = 0.6;
 
 /// The pen: its inside, and the walls around it (open on the left)
 pub const PEN: Rect = Rect {
-    left: 620.0,
-    top: 200.0,
+    left: 580.0,
+    top: 190.0,
     right: 780.0,
-    bottom: 400.0,
+    bottom: 410.0,
 };
 const WALL: f64 = 6.0;
 pub const WALLS: [Rect; 3] = [
@@ -64,8 +64,8 @@ pub struct Square {
 /// The resting place of the k-th caught square: rows of five from the back of the pen
 pub fn home(k: usize) -> (f64, f64) {
     (
-        PEN.right - 18.0 - (k / 5) as f64 * 32.0,
-        PEN.top + 24.0 + (k % 5) as f64 * 38.0,
+        PEN.right - 20.0 - (k / 5) as f64 * 40.0,
+        PEN.top + 22.0 + (k % 5) as f64 * 44.0,
     )
 }
 
@@ -391,13 +391,8 @@ mod tests {
         wall.step(None);
         assert!(wall.squares[0].y + HALF <= PEN.top - WALL + 1e-9 && wall.squares[0].vy < 0.0);
 
-        // The back wall of the pen, from the right
-        let mut back = field(vec![Square {
-            vx: -5.0,
-            ..square(PEN.right + WALL + HALF + 1.0, 300.0)
-        }]);
-        back.step(None);
-        assert!(back.squares[0].x - HALF >= PEN.right + WALL - 1e-9 && back.squares[0].vx > 0.0);
+        // Behind the back wall of the pen there is no room for a square
+        const { assert!(WIDTH - (PEN.right + WALL) < 2.0 * HALF) };
 
         // The bottom wall, from below and from inside
         let mut below = field(vec![Square {
@@ -466,6 +461,8 @@ mod tests {
                 ..square(0.0, 0.0)
             };
             assert!(inside_pen(&s));
+            // The opening stays free: room for one more square in front of them all
+            assert!(s.x - HALF - PEN.left >= 2.0 * HALF);
             for j in 0..k {
                 assert!((home(j).0 - home(k).0).hypot(home(j).1 - home(k).1) >= 2.0 * HALF);
             }
@@ -523,9 +520,9 @@ mod tests {
         assert_eq!(
             WALLS.map(|w| (w.left, w.top, w.right, w.bottom)),
             [
-                (620.0, 194.0, 786.0, 200.0),
-                (620.0, 400.0, 786.0, 406.0),
-                (780.0, 200.0, 786.0, 400.0),
+                (580.0, 184.0, 786.0, 190.0),
+                (580.0, 410.0, 786.0, 416.0),
+                (780.0, 190.0, 786.0, 410.0),
             ]
         );
     }
@@ -740,32 +737,32 @@ mod tests {
             separate(&mut squares);
             squares.iter().map(|s| (s.x, s.y)).collect::<Vec<_>>()
         };
-        // Side by side: 14 too close in x, 20 in y, so apart along x, half each
+        // Side by side: 26 too close in x, 32 in y, so apart along x, half each
         assert_eq!(
             after(vec![square(100.0, 100.0), square(110.0, 104.0)]),
-            vec![(93.0, 100.0), (117.0, 104.0)]
+            vec![(87.0, 100.0), (123.0, 104.0)]
         );
         // The other way round, and above each other
         assert_eq!(
             after(vec![square(110.0, 104.0), square(100.0, 100.0)]),
-            vec![(117.0, 104.0), (93.0, 100.0)]
+            vec![(123.0, 104.0), (87.0, 100.0)]
         );
         assert_eq!(
             after(vec![square(104.0, 100.0), square(100.0, 110.0)]),
-            vec![(104.0, 93.0), (100.0, 117.0)]
+            vec![(104.0, 87.0), (100.0, 123.0)]
         );
         assert_eq!(
             after(vec![square(100.0, 110.0), square(104.0, 100.0)]),
-            vec![(100.0, 117.0), (104.0, 93.0)]
+            vec![(100.0, 123.0), (104.0, 87.0)]
         );
         // A free square moves all the way from a caught one, whichever comes first
         assert_eq!(
             after(vec![caught(300.0, 300.0), square(310.0, 300.0)]),
-            vec![(300.0, 300.0), (324.0, 300.0)]
+            vec![(300.0, 300.0), (336.0, 300.0)]
         );
         assert_eq!(
             after(vec![square(310.0, 300.0), caught(300.0, 300.0)]),
-            vec![(324.0, 300.0), (300.0, 300.0)]
+            vec![(336.0, 300.0), (300.0, 300.0)]
         );
         // Two caught squares, or squares apart on one axis, stay where they are
         assert_eq!(
@@ -773,16 +770,16 @@ mod tests {
             vec![(300.0, 300.0), (310.0, 300.0)]
         );
         assert_eq!(
-            after(vec![square(100.0, 100.0), square(110.0, 124.0)]),
-            vec![(100.0, 100.0), (110.0, 124.0)]
+            after(vec![square(100.0, 100.0), square(110.0, 136.0)]),
+            vec![(100.0, 100.0), (110.0, 136.0)]
         );
         assert_eq!(
-            after(vec![square(100.0, 100.0), square(124.0, 110.0)]),
-            vec![(100.0, 100.0), (124.0, 110.0)]
+            after(vec![square(100.0, 100.0), square(136.0, 110.0)]),
+            vec![(100.0, 100.0), (136.0, 110.0)]
         );
         assert_eq!(
-            after(vec![square(100.0, 100.0), square(110.0, 130.0)]),
-            vec![(100.0, 100.0), (110.0, 130.0)]
+            after(vec![square(100.0, 100.0), square(110.0, 142.0)]),
+            vec![(100.0, 100.0), (110.0, 142.0)]
         );
     }
 
@@ -793,8 +790,8 @@ mod tests {
         f.step(None);
         let s = f.squares[1];
         assert!(close(s.vx, 0.15 * 0.6 * FRICTION) && close(s.vy, 0.15 * 0.8 * FRICTION));
-        // 26 apart: not overlapping, but closer than KEEP_APART
-        let mut f = field(vec![square(100.0, 100.0), square(126.0, 100.0)]);
+        // 40 apart: not overlapping, but closer than KEEP_APART
+        let mut f = field(vec![square(100.0, 100.0), square(140.0, 100.0)]);
         f.step(None);
         let s = &f.squares;
         assert!(close(s[0].vx, -0.15 * FRICTION) && close(s[1].vx, 0.15 * FRICTION));
@@ -803,8 +800,8 @@ mod tests {
             square(100.0, 100.0),
             Square {
                 caught: true,
-                home: Some((126.0, 100.0)),
-                ..square(126.0, 100.0)
+                home: Some((140.0, 100.0)),
+                ..square(140.0, 100.0)
             },
         ]);
         f.step(None);
@@ -826,9 +823,9 @@ mod tests {
         let mut squares = vec![
             Square {
                 vx: 2.0,
-                ..square(13.0, 300.0)
+                ..square(HALF + 1.0, 300.0)
             },
-            square(20.0, 300.0),
+            square(HALF + 8.0, 300.0),
         ];
         separate(&mut squares);
         assert!(
@@ -839,27 +836,27 @@ mod tests {
         let mut right = vec![
             Square {
                 vx: -2.0,
-                ..square(WIDTH - 13.0, 100.0)
+                ..square(WIDTH - HALF - 1.0, 100.0)
             },
-            square(WIDTH - 20.0, 100.0),
+            square(WIDTH - HALF - 8.0, 100.0),
         ];
         separate(&mut right);
         assert!(right[0].vx < 0.0);
         let mut top = vec![
             Square {
                 vy: 2.0,
-                ..square(300.0, 13.0)
+                ..square(300.0, HALF + 1.0)
             },
-            square(300.0, 20.0),
+            square(300.0, HALF + 8.0),
         ];
         separate(&mut top);
         assert!(top[0].vy > 0.0);
         let mut bottom = vec![
             Square {
                 vy: -2.0,
-                ..square(300.0, HEIGHT - 13.0)
+                ..square(300.0, HEIGHT - HALF - 1.0)
             },
-            square(300.0, HEIGHT - 20.0),
+            square(300.0, HEIGHT - HALF - 8.0),
         ];
         separate(&mut bottom);
         assert!(bottom[0].vy < 0.0);
@@ -891,28 +888,28 @@ mod tests {
             separate(&mut squares);
             squares.iter().map(|s| (s.x, s.y)).collect::<Vec<_>>()
         };
-        // 16 too close: the one against the edge stays, the other moves all 16
+        // 28 too close: the one against the edge stays, the other moves all 28
         assert_eq!(
             after(vec![square(HALF, 300.0), square(HALF + 8.0, 300.0)]),
-            vec![(HALF, 300.0), (HALF + 24.0, 300.0)]
+            vec![(HALF, 300.0), (HALF + 36.0, 300.0)]
         );
         assert_eq!(
             after(vec![
                 square(WIDTH - HALF - 8.0, 100.0),
                 square(WIDTH - HALF, 100.0)
             ]),
-            vec![(WIDTH - HALF - 24.0, 100.0), (WIDTH - HALF, 100.0)]
+            vec![(WIDTH - HALF - 36.0, 100.0), (WIDTH - HALF, 100.0)]
         );
         assert_eq!(
             after(vec![square(300.0, HALF), square(300.0, HALF + 8.0)]),
-            vec![(300.0, HALF), (300.0, HALF + 24.0)]
+            vec![(300.0, HALF), (300.0, HALF + 36.0)]
         );
         assert_eq!(
             after(vec![
                 square(300.0, HEIGHT - HALF - 8.0),
                 square(300.0, HEIGHT - HALF)
             ]),
-            vec![(300.0, HEIGHT - HALF - 24.0), (300.0, HEIGHT - HALF)]
+            vec![(300.0, HEIGHT - HALF - 36.0), (300.0, HEIGHT - HALF)]
         );
     }
 
@@ -957,9 +954,9 @@ mod tests {
     fn regression_squares_against_an_edge_end_apart() {
         // Three squares in a row against the left edge
         let mut squares = vec![
-            square(12.0, 300.0),
-            square(20.0, 300.0),
-            square(30.0, 300.0),
+            square(HALF, 300.0),
+            square(HALF + 8.0, 300.0),
+            square(HALF + 18.0, 300.0),
         ];
         separate(&mut squares);
         for (i, a) in squares.iter().enumerate() {
