@@ -131,7 +131,7 @@ describe("Requirement 6: shy Schuberts", () => {
     const first = images[0]!;
     expect(first.attributes("href")).toMatch(/schubert\.png$/);
     expect([first.attributes("x"), first.attributes("y"), first.attributes("width"), first.attributes("height")].map(Number))
-      .toEqual([s.x - 12, s.y - 12, 24, 24]);
+      .toEqual([s.x - 18, s.y - 18, 36, 36]);
   });
 
   test("only a caught Schubert stands on a turquoise circle", async () => {

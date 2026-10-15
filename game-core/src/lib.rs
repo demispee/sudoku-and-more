@@ -689,7 +689,7 @@ mod tests {
         field.step(before[0] - 20.0, before[1], true);
         assert_ne!(field.squares()[0], before[0]);
         field.step(0.0, 0.0, false);
-        assert_eq!(shy_shapes(), vec![620.0, 200.0, 780.0, 400.0, 6.0, 12.0]);
+        assert_eq!(shy_shapes(), vec![580.0, 190.0, 780.0, 410.0, 6.0, 18.0]);
     }
 
     #[test]

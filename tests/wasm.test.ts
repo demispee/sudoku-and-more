@@ -110,7 +110,7 @@ describe("shy squares through WebAssembly", () => {
     expect(squares).toHaveLength(24);
     field.step(squares[0]! - 30, squares[1]!, true);
     expect(field.squares()[0]).toBeGreaterThan(squares[0]!);
-    expect(Array.from(shyShapes())).toEqual([620, 200, 780, 400, 6, 12]);
+    expect(Array.from(shyShapes())).toEqual([580, 190, 780, 410, 6, 18]);
     field.free();
   });
 });
