@@ -1,6 +1,6 @@
 ---
 domain: flying-schubert
-version: 1.0.0
+version: 1.1.0
 status: accepted
 date: 2026-10-15
 ---
@@ -18,8 +18,10 @@ Bird, with a name of its own.
 The game MUST be played on an 800 × 600 field, scaled to fit the window. Schubert MUST
 stay at the same distance from the left (x = 200) and only move up and down: gravity
 pulls Schubert down a little more every step, and a flap MUST give the same upward
-speed, whatever the speed was. A flap is a click or tap on the field, or the space bar. Schubert
-can't fly above the top of the field; touching the ground ends the game.
+speed, whatever the speed was. A flap is a click or tap on the field, or the space bar. Tapping
+quickly MUST NOT zoom the page: every tap on the field is a flap, also the second of a
+double tap. Zooming in with two fingers next to the field still works. Schubert can't fly above the top of
+the field; touching the ground ends the game.
 
 The game MUST move 60 steps per second, so it is as fast on a 120 Hz screen as on a
 60 Hz one, and it MUST pause while the page is not visible.
@@ -32,6 +34,12 @@ The game MUST move 60 steps per second, so it is as fast on a 120 Hz screen as o
 - GIVEN Schubert falling fast
 - WHEN the player flaps
 - THEN Schubert rises with the same speed as after any other flap
+
+#### Scenario: A quick double tap on a phone
+
+- GIVEN Schubert flying, on a phone
+- WHEN the player taps the field twice, quickly
+- THEN Schubert flaps twice, and the page doesn't zoom
 
 #### Scenario: The ground
 

@@ -83,7 +83,8 @@ defineExpose({ game });
       <button class="btn landscape" @click="chooseLandscape">landscape \ {{ LANDSCAPES[chosen]!.label }}</button>
     </div>
 
-    <div class="field-wrap">
+    <!-- No double-tap zoom on the field: Safari ignores touch-action on SVG -->
+    <div class="field-wrap" @touchstart.prevent>
       <svg class="field" viewBox="0 0 800 600" @pointerdown.prevent="game.flap()">
         <defs>
           <linearGradient v-for="l in LANDSCAPES" :id="`sky-${l.name}`" :key="l.name" x1="0" y1="0" x2="0" y2="1">
@@ -119,10 +120,12 @@ defineExpose({ game });
 </template>
 
 <style scoped>
+/* A quick double tap anywhere on the page flaps instead of zooming; two fingers still zoom */
+.page { touch-action: manipulation; }
 h1 { margin-bottom: 24px; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 20px; }
 /* As large as fits: never wider than 960 px, never taller than the screen below the header */
-.field-wrap { position: relative; max-width: min(960px, calc((100vh - 320px) * 4 / 3)); min-width: 300px; }
+.field-wrap { position: relative; max-width: min(960px, calc((100vh - 320px) * 4 / 3)); min-width: 300px; touch-action: none; }
 .field {
   display: block;
   width: 100%;
