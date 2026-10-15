@@ -1,8 +1,8 @@
 ---
 domain: site
-version: 5.4.0
+version: 5.5.0
 status: accepted
-date: 2026-10-13
+date: 2026-10-15
 ---
 
 # 000 — Site
@@ -16,7 +16,7 @@ how they are tested and published.
 
 Every page MUST have a small entry file in `web/` (`index.html`, `sudoku.html`,
 `spot-the-difference.html`, `balls.html`, `ministry.html`, `shy-squares.html`,
-`mastermind.html`), so the addresses stay the same, and its
+`mastermind.html`, `flying-schubert.html`), so the addresses stay the same, and its
 interface MUST be Vue 3 components in TypeScript in `web/src/`. The components show state
 and send actions; the rules of each game MUST live in the Rust crate `game-core/`,
 compiled to WebAssembly, which does not touch the DOM. The only runtime packages are

@@ -22,6 +22,7 @@ export default defineConfig({
         ministry: page("ministry"),
         shy: page("shy-squares"),
         mastermind: page("mastermind"),
+        flying: page("flying-schubert"),
       },
     },
   },

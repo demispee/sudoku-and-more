@@ -3,7 +3,7 @@
 // compiled module loads and that values cross the bridge correctly.
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  Mastermind, Ministry, SceneOrder, ShyField, World, ballColors, formsPerDay, mastermindLevels, mastermindRows, shyShapes, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
+  FlyingField, Mastermind, Ministry, SceneOrder, ShyField, World, ballColors, formsPerDay, mastermindLevels, mastermindRows, shyShapes, flyingLandscape, flyingShapes, clearNotesAround, findHit, generate, hintPenalty, hitsFound, isPeer,
   missPenalty, pickDifferences, recordKey, solverStep, totalTime,
 } from "../web/src/wasm";
 import { loadWasmForTests } from "./wasm-setup";
@@ -111,6 +111,23 @@ describe("shy squares through WebAssembly", () => {
     field.step(squares[0]! - 30, squares[1]!, true);
     expect(field.squares()[0]).toBeGreaterThan(squares[0]!);
     expect(Array.from(shyShapes())).toEqual([580, 190, 780, 410, 6, 18]);
+    field.free();
+  });
+});
+
+describe("flying Schubert through WebAssembly", () => {
+  test("gives the obstacles as x and gap top, Schubert's flight and the shapes", () => {
+    const field = new FlyingField(4);
+    expect([field.started, field.over, field.score, field.y]).toEqual([false, false, 0, 300]);
+    const obstacles = field.obstacles();
+    expect(obstacles).toBeInstanceOf(Float64Array);
+    expect(Array.from(obstacles.slice(0, 2))).toEqual([800, 215]);
+    field.flap();
+    field.step();
+    expect(field.vy).toBeLessThan(0);
+    expect([field.obstacles()[0], field.distance]).toEqual([797, 3]);
+    expect([flyingLandscape(0, 19), flyingLandscape(0, 20), flyingLandscape(3, 20)]).toEqual([0, 1, 0]);
+    expect(Array.from(flyingShapes())).toEqual([560, 200, 18, 80, 170]);
     field.free();
   });
 });

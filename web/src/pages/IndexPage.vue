@@ -16,6 +16,7 @@ const games: Game[] = [
   { href: "ministry.html", name: "The Ministry of Odd Forms", text: "Stamp absurd forms by a rulebook that gets stranger every day" },
   { href: "shy-squares.html", name: "Shy Schuberts", text: "Sheep that are afraid of your cursor. Herd them into the pen" },
   { href: "mastermind.html", name: "Mastermind", text: "Break the secret code on a real wooden board" },
+  { href: "flying-schubert.html", name: "Flying Schubert", text: "Flap through the gaps, from the meadow to the data centre" },
 ];
 </script>
 

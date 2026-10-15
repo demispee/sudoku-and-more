@@ -13,6 +13,7 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 | [`ministry.html`](web/ministry.html) | The Ministry of Odd Forms: stamp absurd forms by a rulebook that grows every day |
 | [`shy-squares.html`](web/shy-squares.html) | Shy Schuberts: herd sheep that flee from your cursor into a pen |
 | [`mastermind.html`](web/mastermind.html) | Mastermind: break a secret code on a modern 3D board |
+| [`flying-schubert.html`](web/flying-schubert.html) | Flying Schubert: flap through the gaps between obstacles, through four landscapes |
 | [`index.html`](web/index.html) | Start page with links to the games |
 
 ## Running it
@@ -133,6 +134,15 @@ Keyboard: `H` hint, `S` show solution, `N` next scene. All artwork is drawn in c
   bounce in, and the light follows your mouse; drag it and it springs back. Everything on
   it is made in code, without image or model files (ADR-0009).
 
+## Flying Schubert
+
+- Click, tap or press `Space` to flap; gravity does the rest. Fly through the gaps
+  between the obstacles; touching one, or the ground, ends the game.
+- Every obstacle you pass is a point. Every 10 points they come a little faster (up to
+  50), and every 20 points Schubert flies into the next landscape: meadow, snowy
+  mountains, city and data centre. `landscape` chooses where you start.
+- The best score is kept in your browser.
+
 ## Specs
 
 What each page must do, and why it is built the way it is, lives in
@@ -150,7 +160,8 @@ Philis.
   back to Avenir Next, Poppins, Inter, or the system sans serif.
 - **Logos:** the Lab271 and Schuberg Philis logos are trademarks of Schuberg Philis. They
   are **not** covered by the license below and may not be reused outside this project.
-- **Mascot:** Schubert the sheep (`web/src/shy/schubert.png`, used in shy Schuberts) is
+- **Mascot:** Schubert the sheep (`web/src/shy/schubert.png`, used in shy Schuberts and Flying
+  Schubert) is
   the Schuberg Philis mascot and a trademark of Schuberg Philis. Like the logos, it is
   **not** covered by the license below and may not be reused outside this project.
 
