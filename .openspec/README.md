@@ -28,6 +28,7 @@ on purpose. See ADR-0004 and ADR-0005.
 | [005](specs/005-shy-squares/spec.md) | Shy squares | Squares that flee the cursor, a pen, levels |
 | [006](specs/006-reverse-snake/spec.md) | Reverse snake | Withdrawn: the game was removed on 2026-10-13 |
 | [007](specs/007-mastermind/spec.md) | Mastermind | Secret code, answer pegs, a modern 3D board that moves |
+| [008](specs/008-flying-schubert/spec.md) | Flying Schubert | Flap through gaps between obstacles, slowly harder, a journey through four landscapes, best score |
 
 ## ADRs
 

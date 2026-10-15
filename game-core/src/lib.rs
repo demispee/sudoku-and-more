@@ -5,6 +5,7 @@
 //! and arrays, and are what the pages import from `game-core/pkg/game_core.js`.
 
 pub mod balls;
+pub mod flying;
 pub mod mastermind;
 pub mod ministry;
 pub mod random;
@@ -492,6 +493,86 @@ pub fn shy_shapes() -> Vec<f64> {
     ]
 }
 
+// ---------- Flying Schubert ----------
+
+#[wasm_bindgen(js_name = FlyingField)]
+pub struct JsFlyingField(flying::Field);
+
+#[wasm_bindgen(js_class = FlyingField)]
+impl JsFlyingField {
+    #[wasm_bindgen(constructor)]
+    pub fn new(seed: u32) -> JsFlyingField {
+        JsFlyingField(flying::Field::new(seed))
+    }
+
+    pub fn flap(&mut self) {
+        self.0.flap();
+    }
+
+    /// One step of 1/60 s
+    pub fn step(&mut self) {
+        self.0.step();
+    }
+
+    /// x and the top of the gap for every obstacle
+    pub fn obstacles(&self) -> Vec<f64> {
+        self.0
+            .obstacles
+            .iter()
+            .flat_map(|o| [o.x, o.gap_top])
+            .collect()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn y(&self) -> f64 {
+        self.0.y
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn vy(&self) -> f64 {
+        self.0.vy
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn score(&self) -> u32 {
+        self.0.score
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn distance(&self) -> f64 {
+        self.0.distance
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn started(&self) -> bool {
+        self.0.started
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn over(&self) -> bool {
+        self.0.over
+    }
+}
+
+/// The landscape to fly in, from the one the game started in and the score
+#[wasm_bindgen(js_name = flyingLandscape)]
+pub fn flying_landscape(start: u32, score: u32) -> u32 {
+    flying::landscape(start, score)
+}
+
+/// The ground, Schubert's distance from the left, the radius of the hit area, the width
+/// of an obstacle and the height of a gap
+#[wasm_bindgen(js_name = flyingShapes)]
+pub fn flying_shapes() -> Vec<f64> {
+    vec![
+        flying::GROUND,
+        flying::X,
+        flying::RADIUS,
+        flying::OBSTACLE_WIDTH,
+        flying::GAP,
+    ]
+}
+
 // ---------- Mastermind ----------
 
 #[wasm_bindgen(js_name = Mastermind)]
@@ -678,6 +759,22 @@ mod tests {
         assert!(!game.expire());
         game.next_day();
         assert_eq!(game.day(), 1);
+    }
+
+    #[test]
+    fn flying_bridge() {
+        let mut field = JsFlyingField::new(3);
+        assert!(!field.started() && !field.over());
+        assert_eq!((field.score(), field.y(), field.vy()), (0, 300.0, 0.0));
+        let before = field.obstacles();
+        assert_eq!(before[0..2], [800.0, 215.0]);
+        field.flap();
+        field.step();
+        assert!(field.started() && field.vy() < 0.0);
+        assert_eq!(field.obstacles()[0], 797.0);
+        assert_eq!(field.distance(), 3.0);
+        assert_eq!((flying_landscape(1, 20), flying_landscape(3, 20)), (2, 0));
+        assert_eq!(flying_shapes(), vec![560.0, 200.0, 18.0, 80.0, 170.0]);
     }
 
     #[test]
