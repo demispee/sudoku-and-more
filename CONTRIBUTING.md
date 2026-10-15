@@ -45,11 +45,11 @@ and tests.
   `brew install cargo-mutants`, about 15 minutes) and add tests for the gaps it finds.
   After changing the sudoku generator or solver, run `npm run bench`. See ADR-0008.
 
-## Fonts and logos
+## Fonts, logos and mascot
 
 Do not commit font files. TT Interphases is licensed and lives only in the ignored
-`web/public/fonts/` folder. Do not add or change brand logos; they are not covered by the
-license.
+`web/public/fonts/` folder. Do not add or change brand logos or the Schubert mascot
+(`web/src/shy/schubert.png`); they are not covered by the license.
 
 ## Commits
 

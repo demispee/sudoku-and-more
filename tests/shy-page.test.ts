@@ -54,17 +54,11 @@ describe("Requirement 1: the field", () => {
 });
 
 describe("Requirement 2: shy squares", () => {
-  test("a square runs from the pointer, and its eyes look away", async () => {
+  test("a square runs from the pointer", async () => {
     const s = game.squares.value[0]!;
     point("pointermove", s.x - 50, s.y);
     await nextFrame();
     expect(game.squares.value[0]!.x).toBeGreaterThan(s.x);
-    const [left] = page.findAll(".square")[0]!.findAll(".eye");
-    expect(Number(left!.attributes("cx"))).toBeGreaterThan(game.squares.value[0]!.x - 4);
-    point("pointerdown", 10, 10);
-    point("pointerleave", 0, 0);
-    await nextFrame();
-    expect(Number(page.findAll(".square")[0]!.findAll(".eye")[0]!.attributes("cx"))).toBeCloseTo(game.squares.value[0]!.x - 4, 5);
   });
 });
 
@@ -82,7 +76,7 @@ describe("Requirement 3 and 4: caught, levels and keys", () => {
     expect(page.find(".time").text()).toBe("0:00");
   });
 
-  test("caught squares turn turquoise, and a finished level shows its time", async () => {
+  test("caught squares get a turquoise mark, and a finished level shows its time", async () => {
     for (let k = 0; k < 40_000 && !game.result.value; k++) {
       const s = game.squares.value.find(q => !q.caught)!;
       const inFront = s.x > 520 && Math.abs(s.y - 300) < 50;
@@ -93,6 +87,7 @@ describe("Requirement 3 and 4: caught, levels and keys", () => {
     }
     await page.vm.$nextTick();
     expect(page.findAll(".square.caught")).toHaveLength(6);
+    expect(page.findAll(".square.caught .mark")).toHaveLength(6);
     expect(page.find(".overlay strong").text()).toMatch(/^New best: level 1 in \d:\d\d$/);
     expect(page.find(".overlay .meta").text()).toBe("level 2 starts in 3 seconds");
   });
@@ -124,5 +119,32 @@ describe("Requirement 2: the cursor", () => {
     const set = vi.spyOn(game, "setCursor");
     point("pointermove", 202, 152);
     expect(set).toHaveBeenLastCalledWith({ x: 400, y: 300 });
+  });
+});
+
+describe("Requirement 6: shy Schuberts", () => {
+  test("every square is drawn as Schubert, filling the square", () => {
+    const images = page.findAll(".square image");
+    expect(images).toHaveLength(6);
+    expect(page.findAll(".square rect")).toHaveLength(0);
+    const s = game.squares.value[0]!;
+    const first = images[0]!;
+    expect(first.attributes("href")).toMatch(/schubert\.png$/);
+    expect([first.attributes("x"), first.attributes("y"), first.attributes("width"), first.attributes("height")].map(Number))
+      .toEqual([s.x - 12, s.y - 12, 24, 24]);
+  });
+
+  test("only a caught Schubert stands on a turquoise circle", async () => {
+    expect(page.findAll(".mark")).toHaveLength(0);
+    const s = game.squares.value[0]!;
+    game.squares.value = game.squares.value.map((q, i) => (i === 0 ? { ...q, caught: true } : q));
+    await page.vm.$nextTick();
+    const marks = page.findAll(".mark");
+    expect(marks).toHaveLength(1);
+    expect([marks[0]!.attributes("cx"), marks[0]!.attributes("cy")].map(Number)).toEqual([s.x, s.y]);
+  });
+
+  test("the page is called shy Schuberts", () => {
+    expect(page.find("h1").text()).toBe("Herd the shy Schuberts");
   });
 });
