@@ -65,6 +65,23 @@ describe("Requirement 1 and 5: the flight, start and game over", () => {
     expect(page.find(".overlay").exists()).toBe(false);
   });
 
+  test("regression: a quick double tap on a phone flaps twice and doesn't zoom", async () => {
+    // Safari ignores touch-action on SVG; the field's box cancels the touch itself, so
+    // there is no double-tap zoom, and the pointer events still flap
+    const wrap = page.find(".field-wrap").element;
+    const touch = new Event("touchstart", { bubbles: true, cancelable: true });
+    page.find("svg.field").element.dispatchEvent(touch);
+    expect(touch.defaultPrevented).toBe(true);
+    const flap = vi.spyOn(game, "flap");
+    await page.find("svg.field").trigger("pointerdown");
+    await page.find("svg.field").trigger("pointerdown");
+    expect(flap).toHaveBeenCalledTimes(2);
+    // Next to the field, the page only turns off double-tap zoom
+    const outside = new Event("touchstart", { bubbles: true, cancelable: true });
+    wrap.parentElement!.dispatchEvent(outside);
+    expect(outside.defaultPrevented).toBe(false);
+  });
+
   test("the space bar flaps; held down or with a modifier it doesn't", () => {
     expect(key({ key: " ", metaKey: true }).defaultPrevented).toBe(false);
     expect(key({ key: "Enter" }).defaultPrevented).toBe(false);
