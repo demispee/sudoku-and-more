@@ -11,7 +11,7 @@ WebAssembly; the pages are Vue 3 components in TypeScript.
 | [`spot-the-difference.html`](web/spot-the-difference.html) | Spot the difference with scenes drawn in code |
 | [`balls.html`](web/balls.html) | Bouncing balls: click to add balls, toggle gravity |
 | [`ministry.html`](web/ministry.html) | The Ministry of Odd Forms: stamp absurd forms by a rulebook that grows every day |
-| [`shy-squares.html`](web/shy-squares.html) | Shy squares: herd squares that flee from your cursor into a pen |
+| [`shy-squares.html`](web/shy-squares.html) | Shy Schuberts: herd sheep that flee from your cursor into a pen |
 | [`mastermind.html`](web/mastermind.html) | Mastermind: break a secret code on a modern 3D board |
 | [`index.html`](web/index.html) | Start page with links to the games |
 
@@ -113,11 +113,11 @@ Keyboard: `H` hint, `S` show solution, `N` next scene. All artwork is drawn in c
 - A wrong stamp spills tea and tells you which rule you missed; so does running out of
   time. Three times and you're fired.
 
-## Shy squares
+## Shy Schuberts
 
-- Squares within 120 pixels of your mouse or finger run away from it; the closer you get,
+- Schuberts (sheep) within 120 pixels of your mouse or finger run away from it; the closer you get,
   the harder they run. Use that to drive them into the pen on the right.
-- Every level has 2 more squares (up to 20), and they get a little faster (up to level
+- Every level has 2 more Schuberts (up to 20), and they get a little faster (up to level
   11). `R` restarts the level; the best time per level is kept in your browser.
 
 ## Mastermind
@@ -140,7 +140,7 @@ What each page must do, and why it is built the way it is, lives in
 Change the spec first, then the code. Every change goes through a pull request, and `main`
 only accepts pull requests whose tests pass.
 
-## Fonts and logos
+## Fonts, logos and mascot
 
 All pages use the [Lab271](https://github.com/Lab271) design system of Schuberg
 Philis.
@@ -150,6 +150,9 @@ Philis.
   back to Avenir Next, Poppins, Inter, or the system sans serif.
 - **Logos:** the Lab271 and Schuberg Philis logos are trademarks of Schuberg Philis. They
   are **not** covered by the license below and may not be reused outside this project.
+- **Mascot:** Schubert the sheep (`web/src/shy/schubert.png`, used in shy Schuberts) is
+  the Schuberg Philis mascot and a trademark of Schuberg Philis. Like the logos, it is
+  **not** covered by the license below and may not be reused outside this project.
 
 ## License
 

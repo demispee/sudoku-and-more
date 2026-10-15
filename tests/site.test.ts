@@ -46,8 +46,12 @@ describe("Requirement 2: start page", () => {
   test("links to every game, with its name and a description", () => {
     const links = mount(IndexPage).findAll("a.game");
     expect(links.map(a => a.attributes("href"))).toEqual(GAMES);
-    expect(links.map(a => a.find("strong").text())).toEqual(["Sudoku", "Spot the difference", "Bouncing balls", "The Ministry of Odd Forms", "Shy squares", "Mastermind"]);
+    expect(links.map(a => a.find("strong").text())).toEqual(["Sudoku", "Spot the difference", "Bouncing balls", "The Ministry of Odd Forms", "Shy Schuberts", "Mastermind"]);
     links.forEach(a => expect(a.find("span").text().length).toBeGreaterThan(10));
+  });
+
+  test("the shy Schuberts page keeps its address and has its new title", () => {
+    expect(read("web/shy-squares.html")).toContain("<title>Shy Schuberts \\ LAB271</title>");
   });
 
   test("shows the footer", () => {

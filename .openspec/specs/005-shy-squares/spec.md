@@ -1,13 +1,16 @@
 ---
 domain: shy-squares
-version: 1.1.0
+version: 1.2.0
 status: accepted
-date: 2026-10-13
+date: 2026-10-15
 ---
 
 # 005 — Shy squares
 
 Squares that are afraid of your cursor. You are the sheepdog: herd them into the pen.
+On screen every square is Schubert, the Schuberg Philis sheep (Requirement 6), so the
+page is called "Shy Schuberts"; the rules below still speak of squares, because that is
+how they move and collide.
 
 ---
 
@@ -62,7 +65,7 @@ nothing scares the squares.
 ### Requirement 3: Caught [MUST]
 
 A square that is entirely inside the pen MUST be caught: it walks to its own place at the
-back of the pen, so the opening stays free, turns turquoise, and no longer flees. The page MUST show how many squares are caught out of how many.
+back of the pen, so the opening stays free, gets a turquoise mark, and no longer flees. The page MUST show how many squares are caught out of how many.
 
 **Implementation:** `game-core/src/shy.rs`; `web/src/pages/ShyPage.vue` (counter, colour)
 
@@ -103,3 +106,26 @@ shown on the page. A saved value that can't be read MUST be ignored, not break t
 **Implementation:** `web/src/shy/useShy.ts`
 
 **Tests:** `tests/use-shy.test.ts`
+
+---
+
+### Requirement 6: Shy Schuberts [MUST]
+
+Every square MUST be drawn as Schubert, the Schuberg Philis mascot, always wearing the
+Christmas hat, filling the square (24 × 24 field units). A caught Schubert MUST stand on a
+turquoise circle. The page title, the heading and the link on the index page MUST say
+"Shy Schuberts"; the address stays `shy-squares.html`.
+
+Schubert is a trademark of Schuberg Philis, like the logos: the image MUST be used as
+supplied, not changed, and is not covered by the license (see README).
+
+**Implementation:** `web/src/shy/schubert.png`; `web/src/pages/ShyPage.vue`;
+`web/src/pages/IndexPage.vue`; `web/shy-squares.html`
+
+#### Scenario: A caught Schubert
+
+- GIVEN a Schubert just outside the opening of the pen
+- WHEN it is chased entirely inside
+- THEN it stands on a turquoise circle at its place at the back of the pen
+
+**Tests:** `tests/shy-page.test.ts`, `tests/site.test.ts`

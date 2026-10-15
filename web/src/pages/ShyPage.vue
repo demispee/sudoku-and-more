@@ -1,11 +1,13 @@
-<!-- Shy squares (.openspec/specs/005-shy-squares). How the squares move is in Rust; the state
-     and actions are in useShy. -->
+<!-- Shy Schuberts (.openspec/specs/005-shy-squares). How the squares move is in Rust; the state
+     and actions are in useShy. Schubert is a Schuberg Philis trademark and not covered by the
+     license (see README). -->
 <script setup lang="ts">
 import { onMounted, onUnmounted } from "vue";
 import BackLink from "../components/BackLink.vue";
 import SiteFooter from "../components/SiteFooter.vue";
 import SlashMark from "../components/SlashMark.vue";
-import { useShy, type ShySquare } from "../shy/useShy";
+import schubert from "../shy/schubert.png";
+import { useShy } from "../shy/useShy";
 import { shyShapes } from "../wasm";
 
 const game = useShy();
@@ -34,18 +36,6 @@ function onLeave() {
   game.setCursor(null);
 }
 
-/** The eyes look away from the cursor: shy */
-function eyes(s: ShySquare) {
-  let dx = 0;
-  let dy = 0;
-  if (pointer && !s.caught) {
-    const d = Math.hypot(s.x - pointer.x, s.y - pointer.y) || 1;
-    dx = ((s.x - pointer.x) / d) * 2.5;
-    dy = ((s.y - pointer.y) / d) * 2.5;
-  }
-  return [{ cx: s.x - 4 + dx, cy: s.y - 2 + dy }, { cx: s.x + 4 + dx, cy: s.y - 2 + dy }];
-}
-
 function onKey(event: KeyboardEvent) {
   if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
   if (event.key.toLowerCase() === "r") game.restart();
@@ -68,8 +58,8 @@ defineExpose({ game });
   <SlashMark />
   <main class="page">
     <BackLink />
-    <div class="eyebrow">LAB271 \ shy squares</div>
-    <h1>Herd the shy squares</h1>
+    <div class="eyebrow">LAB271 \ shy Schuberts</div>
+    <h1>Herd the shy Schuberts</h1>
 
     <div class="bar">
       <span class="label">level \&nbsp;<span class="level">{{ level }}</span></span>
@@ -86,8 +76,8 @@ defineExpose({ game });
         <rect class="wall" :x="penRight" :y="penTop" :width="wall" :height="penBottom! - penTop!" />
         <text class="pen-label" :x="(penLeft! + penRight!) / 2" :y="(penTop! + penBottom!) / 2">pen</text>
         <g v-for="(s, i) in squares" :key="i" class="square" :class="{ caught: s.caught }">
-          <rect :x="s.x - half!" :y="s.y - half!" :width="half! * 2" :height="half! * 2" rx="4" />
-          <circle v-for="(e, k) in eyes(s)" :key="k" class="eye" :cx="e.cx" :cy="e.cy" r="2" />
+          <circle v-if="s.caught" class="mark" :cx="s.x" :cy="s.y" :r="half! + 2" />
+          <image :href="schubert" :x="s.x - half!" :y="s.y - half!" :width="half! * 2" :height="half! * 2" />
         </g>
       </svg>
       <div v-if="result" class="overlay">
@@ -120,9 +110,7 @@ h1 { margin-bottom: 24px; }
 .pen-floor { fill: rgba(30, 232, 237, 0.08); }
 .wall { fill: var(--c-tq); }
 .pen-label { fill: var(--c-muted); font-size: 16px; text-anchor: middle; letter-spacing: 0.2em; }
-.square rect { fill: var(--c-orange); }
-.square.caught rect { fill: var(--c-tq); }
-.eye { fill: #02121f; }
+.mark { fill: var(--c-tq); }
 .overlay {
   position: absolute;
   inset: 0;
