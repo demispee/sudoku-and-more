@@ -1,8 +1,8 @@
 ---
 domain: shy-squares
-version: 1.3.0
+version: 1.4.0
 status: accepted
-date: 2026-10-15
+date: 2026-10-16
 ---
 
 # 005 — Shy squares
@@ -118,8 +118,8 @@ Christmas hat, filling the square (36 × 36 field units). A caught Schubert MUST
 turquoise circle. The page title, the heading and the link on the index page MUST say
 "Shy Schuberts"; the address stays `shy-squares.html`.
 
-Schubert is a trademark of Schuberg Philis, like the logos: the image MUST be used as
-supplied, not changed, and is not covered by the license (see README).
+Schubert is a trademark of Schuberg Philis, like the logos, and is not covered by the
+license; Schuberg Philis agreed that the games may adapt it (see README).
 
 **Implementation:** `web/src/shy/schubert.png`; `web/src/pages/ShyPage.vue`;
 `web/src/pages/IndexPage.vue`; `web/shy-squares.html`

@@ -27,10 +27,19 @@ describe("Requirement 7: landscapes", () => {
   });
 
   test.each(LANDSCAPES)("$label loads nothing from the internet and is valid SVG", l => {
-    const all = l.far + l.ground + l.obstacle(0, 0, 80, 200, "bottom");
+    const all = l.far + l.ground + l.hat + l.obstacle(0, 0, 80, 200, "bottom");
     expect(all).not.toMatch(/https?:|href=/);
     expect(shapes(l.far).length).toBeGreaterThan(5);
     expect(shapes(l.ground).length).toBeGreaterThan(0);
+  });
+
+  test("every landscape has its own hat for Schubert, around his head", () => {
+    expect(new Set(LANDSCAPES.map(l => l.hat)).size).toBe(4);
+    for (const l of LANDSCAPES) {
+      for (const s of shapes(l.hat)) {
+        expect([s.left >= 8, s.right <= 40, s.top >= -4, s.bottom <= 32]).toEqual([true, true, true, true]);
+      }
+    }
   });
 
   test.each(LANDSCAPES)("$label draws the ground from 560 down, and the background above it", l => {

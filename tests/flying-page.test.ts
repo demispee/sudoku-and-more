@@ -3,6 +3,7 @@
 import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import FlyingPage from "../web/src/pages/FlyingPage.vue";
+import { LANDSCAPES } from "../web/src/flying/landscapes";
 import { RESTART_DELAY, STEP, type FlyingGame } from "../web/src/flying/useFlying";
 import { seedRandom } from "./helpers";
 import { loadWasmForTests } from "./wasm-setup";
@@ -35,6 +36,12 @@ afterEach(() => {
 });
 
 const frame = () => frames.shift()!((now += STEP));
+/** SVG markup the way the browser writes it back */
+const asDrawn = (markup: string) => {
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.innerHTML = markup;
+  return g.innerHTML;
+};
 const render = () => page.vm.$nextTick();
 const key = (init: KeyboardEventInit) => {
   const event = new KeyboardEvent("keydown", { cancelable: true, ...init });
@@ -122,22 +129,30 @@ describe("Requirement 2: obstacles", () => {
 });
 
 describe("Requirement 6: Schubert", () => {
-  test("is the Schubert picture, 48 × 48, where the game says", () => {
-    const image = page.find("image.schubert");
-    expect(image.attributes("href")).toMatch(/schubert\.png$/);
-    expect([image.attributes("x"), image.attributes("y"), image.attributes("width"), image.attributes("height")].map(Number))
-      .toEqual([176, game.y.value - 24, 48, 48]);
-    expect(image.attributes("transform")).toBe(`rotate(0 200 ${game.y.value})`);
+  test("is drawn 48 × 48 around where the game says, with the meadow's straw hat", () => {
+    const schubert = page.find("g.schubert");
+    expect(schubert.attributes("transform")).toBe(`rotate(0 200 ${game.y.value}) translate(176 ${game.y.value - 24})`);
+    expect(schubert.find("g").html()).toContain("<ellipse"); // the drawing, not a picture
+    expect(schubert.find("image").exists()).toBe(false);
+    expect(schubert.find(".hat").element.innerHTML).toBe(asDrawn(LANDSCAPES[0]!.hat));
   });
 
-  test("tilts up when rising and down when falling, up to 25°", async () => {
-    const tilt = () => Number(page.find("image.schubert").attributes("transform")!.match(/rotate\((-?[\d.]+)/)![1]);
+  test("tilts up when rising and down when falling, up to 25°, hat and all", async () => {
+    const tilt = () => Number(page.find("g.schubert").attributes("transform")!.match(/rotate\((-?[\d.]+)/)![1]);
     game.flap();
     await render();
     expect(tilt()).toBe(-22.5);
     for (let k = 0; k < 40; k++) frame();
     await render();
     expect(tilt()).toBe(25);
+    expect(page.find("g.schubert .hat").exists()).toBe(true);
+  });
+
+  test("the hat changes together with the landscape", async () => {
+    for (const l of [LANDSCAPES[1]!, LANDSCAPES[2]!, LANDSCAPES[3]!, LANDSCAPES[0]!]) {
+      await page.find("button.landscape").trigger("click");
+      expect(page.find("g.schubert .hat").element.innerHTML).toBe(asDrawn(l.hat));
+    }
   });
 });
 

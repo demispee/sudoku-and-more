@@ -1,8 +1,8 @@
 ---
 domain: flying-schubert
-version: 1.1.0
+version: 1.2.0
 status: accepted
-date: 2026-10-15
+date: 2026-10-16
 ---
 
 # 008 — Flying Schubert
@@ -122,14 +122,29 @@ that was meant for the last obstacle doesn't start a new game by accident.
 
 ### Requirement 6: Schubert [MUST]
 
-Schubert MUST be the same picture as in shy Schuberts (`web/src/shy/schubert.png`), wearing
-the Christmas hat, 48 × 48 field units, used as supplied: a Schuberg Philis trademark,
-not covered by the license (see README). Schubert MUST tilt, up to 25°, up when rising
-and down when falling; the picture itself is not changed.
+Schubert MUST be the Schuberg Philis sheep, 48 × 48 field units, wearing the hat of the
+landscape Schubert flies in (Requirement 7):
 
-**Implementation:** `web/src/pages/FlyingPage.vue`
+- **Meadow:** a straw hat.
+- **Snowy mountains:** the Christmas hat.
+- **City:** a bowler hat.
+- **Data centre:** a headset with a microphone.
 
-**Tests:** `tests/flying-page.test.ts`
+The hat MUST change together with the landscape. Schubert MUST tilt, up to 25°, up when
+rising and down when falling, hat and all. Schubert is a Schuberg Philis trademark, not
+covered by the license; Schuberg Philis agreed that the games may adapt the mascot (see README).
+
+**Implementation:** `web/src/flying/schubert.ts` (Schubert without a hat, drawn after
+`web/src/shy/schubert.png`);
+`web/src/flying/landscapes/` (the hats); `web/src/pages/FlyingPage.vue`
+
+#### Scenario: A new hat in the mountains
+
+- GIVEN Schubert in the meadow, wearing the straw hat, with 19 points
+- WHEN Schubert flies past the next obstacle
+- THEN the snowy mountains fade in, and Schubert wears the Christmas hat
+
+**Tests:** `tests/flying-page.test.ts`, `tests/flying-landscapes.test.ts`
 
 ---
 

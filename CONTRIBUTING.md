@@ -48,8 +48,9 @@ and tests.
 ## Fonts, logos and mascot
 
 Do not commit font files. TT Interphases is licensed and lives only in the ignored
-`web/public/fonts/` folder. Do not add or change brand logos or the Schubert mascot
-(`web/src/shy/schubert.png`); they are not covered by the license.
+`web/public/fonts/` folder. Do not add or change brand logos. The Schubert mascot
+(`web/src/shy/schubert.png`, and `web/src/flying/schubert.ts` drawn after it) may be adapted for the games here, for example with another
+hat; Schuberg Philis agreed to that. Logos and mascot are not covered by the license.
 
 ## Commits
 

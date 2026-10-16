@@ -22,6 +22,13 @@ export const datacentre: Landscape = {
   sky: ["#030812", "#0b1d2e"],
   far,
   ground: rect(0, 560, 800, 40, "#0d1b2a") + rect(0, 560, 800, 3, "#1ee8ed"),
+  // A headset with a microphone
+  hat:
+    '<path d="M14.6 16.5 C14 6 32 6 30.6 17" stroke="#263241" stroke-width="1.7" fill="none" stroke-linecap="round"/>' +
+    rect(12.6, 14.6, 3.6, 5.6, "#16202b", 'rx="1.4"') + rect(13.1, 15.8, 0.9, 3.2, "#1ee8ed") +
+    rect(29, 15.6, 3.6, 5.6, "#16202b", 'rx="1.4"') + rect(31.2, 16.8, 0.9, 3.2, "#1ee8ed") +
+    '<path d="M14.6 20 C14.5 25 16.5 28.5 19.4 29.2" stroke="#263241" stroke-width="1" fill="none"/>' +
+    '<circle cx="19.8" cy="29.3" r="1.1" fill="#1ee8ed"/>',
   obstacle(x, y, w, h, gapAt) {
     // A rack: units of 20 high with a light each; a lit band where the gap is
     let out = rect(x, y, w, h, "#16293a") + rect(x + 4, y, w - 8, h, "#0f2132");

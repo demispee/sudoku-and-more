@@ -1,14 +1,14 @@
 <!-- Flying Schubert (.openspec/specs/008-flying-schubert). How Schubert and the obstacles
      move is in Rust; the state and actions are in useFlying. Schubert is a Schuberg Philis
-     trademark and not covered by the license (see README). -->
+     trademark, adapted with their permission and not covered by the license (see README). -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import BackLink from "../components/BackLink.vue";
 import SiteFooter from "../components/SiteFooter.vue";
 import SlashMark from "../components/SlashMark.vue";
 import { LANDSCAPES, type Landscape } from "../flying/landscapes";
+import { HEAD_TOP, SCHUBERT } from "../flying/schubert";
 import { useFlying, type Obstacle } from "../flying/useFlying";
-import schubert from "../shy/schubert.png";
 import { flyingShapes } from "../wasm";
 
 const FADE = 1000; // ms for a new landscape to fade in
@@ -101,7 +101,10 @@ defineExpose({ game });
           <g v-for="o in obstacles" :key="key(o)" class="obstacle" :transform="`translate(${o.x} 0)`" v-html="drawObstacle(LANDSCAPES[layer.index]!, o)" />
           <g v-html="LANDSCAPES[layer.index]!.ground" />
         </g>
-        <image class="schubert" :href="schubert" :x="x! - 24" :y="y - 24" width="48" height="48" :transform="`rotate(${tilt} ${x} ${y})`" />
+        <g class="schubert" :transform="`rotate(${tilt} ${x} ${y}) translate(${x! - 24} ${y - 24})`">
+          <g v-html="SCHUBERT" />
+          <g class="hat" :transform="`rotate(${HEAD_TOP.tilt} ${HEAD_TOP.x} ${HEAD_TOP.y})`" v-html="LANDSCAPES[landscape]!.hat" />
+        </g>
       </svg>
       <div v-if="!started" class="overlay start">
         <strong>click or press space to fly</strong>
