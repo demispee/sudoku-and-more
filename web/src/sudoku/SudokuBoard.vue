@@ -28,19 +28,19 @@ function classes(i: number) {
     selected: i === selected,
     pattern: g.pattern.value.has(i),
     target: g.targets.value.has(i),
-    flash: g.flash.value.cell === i,
   };
 }
 
 const has = (mask: number, n: number) => (mask & (1 << n)) !== 0;
 
-// A new key restarts the flash animation when a step fills in the same cell again
-const cellKey = (i: number) => (game.value.flash.value.cell === i ? `${i}-${game.value.flash.value.count}` : `${i}`);
 </script>
 
 <template>
   <div class="board">
-    <div v-for="i in CELLS" :key="cellKey(i)" class="cell" :class="classes(i)" @click="emit('select', i)">
+    <div v-for="i in CELLS" :key="i" class="cell" :class="classes(i)" @click="emit('select', i)">
+      <!-- A new key restarts the flash when a step fills in the same cell again. Only this
+           layer changes its key: a cell that did kept the previous puzzle's numbers -->
+      <span v-if="game.flash.value.cell === i" :key="game.flash.value.count" class="flash"></span>
       <template v-if="game.values.value[i]">{{ game.values.value[i] }}</template>
       <div v-else-if="game.notes.value[i] || game.removed.value[i]" class="notes">
         <span v-for="n in DIGITS" :key="n"
@@ -86,6 +86,8 @@ const cellKey = (i: number) => (game.value.flash.value.cell === i ? `${i}-${game
   color: var(--c-tq);
   cursor: pointer;
   transition: background-color var(--motion);
+  position: relative;
+  isolation: isolate;
 }
 .cell.br { border-right: 2px solid var(--c-muted); }
 .cell.bb { border-bottom: 2px solid var(--c-muted); }
@@ -97,9 +99,18 @@ const cellKey = (i: number) => (game.value.flash.value.cell === i ? `${i}-${game
 .cell.pattern { background: var(--c-panel); }
 .cell.selected { background: var(--c-panel); box-shadow: inset 0 0 0 2px var(--c-tq); }
 .cell.target { box-shadow: inset 0 0 0 2px var(--c-tq); }
-.cell.flash { animation: flash 0.8s cubic-bezier(.2, 0, .2, 1); }
+/* Over the cell's background, under its number */
+.flash {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--c-panel);
+  opacity: 0;
+  animation: flash 0.8s cubic-bezier(.2, 0, .2, 1);
+  pointer-events: none;
+}
 @keyframes flash {
-  from { background: var(--c-panel); }
+  from { opacity: 1; }
 }
 .notes {
   display: grid;
