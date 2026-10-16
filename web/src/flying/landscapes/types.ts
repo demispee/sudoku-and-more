@@ -12,6 +12,8 @@ export interface Landscape {
   far: string;
   /** The ground, from y = 560 to 600 */
   ground: string;
+  /** Schubert's hat, upright in his 48 × 48 box; the top of the head is at HEAD_TOP */
+  hat: string;
   /**
    * One part of an obstacle, filling the box from (x, y), `width` by `height`. `gapAt`
    * says which side of the box borders the gap: the top part has it at the bottom.

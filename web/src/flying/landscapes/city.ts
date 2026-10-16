@@ -30,6 +30,14 @@ export const city: Landscape = {
   sky: ["#2b1e4f", "#f08a5d"],
   far,
   ground: rect(0, 560, 800, 40, "#1f3557") + rect(0, 566, 800, 3, "#4f77a8") + rect(0, 584, 800, 2, "#35557f"),
+  // A bowler hat
+  hat:
+    `<g transform="translate(0 -2.2)">` +
+    '<ellipse cx="23" cy="11.3" rx="8.2" ry="1.7" fill="#161616"/>' +
+    '<path d="M17.4 11 C17.4 3.8 28.6 3.8 28.6 11 Z" fill="#262626"/>' +
+    rect(17.5, 9.2, 11, 1.5, "#4a4a4a") +
+    '<path d="M20 6.5 C21.5 5.3 23.5 5 25 5.3" stroke="#555555" stroke-width="0.6" fill="none"/>' +
+    "</g>",
   obstacle(x, y, w, h, gapAt) {
     // Houses of 60 high on top of each other, the gable facing the gap
     let out = "";

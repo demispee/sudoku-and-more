@@ -140,7 +140,8 @@ Keyboard: `H` hint, `S` show solution, `N` next scene. All artwork is drawn in c
   between the obstacles; touching one, or the ground, ends the game.
 - Every obstacle you pass is a point. Every 10 points they come a little faster (up to
   50), and every 20 points Schubert flies into the next landscape: meadow, snowy
-  mountains, city and data centre. `landscape` chooses where you start.
+  mountains, city and data centre, and Schubert puts on the hat that goes with it: a straw
+  hat, the Christmas hat, a bowler hat and a headset. `landscape` chooses where you start.
 - The best score is kept in your browser.
 
 ## Specs
@@ -160,10 +161,11 @@ Philis.
   back to Avenir Next, Poppins, Inter, or the system sans serif.
 - **Logos:** the Lab271 and Schuberg Philis logos are trademarks of Schuberg Philis. They
   are **not** covered by the license below and may not be reused outside this project.
-- **Mascot:** Schubert the sheep (`web/src/shy/schubert.png`, used in shy Schuberts and Flying
-  Schubert) is
-  the Schuberg Philis mascot and a trademark of Schuberg Philis. Like the logos, it is
-  **not** covered by the license below and may not be reused outside this project.
+- **Mascot:** Schubert the sheep (`web/src/shy/schubert.png` in shy Schuberts, drawn after it
+  in `web/src/flying/schubert.ts` for Flying Schubert) is the Schuberg Philis mascot and a trademark of Schuberg Philis. It is
+  used with their permission, and they agreed (October 2026) that the games may adapt it,
+  for example with other hats. Like the logos, it is **not** covered by the license below
+  and may not be reused outside this project.
 
 ## License
 

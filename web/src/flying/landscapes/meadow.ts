@@ -26,6 +26,14 @@ export const meadow: Landscape = {
     tree(330) + tree(610) +
     hill(260, 470, 520, "#5fae4c") + hill(680, 480, 460, "#5fae4c"),
   ground: rect(0, 560, 800, 40, "#4f8f37") + rect(0, 560, 800, 6, "#6dbb4f"),
+  // A straw hat with a red band
+  hat:
+    `<g transform="translate(0 -2.2)">` +
+    '<ellipse cx="23" cy="11.2" rx="10.5" ry="2.4" fill="#e2b85a"/>' +
+    '<path d="M17.6 11 C17.6 4.8 28.4 4.8 28.4 11 Z" fill="#edca72"/>' +
+    rect(17.7, 8.6, 10.6, 1.6, "#b8452f") +
+    '<ellipse cx="23" cy="11.4" rx="9" ry="1.4" fill="none" stroke="#f3d98f" stroke-width="0.5"/>' +
+    "</g>",
   obstacle(x, y, w, h, gapAt) {
     const cap = gapAt === "bottom" ? y + h - 22 : y;
     // A wooden post, with a wider top board where the gap is

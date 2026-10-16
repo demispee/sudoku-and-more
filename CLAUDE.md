@@ -92,6 +92,7 @@ Keep the spec's `**Implementation:**` and `**Tests:**` lines up to date when cod
 - Styling lives in `web/src/styles/lab271.css` and the shared components; page-specific
   styles go in the component's `<style scoped>`.
 - Never commit font files; `web/public/fonts/` is licensed and ignored. CI refuses to
-  publish a site that contains fonts. Don't change the logos or the Schubert mascot
-  (`web/src/shy/schubert.png`); they are Schuberg Philis trademarks.
+  publish a site that contains fonts. Don't change the logos. The Schubert mascot
+  (`web/src/shy/schubert.png`, drawn after it in `web/src/flying/schubert.ts`) may be adapted for the games (other hats, poses); Schuberg
+  Philis agreed. Logos and mascot are Schuberg Philis trademarks, not covered by the license.
 - Opening a page from disk (`file://`) doesn't work; use the dev server.
