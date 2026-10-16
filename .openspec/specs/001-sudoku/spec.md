@@ -1,8 +1,8 @@
 ---
 domain: sudoku
-version: 2.2.0
+version: 2.3.0
 status: accepted
-date: 2026-10-12
+date: 2026-10-16
 ---
 
 # 001 — Sudoku
@@ -195,7 +195,8 @@ auto-solve MUST NOT count as solved.
 When the player completes the puzzle correctly, the board MUST lock and an overlay MUST
 show the time, the level and the number of hints. The solved counter MUST go up by one and
 be saved in the browser. After 3 seconds a new puzzle of the same level MUST start.
-`skip` MUST start a new puzzle at any time.
+`skip` MUST start a new puzzle at any time. A new puzzle MUST show only its own numbers:
+nothing of the previous puzzle may stay on the board, also not the numbers `step` filled in.
 
 **Implementation:** `web/src/sudoku/useSudoku.ts::checkSolved()`, `newGame()`; `web/src/sudoku/SudokuBoard.vue` (the result)
 
@@ -204,6 +205,12 @@ be saved in the browser. After 3 seconds a new puzzle of the same level MUST sta
 - GIVEN one empty cell left
 - WHEN the player fills in the correct number
 - THEN the overlay shows `Solved in m:ss`, and 3 seconds later a new puzzle starts
+
+#### Scenario: A new puzzle after stepping to the end
+
+- GIVEN a puzzle solved by pressing `step` until it was done
+- WHEN the next puzzle starts, or the player presses `skip`
+- THEN the board shows only the numbers of the new puzzle
 
 **Tests:** `tests/use-sudoku.test.ts` ("Requirement 9"); `tests/sudoku-page.test.ts` ("Requirement 9")
 

@@ -3,7 +3,7 @@
 import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import SudokuPage from "../web/src/pages/SudokuPage.vue";
-import type { Sudoku } from "../web/src/sudoku/useSudoku";
+import { NEXT_PUZZLE_DELAY, type Sudoku } from "../web/src/sudoku/useSudoku";
 import { runUntil, seedRandom } from "./helpers";
 import { loadWasmForTests } from "./wasm-setup";
 
@@ -122,7 +122,7 @@ describe("Requirement 7: step", () => {
     await click(".btn.step");
     expect(page.find(".message .eyebrow").text()).toMatch(/^step \\ /);
     expect(page.find(".hints").text()).toBe("1");
-    expect(page.findAll(".cell.flash")).toHaveLength(1);
+    expect(page.findAll(".cell .flash")).toHaveLength(1);
     expect(page.findAll(".cell.target")).toHaveLength(1);
     expect(page.findAll(".cell .notes")).toHaveLength(0);
     await press("s");
@@ -179,6 +179,21 @@ describe("Requirement 9: solving a puzzle", () => {
     await page.vm.$nextTick();
     expect(page.find(".overlay").exists()).toBe(false);
   });
+
+  test.each(["waits for the next puzzle", "presses skip"])(
+    "regression: after stepping to the end, a player who %s sees only the new puzzle's numbers", async how => {
+      for (let k = 0; k < 200 && !game.locked.value; k++) await click(".btn.step");
+      expect(game.values.value).toEqual(game.solution.value);
+      if (how === "presses skip") await click(".btn.skip");
+      else vi.advanceTimersByTime(NEXT_PUZZLE_DELAY);
+      runUntil(() => !game.locked.value);
+      await page.vm.$nextTick();
+      const shown = cells().map(c => c.text());
+      expect(shown).toEqual(game.puzzle.value.map(v => (v ? String(v) : "")));
+      // A step still lights up the cell it fills in
+      await click(".btn.step");
+      expect(page.findAll(".cell .flash")).toHaveLength(1);
+    });
 });
 
 describe("Requirement 2 and 10: choosing and remembering the level", () => {
